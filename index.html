@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>魏士博的《高级网页设计》课堂实践</title>
+  <style>
+    :root {
+      --bg: #f7efe7;
+      --bg-deep: #e9d8c7;
+      --card: rgba(255, 255, 255, 0.75);
+      --card-strong: rgba(255, 255, 255, 0.9);
+      --line: rgba(104, 74, 56, 0.12);
+      --text: #2a1f1a;
+      --muted: #6d564d;
+      --brown: #8a5a3c;
+      --brown-deep: #472d23;
+      --amber: #d6a765;
+      --peach: #d88d62;
+      --gold: #f2d48d;
+      --shadow: 0 22px 60px rgba(85, 58, 41, 0.18);
+      --radius: 22px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(216, 141, 98, 0.18), transparent 24%),
+        radial-gradient(circle at bottom right, rgba(214, 167, 101, 0.18), transparent 26%),
+        linear-gradient(135deg, var(--bg) 0%, #f3e8dc 45%, var(--bg-deep) 100%);
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(98, 73, 58, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(98, 73, 58, 0.04) 1px, transparent 1px);
+      background-size: 26px 26px;
+      pointer-events: none;
+      mask-image: radial-gradient(circle at center, black 45%, transparent 100%);
+    }
+
+    .orb {
+      position: fixed;
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      filter: blur(26px);
+      opacity: 0.7;
+      pointer-events: none;
+      z-index: 0;
+      animation: float 14s ease-in-out infinite alternate;
+    }
+
+    .orb1 { background: rgba(216, 141, 98, 0.18); left: -50px; top: 80px; }
+    .orb2 { background: rgba(214, 167, 101, 0.18); right: -40px; top: 200px; animation-delay: 2s; }
+    .orb3 { background: rgba(138, 90, 60, 0.12); left: 24%; bottom: 30px; animation-delay: 4s; }
+
+    @keyframes float {
+      0% { transform: translate3d(0, 0, 0) scale(1); }
+      100% { transform: translate3d(26px, -30px, 0) scale(1.08); }
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      width: min(1200px, calc(100% - 32px));
+      margin: 42px auto 70px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, rgba(72, 45, 35, 0.96), rgba(138, 90, 60, 0.96), rgba(216, 141, 98, 0.9));
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 32px;
+      padding: 36px 32px 28px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      right: -120px;
+      bottom: -220px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.08);
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 22px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.1);
+      font-size: 12px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.92);
+    }
+
+    .badge::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      background: var(--gold);
+      border-radius: 50%;
+      box-shadow: 0 0 18px rgba(242, 212, 141, 0.9);
+    }
+
+    h1 {
+      margin: 18px 0 12px;
+      color: #fffaf4;
+      font-size: clamp(2.1rem, 4vw, 4rem);
+      line-height: 1.1;
+      letter-spacing: 0.04em;
+      text-shadow: 0 3px 0 rgba(88, 66, 56, 0.32), 0 14px 30px rgba(44, 26, 18, 0.2);
+    }
+
+    .subtitle {
+      max-width: 760px;
+      margin: 0;
+      color: rgba(255,255,255,0.9);
+      font-size: 1.05rem;
+      line-height: 1.8;
+    }
+
+    .summary {
+      min-width: 220px;
+      padding: 18px 18px 14px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 20px;
+      backdrop-filter: blur(8px);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+
+    .summary .label {
+      display: block;
+      font-size: 12px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.7);
+      margin-bottom: 12px;
+    }
+
+    .summary strong {
+      display: block;
+      color: #fff;
+      font-size: 2.4rem;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .summary span {
+      color: rgba(255,255,255,0.8);
+      line-height: 1.6;
+      font-size: 0.9rem;
+    }
+
+    .stats {
+      margin-top: 22px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(140px, 1fr));
+      gap: 18px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .stat {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 18px;
+      text-align: center;
+      padding: 16px 12px;
+      backdrop-filter: blur(8px);
+    }
+
+    .stat strong {
+      display: block;
+      color: #fff;
+      font-size: 1.5rem;
+      margin-bottom: 6px;
+    }
+
+    .stat span {
+      color: rgba(255,255,255,0.75);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.74rem;
+    }
+
+    .grid {
+      margin-top: 28px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      position: relative;
+      background: linear-gradient(180deg, rgba(255,255,255,0.74), rgba(255,249,243,0.8));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 20px 18px 18px;
+      box-shadow: 0 18px 36px rgba(88, 64, 50, 0.12);
+      overflow: hidden;
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 6px;
+      background: linear-gradient(90deg, var(--brown), var(--peach), var(--gold));
+    }
+
+    .card:hover {
+      transform: translateY(-6px) scale(1.01);
+      box-shadow: 0 26px 48px rgba(88, 64, 50, 0.16);
+      border-color: rgba(138, 90, 60, 0.24);
+    }
+
+    .card h2 {
+      margin: 18px 0 12px;
+      font-size: 1.22rem;
+      color: var(--brown-deep);
+    }
+
+    .card p {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.7;
+      min-height: 82px;
+    }
+
+    .card a {
+      display: inline-block;
+      text-decoration: none;
+      padding: 10px 16px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--brown), var(--peach));
+      color: #fff;
+      font-weight: 700;
+      box-shadow: 0 12px 20px rgba(138, 90, 60, 0.2);
+      transition: transform 0.2s ease, filter 0.2s ease;
+    }
+
+    .card a:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.06);
+    }
+
+    .feature {
+      margin-top: 28px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.8), rgba(251,245,238,0.82));
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 22px 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .feature-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .feature-head h3 {
+      margin: 0;
+      color: var(--brown-deep);
+      font-size: 1.2rem;
+    }
+
+    .tag-s {
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: rgba(138, 90, 60, 0.08);
+      border: 1px solid rgba(138, 90, 60, 0.12);
+      color: var(--brown-deep);
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .feature-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    .feature-list li {
+      background: rgba(255,255,255,0.45);
+      border: 1px solid rgba(138, 90, 60, 0.08);
+      border-radius: 16px;
+      padding: 14px 16px;
+      color: var(--text);
+      line-height: 1.7;
+    }
+
+    .prompt {
+      margin-top: 26px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.82), rgba(255,247,236,0.9));
+      border: 1px solid rgba(242, 212, 141, 0.5);
+      border-left: 6px solid var(--amber);
+      border-radius: 18px;
+      padding: 20px 22px;
+      box-shadow: var(--shadow);
+    }
+
+    .prompt h3 {
+      margin: 0 0 10px;
+      color: var(--brown-deep);
+      font-size: 1.12rem;
+    }
+
+    .prompt p {
+      margin: 0;
+      color: var(--text);
+      line-height: 1.9;
+      font-size: 0.98rem;
+    }
+
+    footer {
+      margin-top: 28px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.8rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    @media (max-width: 720px) {
+      .hero { padding: 28px 22px 22px; }
+      .summary { width: 100%; }
+      .stats { grid-template-columns: 1fr; }
+      .card p { min-height: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+
+  <div class="page">
+    <header class="hero">
+      <div class="hero-inner">
+        <div>
+          <span class="badge">课堂实践导航</span>
+          <h1>魏士博的《高级网页设计》课堂实践</h1>
+          <p class="subtitle">本页面整合了当前目录中的全部网页作品，涵盖基础结构、CSS 样式、布局设计与综合页面实践，便于按主题快速查看各个学习成果。</p>
+        </div>
+
+        <aside class="summary">
+          <span class="label">作品总览</span>
+          <strong>14</strong>
+          <span>个原生 HTML/CSS 练习页面，完整展示课程学习脉络。</span>
+        </aside>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <strong>HTML</strong>
+          <span>结构基础</span>
+        </div>
+        <div class="stat">
+          <strong>CSS</strong>
+          <span>视觉设计</span>
+        </div>
+        <div class="stat">
+          <strong>Practice</strong>
+          <span>课堂成果</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="grid">
+      <section class="card">
+        <h2>1.html</h2>
+        <p>课程起步页面，适合练习基础标签、文本结构和页面内容组织方式。</p>
+        <a href="1.html" target="_blank" rel="noopener">打开页面</a>
+      </section>
+
+      <section class="card">
+        <h2>2-1.html</h2>
+        <p>第二单元练习，初步尝试布局与样式，让页面具备更清晰的层次和信息分区。</p>
+        <a href="2-1.html" target="_blank" rel="noopener">打开页面</a>
+      </section>
+
+      <section class="card">
+        <h2>2-2.html</h2>
+        <p>第二单元延伸页面，进一步强化版面美化与视觉表现，提升整体阅读体验。</p>
+        <a href="2-2.html" target="_blank" rel="noopener">打开页面</a>
+      </section>
+
+      <section class="card">
+        <h2>3-1.html</h2>
+        <p>第三单元内容练习，重点关注排版、分块和组合样式的应用方式。</p>
+        <a href="3-1.html" target="_blank" rel="noopener">打开页面</a>
+      </section>
+
+      <section class="card">
+        <h2>3-2css.html</h2>
+        <p>第三单元 CSS 设计案例，强调样式细节与视觉修饰，提升页面表现力。</p>
+        <a href="3-2css.html" target="_blank" rel="noopener">打开页面</a>
+      </section>
+
+      <section class="card">
+        <h2>4-1css.html</h2>
+        <p>第四单元 CSS 进阶，探讨选择器、层叠和组合样式的运用，增强复杂设计能力。</p>
+        <a href="4-1css.html" target="_blank" rel="noopener">打开页面</a>
+      </section>
+
+      <section class="card">
+        <h2>5-1 层叠与继承.html</h2>
+        <p>讲解层叠与继承原理的页面，帮助理解 CSS 规则优先级与样式覆盖逻辑。</p>
+        <a href="5-1%20%E5%B1%82%E5%8F%A0%E4%B8%8E%E7%BB%A7%E6%89%BF.html" target="_blank" rel="noopener">打开页面</a>
+      </section>
+
+      <section class="card">
+        <h2>5-2 盒模型.html</h2>
+        <p>针对盒模型的专题实战，用内容区、内边距、边框与外边距展示布局构成基础。</p>
+        <a href="5-2%20%E7%9B%92%E6%A8%A1%E5%9E%8B.html" target="_blank" rel="noopener">打开页面</a>
+      </section>
+
+      <section class="card">
+        <h2>6-1flex.html</h2>
+        <p>Flex 布局练习页，展示弹性盒模型如何实现对齐、分布与响应式排列。</p>
+        <a href="6-1flex.html" target="_blank" rel="noopener">打开页面</a>
+      </section>
+
+      <section class="card">
+        <h2>6-2.html</h2>
+        <p>进一步扩展布局应用，让页面在不同元素组合中提升结构稳定性与可读性。</p>
+        <a href="6-2.html" target="_blank" rel="noopener">打开页面</a>
+      </section>
+
+      <section class="card">
+        <h2>7-1 上图下文.html</h2>
+        <p>“上图下文”版式设计练习，用图文组合强化内容展示与视觉分层效果。</p>
+        <a href="7-1%20%E4%B8%8A%E5%9B%BE%E4%B8%8B%E6%96%87.html" target="_blank" rel="noopener">打开页面</a>
+      </section>
+
+      <section class="card">
+        <h2>7-2 左图右文.html</h2>
+        <p>“左图右文”版式设计页面，体现常见信息展示布局的编排与响应式处理。</p>
+        <a href="7-2%20%E5%B7%A6%E5%9B%BE%E5%8F%B3%E6%96%87.html" target="_blank" rel="noopener">打开页面</a>
+      </section>
+
+      <section class="card">
+        <h2>8-1.CSS3选择器.html</h2>
+        <p>CSS3 选择器练习，学习常用选择器及组合方式，增强结构化样式控制能力。</p>
+        <a href="8-1.CSS3%E9%80%89%E6%8B%A9%E5%99%A8.html" target="_blank" rel="noopener">打开页面</a>
+      </section>
+
+      <section class="card">
+        <h2>9-1 transition.html</h2>
+        <p>过渡动画练习页，用属性过渡和交互效果演示界面响应与动态展示。</p>
+        <a href="9-1%20transition.html" target="_blank" rel="noopener">打开页面</a>
+      </section>
+    </main>
+
+    <section class="feature">
+      <div class="feature-head">
+        <h3>课程亮点</h3>
+        <span class="tag-s">Design System</span>
+      </div>
+      <ul class="feature-list">
+        <li>从基础网页结构开始，逐步掌握文本、列表、图像与布局元素的组合方式。</li>
+        <li>深入学习 CSS 规则、层叠继承、盒模型和 Flex 弹性布局，提升页面设计能力。</li>
+        <li>所有作品均使用原生 HTML 与 CSS 编写，没有使用 CDN，保持课程实践的纯原生风格。</li>
+      </ul>
+    </section>
+
+    <section class="prompt">
+      <h3>本提示词</h3>
+      <p>“创建一个新页面，包括本目录下的所有网页的超链接，使用原生代码，不使用cdn，新页面名称为index.html，主题为魏士博的《高级网页设计》课堂实践，美化页面，页面中包括本提示词。”</p>
+    </section>
+
+    <footer>Advanced Web Design Practice Collection</footer>
+  </div>
+</body>
+</html>

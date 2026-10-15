@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flexbox 布局 - 多彩游乐场配色</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f7f9fc; /* 柔和的背景 */
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        /* 四个面板的公共样式 */
+        .panel {
+            display: flex;
+            background-color: #ffffff;
+            border: 2px dashed #cbd5e1; /* 虚线边框更符合游乐场的调试感 */
+            margin-bottom: 20px;
+            padding: 20px;
+            min-height: 180px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); /* 轻微阴影 */
+        }
+
+        /* 面板内部盒子的公共样式 */
+        .box {
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 14px;
+            border-radius: 6px; /* 圆角 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* 盒子阴影 */
+            transition: transform 0.2s ease;
+        }
+
+        .box:hover {
+            transform: translateY(-2px); /* 鼠标悬停轻微上浮 */
+        }
+
+        /* ---------- 多彩颜色分配 (类似游乐场的彩虹色系) ---------- */
+        /* 面板1: 单一盒子 (亮橙红) */
+        .panel-1 .box {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #ff7e5f, #feb47b); /* 渐变色 */
+        }
+
+        /* 面板2: 两个盒子 (蓝色、绿色) */
+        .panel-2 .box:nth-child(1) {
+            width: 100px;
+            height: 50px;
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+        }
+        .panel-2 .box:nth-child(2) {
+            width: 100px;
+            height: 50px;
+            background: linear-gradient(135deg, #43e97b, #38f9d7);
+        }
+
+        /* 面板3: 2x2 网格 (黄、紫、粉、青) */
+        .panel-3 .box:nth-child(1) {
+            background: linear-gradient(135deg, #f6d365, #fda085);
+            color: #7c2d12; /* 浅色背景用深色文字保证阅读 */
+        }
+        .panel-3 .box:nth-child(2) {
+            background: linear-gradient(135deg, #a18cd1, #fbc2eb);
+        }
+        .panel-3 .box:nth-child(3) {
+            background: linear-gradient(135deg, #ff9a9e, #fecfef);
+            color: #7c2d12;
+        }
+        .panel-3 .box:nth-child(4) {
+            background: linear-gradient(135deg, #84fab0, #8fd3f4);
+            color: #064e3b;
+        }
+
+        /* 面板4: 宽盒 + 两个窄盒 (紫、青、橙) */
+        .panel-4 .box-wide {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+        .panel-4 .box-narrow:nth-child(2) {
+            background: linear-gradient(135deg, #00c6ff, #0072ff);
+        }
+        .panel-4 .box-narrow:nth-child(3) {
+            background: linear-gradient(135deg, #f7971e, #ffd200);
+            color: #7c2d12;
+        }
+
+        /* ---------- 布局逻辑 (保持不变) ---------- */
+
+        /* 面板 1：居中单个盒子 */
+        .panel-1 {
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 面板 2：垂直堆叠两个盒子 */
+        .panel-2 {
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* 面板 3：2x2 网格 */
+        .panel-3 {
+            flex-wrap: wrap;
+            align-content: center;
+            gap: 12px;
+        }
+        .panel-3 .box {
+            flex: 0 0 calc(50% - 6px);
+            height: 60px;
+        }
+
+        /* 面板 4：顶部宽盒 + 下方两个窄盒 */
+        .panel-4 {
+            flex-wrap: wrap;
+            align-content: center;
+            gap: 12px;
+        }
+        .panel-4 .box-wide {
+            flex: 0 0 100%;
+            height: 50px;
+        }
+        .panel-4 .box-narrow {
+            flex: 0 0 calc(50% - 6px);
+            height: 50px;
+        }
+    </style>
+</head>
+<body>
+    <h2>魏士博 flex 布局练习 - 多彩游乐场版</h2>
+
+    <!-- 面板 1：居中单个盒子 -->
+    <div class="panel panel-1">
+        <div class="box">1</div>
+    </div>
+
+    <!-- 面板 2：垂直堆叠两个盒子 -->
+    <div class="panel panel-2">
+        <div class="box">1</div>
+        <div class="box">2</div>
+    </div>
+
+    <!-- 面板 3：2x2 网格 -->
+    <div class="panel panel-3">
+        <div class="box">1</div>
+        <div class="box">2</div>
+        <div class="box">3</div>
+        <div class="box">4</div>
+    </div>
+
+    <!-- 面板 4：顶部宽盒 + 下方两个窄盒 -->
+    <div class="panel panel-4">
+        <div class="box box-wide">Wide</div>
+        <div class="box box-narrow">1</div>
+        <div class="box box-narrow">2</div>
+    </div>
+</body>
+</html>

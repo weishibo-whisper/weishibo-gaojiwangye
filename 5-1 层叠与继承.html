@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<link>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>层叠与继承</title>
+    <link rel="stylesheet" href="css.css"></link>
+    <style>
+        p {
+            color: red;
+            font-size: 100px;
+        }
+        .text {
+            color: green;
+            
+        }
+        #text {
+            color: purple;
+
+        }
+        .box {
+            color: orange;
+        }
+        #box #text {
+            color: silver;
+        }
+        .text {
+            color: yellow !important;
+        }
+        #box{
+            width: 1400px;
+            height: 400px;
+            background-color: gray;
+            margin: 10px;
+            padding: 10px;
+            border: 5px solid black;
+            letter-spacing: 5px;
+            border-radius: 70px;
+        }
+       
+    </style>
+    
+</head>
+<body>
+    <h2>层叠与继承</h2>
+    <div id="box" class="box">
+        <p id="text" class="text">412魏士博</p>
+        <p>层叠与继承的优先级</p>
+       
+        
+    </div>
+</body>
+</html>

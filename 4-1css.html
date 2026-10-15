@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        /* 注意：原来的“h2，h3，p”用的是全角逗号，选择器是无效的，这里改成半角 */
+        h2, h3, p {
+            padding: 0;
+            margin: 0;
+        }
+        #box {
+            width: 300px;
+            padding: 8px;
+            border: 1px solid #4a6fa5;
+            height: 200px;
+            font-size: 16px;
+            margin: 20px;
+        }
+        #box h3 {
+            color: #4dc632;
+            font-size: 20px;
+            text-align: center;
+        }
+        #box p {
+            color: #ecac45;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        /* 原来的后代选择器，会把 p 里面所有 span 都变绿、变细 */
+        #box p span {
+            color: #4dc632;
+            text-decoration: none;
+            font-weight: 100;
+        }
+
+        /* ===== 拓展任务：精确控制每个值的样式 ===== */
+        /* 学号的值：蓝色加粗 */
+        #box p .num {
+            color: #1e6fff;
+            font-weight: bold;
+        }
+        /* 姓名的值：深色加粗 */
+        #box p .name {
+            color: #222222;
+            font-weight: bold;
+        }
+        /* 难度的值：红色加粗 */
+        #box p .level {
+            color: #e2231a;
+            font-weight: bold;
+        }
+        /* 知识点：彩色边框（边框属于额外内容，用 content-box 向外扩展） */
+        #box p .knowledge {
+            display: block;          /* 变成块级，边框才能单独成行 */
+            margin-top: 4px;
+            padding: 4px 6px;
+            border: 2px dashed #4dc632;
+            border-radius: 4px;
+            box-sizing: content-box; /* 边框不计入内容宽高，属于额外内容 */
+        }
+    </style>
+</head>
+<body>
+    <h2>css 进阶</h2>
+    <div id="box">
+        <h3>css那些事</h3>
+        <p>
+            学号：<span class="num">412</span><br>
+            姓名：<span class="name">魏士博</span><br>
+            班级：计算机24010<br>
+            课程的难度认知为：<span class="level">中等</span><br>
+            <span class="knowledge">这个例子对应的知识点是：群组选择器，后代选择器，层叠与继承</span>
+        </p>
+    </div>
+</body>
+</html>

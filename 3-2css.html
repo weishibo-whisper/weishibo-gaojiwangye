@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>412 魏士博</title>
+    <style>
+        /* ---------- 全局重置 & 基础 ---------- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #f0f2f5; /* 浅灰背景，让盒子更突出 */
+            font-family: system-ui, -apple-system, sans-serif;
+            padding: 24px;
+        }
+
+        /* ---------- 标签选择器：p 改用高级深灰蓝，更耐看 ---------- */
+        p {
+            color: #2c3e50; /* 深灰蓝 */
+            font-size: 20px;
+            line-height: 1.6;
+        }
+
+        /* ---------- 扩展二：h2 黑底白字 ---------- */
+        h2 {
+            background-color: #1e272e; /* 更深的黑，带一点质感 */
+            color: #ffffff;
+            padding: 10px 24px;
+            display: inline-block;
+            border-radius: 30px; /* 圆角更现代 */
+            letter-spacing: 2px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            margin-bottom: 16px;
+        }
+
+        /* ---------- 扩展一：名字每个字不同颜色（柔和版） ---------- */
+        .name-wei {
+            color: #ff6b6b; /* 珊瑚红 */
+        }
+        .name-shi {
+            color: #4ecdc4; /* 薄荷绿 */
+        }
+        .name-bo {
+            color: #45b7d1; /* 天蓝 */
+        }
+
+        /* ---------- 扩展三：「选择器」三个字是白色 ---------- */
+        .selector-highlight {
+            color: #ffffff;
+        }
+
+        /* ---------- 原盒子 #box（深蓝紫调） ---------- */
+        #box {
+            width: 300px;
+            height: 200px;
+            background: linear-gradient(145deg, #4a6fa5, #3a5f8a); /* 渐变增加质感 */
+            padding: 20px;
+            border-radius: 16px;
+            margin-top: 12px;
+            box-shadow: 0 8px 20px rgba(58, 95, 138, 0.4);
+            transition: transform 0.2s;
+        }
+        #box:hover {
+            transform: translateY(-4px);
+        }
+
+        /* 盒子内 p 文字颜色为白色（提高可读性），但保留 p 默认深灰蓝的覆盖 */
+        #box p {
+            color: #ffffff;
+            margin: 8px 0;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+        }
+        /* 但「选择器」已经是白色，无需额外调整 */
+        /* 名字行特殊处理，确保颜色显示 */
+        #box .name-line span {
+            text-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        /* ---------- 新增盒子（300x300，珊瑚粉背景） ---------- */
+        .new-box {
+            width: 300px;
+            height: 300px;
+            background: linear-gradient(145deg, #e68a7a, #d97a6a); /* 柔和珊瑚粉渐变 */
+            border-radius: 16px;
+            margin-top: 24px;
+            padding: 20px;
+            box-shadow: 0 8px 20px rgba(217, 122, 106, 0.4);
+            transition: transform 0.2s;
+            color: #ffffff;
+        }
+        .new-box:hover {
+            transform: translateY(-4px);
+        }
+
+        /* 新盒子内的 p 使用白色，确保清晰 */
+        .new-box p {
+            color: #ffffff;
+            margin: 8px 0;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+        }
+
+        /* 名字行微调 */
+        .name-line {
+            letter-spacing: 3px;
+        }
+
+        /* 让两个盒子并排？这里保持纵向排列，但可加一点容器控制 */
+        .box-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            align-items: flex-start;
+            margin-top: 12px;
+        }
+        /* 为了不破坏原有结构，将两个盒子放入 wrapper 中 */
+    </style>
+</head>
+<body>
+
+    <!-- 扩展二：h2 黑底白字 -->
+    <h2>层叠样式表 CSS</h2>
+
+    <!-- 两个盒子放在 flex 容器中，并排显示更美观（可选） -->
+    <div class="box-wrapper">
+        <!-- 原盒子 -->
+        <div id="box">
+            <p>CSSx<span class="selector-highlight">选择器</span></p>
+            <p class="name-line">
+                <span class="name-wei">魏</span>
+                <span class="name-shi">士</span>
+                <span class="name-bo">博</span>
+            </p>
+            <p>CSS属性</p>
+        </div>
+
+        <!-- 新增盒子（300x300） -->
+        <div class="new-box">
+            <p>✨ 新盒子</p>
+            <p>宽度 300px</p>
+            <p>高度 300px</p>
+            <p style="margin-top: 12px; font-size: 0.9rem; opacity: 0.9;">珊瑚粉渐变</p>
+        </div>
+    </div>
+
+</body>
+</html>

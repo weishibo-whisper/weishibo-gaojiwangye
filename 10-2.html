@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>上图下文：纯 CSS 幻灯片（10-2）</title>
+  <style>
+    :root{ --w:clamp(280px,60vmin,900px); --h:clamp(180px,36vmin,540px); }
+    body{font-family:system-ui,-apple-system,'Segoe UI','Microsoft YaHei',sans-serif;margin:28px;background:#f7f8fb;color:#111}
+    h1{font-size:18px;margin-bottom:12px}
+    .wrap{max-width:var(--w);margin:0 auto}
+    .section{background:#fff;border-radius:10px;padding:14px;margin-bottom:22px;box-shadow:0 6px 18px rgba(16,24,40,.06)}
+    .stage{display:block}
+
+    /* 通用：上图下文 布局 */
+    .media{width:100%;height:var(--h);border-radius:8px;overflow:hidden;position:relative}
+    .caption{padding:12px 6px 0;font-size:16px;color:#333}
+
+    /* ---------------- Option A: 文字覆盖，透明背景，图片使用层叠并淡入淡出（纯 CSS） ---------------- */
+    .slider-a .media{background:#000}
+    .slides-a{position:relative;width:100%;height:100%}
+    .slides-a .slide{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat;opacity:0;transition:opacity 1s linear}
+    /* 每张 slide 有序出现：使用 keyframes 控制透明度循环 */
+    .slides-a .slide{animation:slA 16s linear infinite}
+    .slides-a .slide:nth-child(1){animation-delay:0s}
+    .slides-a .slide:nth-child(2){animation-delay:4s}
+    .slides-a .slide:nth-child(3){animation-delay:8s}
+    .slides-a .slide:nth-child(4){animation-delay:12s}
+
+    @keyframes slA{
+      0%{opacity:0}
+      5%{opacity:1}
+      25%{opacity:1}
+      30%{opacity:0}
+      100%{opacity:0}
+    }
+
+    /* 文字覆盖：透明背景（无实心背景），通过 text-shadow 保持可读性 */
+    .overlay-text{position:absolute;left:16px;right:16px;bottom:14px;color:#fff;font-weight:700;font-size:20px;letter-spacing:.08em;text-shadow:0 6px 18px rgba(0,0,0,.55),0 1px 0 rgba(255,255,255,.02)}
+
+    /* ---------------- Option B: 图片位置动画（strip sliding）---------------- */
+    .slider-b .media{background:#111}
+    .strip{position:relative; width:400%; height:100%; display:flex}
+    .strip .item{flex:0 0 25%; height:100%; background-size:cover;background-position:center;position:relative}
+    /* 用 keyframes 驱动 transform（注意：百分比相对于 .strip 宽度，-25%/-50%/-75% 对应移动一张/两张/三张图片） */
+    .strip{animation:slideB 16s ease-in-out infinite}
+    @keyframes slideB{
+      0%   { transform:translateX(0%) }
+      20%  { transform:translateX(0%) }
+      25%  { transform:translateX(-25%) }
+      45%  { transform:translateX(-25%) }
+      50%  { transform:translateX(-50%) }
+      70%  { transform:translateX(-50%) }
+      75%  { transform:translateX(-75%) }
+      95%  { transform:translateX(-75%) }
+      100% { transform:translateX(0%) }
+    }
+    /* 文字放在图片下方（上图下文），但我们也在图片上方放一行可选覆盖字 */
+    .item-text{position:absolute;left:12px;top:12px;color:#fff;font-weight:700;text-shadow:0 4px 12px rgba(0,0,0,.6)}
+
+    /* 无障碍：减少动画 */
+    @media (prefers-reduced-motion: reduce){
+      .slides-a .slide{animation:none;opacity:1}
+      .strip{animation:none;transform:none}
+    }
+
+    /* small screen tweak */
+    @media (max-width:520px){:root{--h:40vmin}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>上图下文 · 纯 CSS 幻灯片（示例）</h1>
+
+    <div class="section slider-a">
+      <strong>选项一 — 字在图片上（透明背景）</strong>
+      <div class="media">
+        <div class="slides-a">
+          <div class="slide" style="background-image:url('1.jpg')"></div>
+          <div class="slide" style="background-image:url('2.jpg')"></div>
+          <div class="slide" style="background-image:url('3.jpg')"></div>
+          <div class="slide" style="background-image:url('4.jpg')"></div>
+        </div>
+        <div class="overlay-text">魏士博</div>
+      </div>
+      <div class="caption">图片上方有叠加文字，文字无实心背景，使用文字阴影保证可读性。</div>
+    </div>
+
+    <div class="section slider-b">
+      <strong>选项二 — 图片位置动画（非透明度切换）</strong>
+      <div class="media">
+        <div class="strip">
+          <div class="item" style="background-image:url('1.jpg')"><div class="item-text">魏士博</div></div>
+          <div class="item" style="background-image:url('2.jpg')"><div class="item-text">魏士博</div></div>
+          <div class="item" style="background-image:url('3.jpg')"><div class="item-text">魏士博</div></div>
+          <div class="item" style="background-image:url('4.jpg')"><div class="item-text">魏士博</div></div>
+        </div>
+      </div>
+      <div class="caption">图片通过横向平移完成切换（纯 CSS keyframes 控制 transform），下方为图片说明区域。</div>
+    </div>
+
+  </div>
+</body>
+</html>

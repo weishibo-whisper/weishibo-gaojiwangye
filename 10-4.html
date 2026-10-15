@@ -1,0 +1,220 @@
+  <!DOCTYPE html>
+  <html lang="zh-CN">
+  <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>10-3 媒体查询响应式网格 —— 魏士博</title>
+  <style>
+    /* ================= 1. 基础样式 ================= */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html {
+      font-size: 15px;              /* 基准字号，所有 rem 都跟着它走 */
+      -webkit-text-size-adjust: 100%;
+    }
+
+    :root {
+      --bg: #0b1220;                /* 页面底色，断点里会改 */
+      --gap: 1rem;
+      --radius: 1.1rem;
+      --grid-max: 1400px;           /* 内容最大宽度，超大屏居中 */
+    }
+
+    body {
+      min-width: 320px;             /* ★ 页面最小宽度 */
+      min-height: 100vh;
+      padding: 2.5rem 1.5rem 3rem;
+      font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", system-ui, sans-serif;
+      background-color: var(--bg);
+      color: #e2e8f0;
+      transition: background-color .6s ease;   /* 换断点时底色平滑过渡 */
+    }
+
+    /* 背景光斑（固定在视口，不随滚动） */
+    .bg {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background:
+        radial-gradient(55rem 38rem at 15% -10%, rgba(56,189,248,.16), transparent 62%),
+        radial-gradient(48rem 34rem at 105% 108%, rgba(167,139,250,.16), transparent 62%);
+    }
+
+    /* ================= 2. 头部 ================= */
+    .header {
+      max-width: var(--grid-max);
+      margin: 0 auto 1.75rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .title {
+      font-size: 2rem;
+      line-height: 1.2;
+      letter-spacing: .15rem;
+      background: linear-gradient(90deg, #38bdf8, #a78bfa, #f472b6);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .subtitle {
+      margin-top: .5rem;
+      font-size: .9rem;
+      color: #94a3b8;
+    }
+
+    /* 右上角状态标签：列数由 CSS 自己写出来，不用 JS */
+    .status {
+      padding: .55rem 1rem;
+      font-size: .85rem;
+      color: #cbd5e1;
+      white-space: nowrap;
+      border: 1px solid rgba(148, 163, 184, .35);
+      border-radius: 999px;
+      background: rgba(148, 163, 184, .08);
+    }
+    .status strong { color: #38bdf8; }
+    .status strong::after { content: "1 列"; }   /* 默认：单列 */
+
+    /* ================= 3. 网格 + 盒子 ================= */
+    .grid {
+      max-width: var(--grid-max);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(1, 1fr);   /* 默认 1 个一行 */
+      gap: var(--gap);
+    }
+
+    .card {
+      position: relative;
+      min-height: 7.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: .3rem;
+      overflow: hidden;
+      border-radius: var(--radius);
+      color: #fff;
+      background: linear-gradient(155deg, var(--c1), var(--c2));
+      box-shadow: 0 .6rem 1.4rem rgba(0, 0, 0, .45),
+                  inset 0 1px 0 rgba(255, 255, 255, .25);
+      transition: transform .3s ease, box-shadow .3s ease;
+    }
+
+    /* 玻璃高光 */
+    .card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(255, 255, 255, .20), transparent 55%);
+      pointer-events: none;
+    }
+
+    .card .num {
+      position: relative;
+      z-index: 1;
+      font-size: 1.6rem;
+      font-weight: 800;
+      letter-spacing: .06rem;
+    }
+    .card .txt {
+      position: relative;
+      z-index: 1;
+      font-size: .8rem;
+      opacity: .88;
+    }
+
+    .card:hover {
+      transform: translateY(-.35rem) scale(1.02);
+      box-shadow: 0 1rem 2rem rgba(0, 0, 0, .55);
+    }
+
+    /* 八个盒子各自配色 */
+    .card:nth-child(1) { --c1: #f87171; --c2: #b91c1c; }
+    .card:nth-child(2) { --c1: #fb923c; --c2: #c2410c; }
+    .card:nth-child(3) { --c1: #fbbf24; --c2: #b45309; }
+    .card:nth-child(4) { --c1: #34d399; --c2: #047857; }
+    .card:nth-child(5) { --c1: #22d3ee; --c2: #0e7490; }
+    .card:nth-child(6) { --c1: #60a5fa; --c2: #1d4ed8; }
+    .card:nth-child(7) { --c1: #a78bfa; --c2: #6d28d9; }
+    .card:nth-child(8) { --c1: #f472b6; --c2: #be185d; }
+
+    /* ================= 4. 提示 ================= */
+    .hint {
+      max-width: var(--grid-max);
+      margin: 2rem auto 0;
+      font-size: .85rem;
+      line-height: 1.9;
+      color: #7c8aa5;
+      text-align: center;
+    }
+    .hint b { color: #38bdf8; }
+
+    /* ================================================================
+       三个媒体查询：视口变宽 → 一行盒子数量 1 → 2 → 4 → 8
+       ================================================================ */
+
+    /* ---- 断点 1：≥480px —— 一行 2 个 ---- */
+    @media screen and (min-width: 480px) {
+      :root { --bg: #0d1526; }
+      .grid { grid-template-columns: repeat(2, 1fr); }
+      .card { min-height: 8.5rem; }
+      .status strong::after { content: "2 列"; }
+    }
+
+    /* ---- 断点 2：≥768px —— 一行 4 个 ---- */
+    @media screen and (min-width: 768px) {
+      html { font-size: 16px; }                 /* 整体文字跟着放大 */
+      :root { --bg: #0e1a2f; --gap: 1.15rem; }
+      .grid { grid-template-columns: repeat(4, 1fr); }
+      .card { min-height: 9rem; }
+      .title { font-size: 2.4rem; }
+      .status strong::after { content: "4 列"; }
+    }
+
+    /* ---- 断点 3：≥1200px —— 一行 8 个 ---- */
+    @media screen and (min-width: 1200px) {
+      html { font-size: 17px; }
+      :root { --bg: #101f38; --gap: 1.25rem; }
+      .grid { grid-template-columns: repeat(8, 1fr); }
+      .card { min-height: 10rem; }
+      .title { font-size: 2.75rem; }
+      .status strong::after { content: "8 列"; }
+    }
+  </style>
+  </head>
+  <body>
+    <div class="bg"></div>
+
+    <header class="header">
+      <div>
+        <h1 class="title">魏士博</h1>
+        <p class="subtitle">媒体查询响应式网格 · 8 个盒子</p>
+      </div>
+      <div class="status">当前布局：<strong></strong></div>
+    </header>
+
+    <main class="grid">
+      <div class="card"><span class="num">01</span><span class="txt">盒子</span></div>
+      <div class="card"><span class="num">02</span><span class="txt">盒子</span></div>
+      <div class="card"><span class="num">03</span><span class="txt">盒子</span></div>
+      <div class="card"><span class="num">04</span><span class="txt">盒子</span></div>
+      <div class="card"><span class="num">05</span><span class="txt">盒子</span></div>
+      <div class="card"><span class="num">06</span><span class="txt">盒子</span></div>
+      <div class="card"><span class="num">07</span><span class="txt">盒子</span></div>
+      <div class="card"><span class="num">08</span><span class="txt">盒子</span></div>
+    </main>
+
+    <p class="hint">
+      拖动窗口宽度试试：<b>320px 起 1 列</b> → <b>480px 起 2 列</b> →
+      <b>768px 起 4 列</b> → <b>1200px 起 8 列</b><br>
+      魏士博 · 网页设计作业
+    </p>
+  </body>
+  </html>

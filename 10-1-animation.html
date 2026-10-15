@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>四色呼吸方块 · 纯 CSS 动画</title>
+<style>
+/* ============================================================
+   可调参数：改这里就够了
+   ============================================================ */
+:root{
+  --c1: #ff2e63;      /* 颜色 1 品红 */
+  --c2: #8a2be2;      /* 颜色 2 紫罗兰 */
+  --c3: #00b8ff;      /* 颜色 3 天蓝 */
+  --c4: #00e0a4;      /* 颜色 4 薄荷绿 */
+
+  --cycle: 8s;                                   /* 四色一轮的时长 */
+  --box: clamp(170px, 42vmin, 240px);            /* 盒子边长 */
+}
+
+/* 注册自定义属性，让颜色/角度可以被动画平滑插值 */
+@property --c { syntax:'<color>'; inherits:true;  initial-value:#ff2e63; }
+@property --a { syntax:'<angle>'; inherits:false; initial-value:0deg;    }
+
+*{ box-sizing:border-box; }
+html,body{ height:100%; }
+
+body{
+  margin:0;
+  min-height:100svh;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  background:#06070c;
+  color:#fff;
+  font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;
+}
+
+/* 环境氛围光：永远在缓慢漂移 */
+body::before{
+  content:"";
+  position:fixed; inset:-30%;
+  background:
+    radial-gradient(45% 45% at 28% 30%, var(--c1), transparent 70%),
+    radial-gradient(45% 45% at 72% 70%, var(--c3), transparent 70%);
+  filter:blur(90px);
+  opacity:.14;
+  pointer-events:none;
+  animation:drift 22s ease-in-out infinite alternate;
+}
+@keyframes drift{
+  0%  { transform:translate3d(-4%,-3%,0) scale(1); }
+  100%{ transform:translate3d( 4%, 3%,0) scale(1.15); }
+}
+
+/* ============================================================
+   舞台：颜色循环就挂在这一层，供所有子元素继承
+   ============================================================ */
+.stage{
+  position:relative;
+  display:grid;
+  place-items:center;
+  width:calc(var(--box) * 2.4);
+  height:calc(var(--box) * 2.4);
+  isolation:isolate;
+  color:var(--c);
+  animation:color-cycle var(--cycle) ease-in-out infinite;
+}
+
+/* ★ 核心：四色循环，只改 --c 一个变量 */
+@keyframes color-cycle{
+  0%,100%{ --c:var(--c1); }
+  25%    { --c:var(--c2); }
+  50%    { --c:var(--c3); }
+  75%    { --c:var(--c4); }
+}
+
+/* 盒子背后的同色大光斑 */
+.glow{
+  position:absolute;
+  width:calc(var(--box) * 1.9);
+  height:calc(var(--box) * 1.9);
+  border-radius:50%;
+  background:var(--c);
+  filter:blur(70px);
+  z-index:0;
+  animation:glow-breathe 5s ease-in-out infinite;
+}
+@keyframes glow-breathe{
+  0%,100%{ transform:scale(.85); opacity:.28; }
+  50%    { transform:scale(1.05); opacity:.44; }
+}
+
+/* ============================================================
+   盒子本体
+   ============================================================ */
+.box{
+  position:relative;
+  z-index:1;
+  width:var(--box);
+  height:var(--box);
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  border-radius:30px;
+
+  background:var(--c);                 /* ← 背景颜色随时间变化 */
+
+  /* currentColor 会跟着主轴颜色走，所以光晕自动同色 */
+  box-shadow:
+    0 0 40px -12px currentColor,
+    0 0 90px -30px currentColor,
+    0 24px 50px -24px rgba(0,0,0,.9);
+
+  animation:
+    float      7s  ease-in-out infinite,
+    morph      11s ease-in-out infinite,
+    glow-pulse 5s  ease-in-out infinite;
+  will-change:transform,border-radius,box-shadow;
+}
+
+/* 漂浮 + 轻微自转 + 呼吸缩放（一个动画管完 transform，避免打架） */
+@keyframes float{
+  0%,100%{ transform:translateY(-6px) rotate(-1.5deg) scale(1); }
+  50%    { transform:translateY( 6px) rotate( 1.5deg) scale(1.045); }
+}
+
+/* 圆角有机形变 */
+@keyframes morph{
+  0%,100%{ border-radius:30px 30px 30px 30px; }
+  33%    { border-radius:48px 22px 48px 22px; }
+  66%    { border-radius:22px 48px 22px 48px; }
+}
+
+/* 光晕脉冲，跟着当前颜色一起呼吸 */
+@keyframes glow-pulse{
+  0%,100%{
+    box-shadow:
+      0 0 40px -12px currentColor,
+      0 0 90px -30px currentColor,
+      0 24px 50px -24px rgba(0,0,0,.9);
+  }
+  50%{
+    box-shadow:
+      0 0 70px  -6px currentColor,
+      0 0 140px -20px currentColor,
+      0 24px 50px -24px rgba(0,0,0,.9);
+  }
+}
+
+/* 玻璃质感高光 */
+.sheen{
+  position:absolute; inset:0;
+  border-radius:inherit;
+  background:linear-gradient(160deg,
+      rgba(255,255,255,.60),
+      rgba(255,255,255,.06) 34%,
+      transparent 58%);
+  mix-blend-mode:soft-light;
+  pointer-events:none;
+}
+
+/* 边框流光：conic-gradient 的角度被动画，绕着边缘跑 */
+.ring{
+  position:absolute; inset:0;
+  border-radius:inherit;
+  padding:2px;
+  background:conic-gradient(from var(--a),
+      transparent 0turn,
+      rgba(255,255,255,0)   .55turn,
+      rgba(255,255,255,.95) .72turn,
+      rgba(255,255,255,0)   .88turn,
+      transparent 1turn);
+  -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+          mask-composite:exclude;
+  pointer-events:none;
+  animation:ring-spin calc(var(--cycle) / 2.5) linear infinite;
+}
+@keyframes ring-spin{ to{ --a:360deg; } }
+
+/* 斜向扫光 */
+.shine{
+  position:absolute;
+  top:-30%; bottom:-30%; left:-60%;
+  width:40%;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.75), transparent);
+  pointer-events:none;
+  animation:sweep 4.5s cubic-bezier(.45,0,.25,1) infinite;
+}
+@keyframes sweep{
+  0%,25%  { transform:translateX(0)   skewX(-14deg); opacity:0; }
+  30%     { opacity:.9; }
+  70%     { transform:translateX(400%) skewX(-14deg); opacity:.9; }
+  75%,100%{ transform:translateX(400%) skewX(-14deg); opacity:0; }
+}
+
+/* 颗粒噪点，让纯色面有质感 */
+.grain{
+  position:absolute; inset:-50%;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:140px 140px;
+  opacity:.14;
+  mix-blend-mode:overlay;
+  pointer-events:none;
+  animation:grain-jitter .9s steps(3) infinite;
+}
+@keyframes grain-jitter{
+  0%  { transform:translate3d(0,0,0); }
+  33% { transform:translate3d(-3%,2%,0); }
+  66% { transform:translate3d(2%,-3%,0); }
+  100%{ transform:translate3d(0,0,0); }
+}
+
+/* 居中文字 */
+.core{
+  position:relative;
+  z-index:2;
+  display:grid;
+  gap:.4em;
+  text-align:center;
+  color:#fff;
+  text-shadow:0 1px 12px rgba(0,0,0,.35), 0 0 30px rgba(255,255,255,.35);
+  animation:core-bob 7s ease-in-out infinite;
+}
+.core strong{
+  font-size:clamp(14px,4.4vmin,20px);
+  font-weight:700;
+  letter-spacing:.28em;
+  text-indent:.28em;
+}
+.core span{
+  font-size:clamp(10px,2.6vmin,12px);
+  letter-spacing:.16em;
+  text-indent:.16em;
+  opacity:.85;
+}
+@keyframes core-bob{
+  0%,100%{ transform:translateY(2px); }
+  50%    { transform:translateY(-2px); }
+}
+
+/* 环绕的小卫星点，光晕颜色同样跟着主色走 */
+.orbit{
+  position:absolute;
+  top:50%; left:50%;
+  transform:translate(-50%,-50%); /* 修复：使用 transform 而非 translate 属性 */
+  border-radius:50%;
+  pointer-events:none;
+}
+.orbit i{
+  position:absolute;
+  top:-4px; left:50%;
+  width:8px; height:8px;
+  margin-left:-4px;
+  border-radius:50%;
+  background:#fff;
+  box-shadow:0 0 12px 2px currentColor, 0 0 30px 6px currentColor;
+}
+.o1{
+  width:calc(var(--box) * 1.65);
+  height:calc(var(--box) * 1.65);
+  animation:orbit-spin 11s linear infinite;
+}
+.o2{
+  width:calc(var(--box) * 2.15);
+  height:calc(var(--box) * 2.15);
+  animation:orbit-spin 17s linear infinite reverse;
+}
+.o2 i{
+  top:-2.5px;
+  width:5px; height:5px;
+  margin-left:-2.5px;
+  opacity:.75;
+}
+@keyframes orbit-spin{ to{ transform:rotate(360deg); } }
+
+/* ============================================================
+   无障碍：开启「减少动态效果」时，保留颜色循环，去掉位移与旋转
+   ============================================================ */
+@media (prefers-reduced-motion: reduce){
+  body::before,
+  .glow,
+  .box,
+  .ring,
+  .shine,
+  .grain,
+  .core,
+  .orbit{
+    animation:none !important;
+  }
+  .stage{ animation-duration:24s; }   /* 颜色还在变，只是慢一点 */
+}
+</style>
+</head>
+<body>
+
+  <div class="stage">
+    <div class="glow"></div>
+
+    <div class="box">
+      <span class="sheen"></span>
+      <span class="ring"></span>
+      <span class="shine"></span>
+      <span class="grain"></span>
+
+      <div class="core">
+        <strong>4 COLORS</strong>
+        <span>纯 CSS 动画</span>
+      </div>
+    </div>
+
+    <span class="orbit o1"><i></i></span>
+    <span class="orbit o2"><i></i></span>
+  </div>
+
+</body>
+</html>

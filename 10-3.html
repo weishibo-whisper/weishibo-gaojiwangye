@@ -1,0 +1,75 @@
+ <!DOCTYPE html>
+  <html lang="zh-CN">
+  <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>10-3 媒体查询 · 视口变化</title>
+  <style>
+    /* 基准字号：1rem = 16px */
+    html { font-size: 16px; }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; }
+
+    /* 全屏盒子 */
+    .box {
+      width: 100vw;              /* 视口宽 */
+      height: 100vh;             /* 视口高 */
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 1rem;
+      background-color: #64b5f6; /* 默认背景色 */
+      transition: background-color .4s ease; /* 变色过渡，更顺滑 */
+      text-align: center;
+    }
+
+    /* 长度全部用 rem，跟着 html 字号缩放 */
+    .title {
+      font-size: 3rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: .25rem;
+      text-shadow: 0 .2rem .4rem rgba(0, 0, 0, .25);
+    }
+
+    .tip {
+      font-size: 1rem;
+      color: rgba(255, 255, 255, .9);
+    }
+
+    /* ===== 媒体查询：视口变化 → 背景色 + 字号一起变 ===== */
+
+    /* 小屏手机 ≤480px */
+    @media screen and (max-width: 480px) {
+      html { font-size: 14px; }          /* 文字变小 */
+      .box { background-color: #e57373; } /* 红 */
+    }
+
+    /* 平板 481px ~ 768px */
+    @media screen and (min-width: 481px) and (max-width: 768px) {
+      html { font-size: 17px; }
+      .box { background-color: #81c784; } /* 绿 */
+    }
+
+    /* 小笔记本 769px ~ 1199px */
+    @media screen and (min-width: 769px) and (max-width: 1199px) {
+      html { font-size: 20px; }
+      .box { background-color: #4dd0e1; } /* 青 */
+    }
+
+    /* 大屏 ≥1200px */
+    @media screen and (min-width: 1200px) {
+      html { font-size: 24px; }           /* 文字变大 */
+      .box { background-color: #9575cd; } /* 紫 */
+    }
+  </style>
+  </head>
+  <body>
+    <div class="box">
+      <h1 class="title">魏士博</h1>
+      <p class="tip">拖动改变窗口宽度，看背景色和文字大小的变化</p>
+    </div>
+  </body>
+  </html>
