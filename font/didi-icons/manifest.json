@@ -1,0 +1,461 @@
+{
+  "source": "https://www.iconfont.cn/",
+  "collection": {
+    "id": 40425,
+    "url": "https://www.iconfont.cn/collections/detail?cid=40425",
+    "name": "Remix"
+  },
+  "downloadedAt": "2026-10-19",
+  "icons": [
+    {
+      "name": "home-line",
+      "id": 29523009,
+      "file": "home-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29523009"
+    },
+    {
+      "name": "home-fill",
+      "id": 29523004,
+      "file": "home-fill.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29523004"
+    },
+    {
+      "name": "file-list-line",
+      "id": 29523791,
+      "file": "file-list-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29523791"
+    },
+    {
+      "name": "file-list-fill",
+      "id": 29523841,
+      "file": "file-list-fill.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29523841"
+    },
+    {
+      "name": "message-3-line",
+      "id": 29523247,
+      "file": "message-3-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29523247"
+    },
+    {
+      "name": "message-3-fill",
+      "id": 29523265,
+      "file": "message-3-fill.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29523265"
+    },
+    {
+      "name": "user-3-line",
+      "id": 29525109,
+      "file": "user-3-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29525109"
+    },
+    {
+      "name": "user-3-fill",
+      "id": 29525116,
+      "file": "user-3-fill.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29525116"
+    },
+    {
+      "name": "map-pin-line",
+      "id": 29524457,
+      "file": "map-pin-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29524457"
+    },
+    {
+      "name": "map-pin-fill",
+      "id": 29524487,
+      "file": "map-pin-fill.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29524487"
+    },
+    {
+      "name": "search-line",
+      "id": 29524865,
+      "file": "search-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29524865"
+    },
+    {
+      "name": "notification-3-line",
+      "id": 29524671,
+      "file": "notification-3-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29524671"
+    },
+    {
+      "name": "arrow-right-s-line",
+      "id": 29524800,
+      "file": "arrow-right-s-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29524800"
+    },
+    {
+      "name": "arrow-down-s-line",
+      "id": 29524907,
+      "file": "arrow-down-s-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29524907"
+    },
+    {
+      "name": "scan-line",
+      "id": 29523510,
+      "file": "scan-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29523510"
+    },
+    {
+      "name": "compass-line",
+      "id": 29524403,
+      "file": "compass-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29524403"
+    },
+    {
+      "name": "car-line",
+      "id": 29524372,
+      "file": "car-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29524372"
+    },
+    {
+      "name": "taxi-line",
+      "id": 29524430,
+      "file": "taxi-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29524430"
+    },
+    {
+      "name": "route-line",
+      "id": 29524480,
+      "file": "route-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29524480"
+    },
+    {
+      "name": "steering-line",
+      "id": 29524358,
+      "file": "steering-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29524358"
+    },
+    {
+      "name": "bike-line",
+      "id": 29524489,
+      "file": "bike-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29524489"
+    },
+    {
+      "name": "bus-line",
+      "id": 29524439,
+      "file": "bus-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29524439"
+    },
+    {
+      "name": "train-line",
+      "id": 29524424,
+      "file": "train-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29524424"
+    },
+    {
+      "name": "more-2-line",
+      "id": 29525009,
+      "file": "more-2-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29525009"
+    },
+    {
+      "name": "flight-takeoff-line",
+      "id": 29524382,
+      "file": "flight-takeoff-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29524382"
+    },
+    {
+      "name": "hotel-bed-line",
+      "id": 29524386,
+      "file": "hotel-bed-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29524386"
+    },
+    {
+      "name": "building-line",
+      "id": 29523026,
+      "file": "building-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29523026"
+    },
+    {
+      "name": "map-pin-time-line",
+      "id": 29524476,
+      "file": "map-pin-time-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29524476"
+    },
+    {
+      "name": "coupon-line",
+      "id": 29523997,
+      "file": "coupon-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29523997"
+    },
+    {
+      "name": "coupon-fill",
+      "id": 29523974,
+      "file": "coupon-fill.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29523974"
+    },
+    {
+      "name": "gift-line",
+      "id": 29523967,
+      "file": "gift-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29523967"
+    },
+    {
+      "name": "red-packet-line",
+      "id": 29524058,
+      "file": "red-packet-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29524058"
+    },
+    {
+      "name": "wallet-line",
+      "id": 29524038,
+      "file": "wallet-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29524038"
+    },
+    {
+      "name": "shield-check-line",
+      "id": 29525035,
+      "file": "shield-check-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29525035"
+    },
+    {
+      "name": "customer-service-line",
+      "id": 29523131,
+      "file": "customer-service-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29523131"
+    },
+    {
+      "name": "time-line",
+      "id": 29525016,
+      "file": "time-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29525016"
+    },
+    {
+      "name": "calendar-line",
+      "id": 29523160,
+      "file": "calendar-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29523160"
+    },
+    {
+      "name": "star-fill",
+      "id": 29524880,
+      "file": "star-fill.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29524880"
+    },
+    {
+      "name": "ticket-line",
+      "id": 29523980,
+      "file": "ticket-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29523980"
+    },
+    {
+      "name": "refund-line",
+      "id": 29523986,
+      "file": "refund-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29523986"
+    },
+    {
+      "name": "headphone-line",
+      "id": 29524611,
+      "file": "headphone-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29524611"
+    },
+    {
+      "name": "phone-line",
+      "id": 29523659,
+      "file": "phone-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29523659"
+    },
+    {
+      "name": "settings-line",
+      "id": 29524924,
+      "file": "settings-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29524924"
+    },
+    {
+      "name": "heart-line",
+      "id": 29524123,
+      "file": "heart-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29524123"
+    },
+    {
+      "name": "vip-crown-line",
+      "id": 29524063,
+      "file": "vip-crown-line.svg",
+      "collection": {
+        "id": 40425,
+        "url": "https://www.iconfont.cn/collections/detail?cid=40425"
+      },
+      "source": "https://www.iconfont.cn/api/icon/iconInfo.json?id=29524063"
+    }
+  ]
+}

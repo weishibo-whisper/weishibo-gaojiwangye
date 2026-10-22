@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
@@ -6,35 +6,34 @@
   <title>魏士博的《高级网页设计》课堂实践</title>
   <style>
     :root {
-      --bg: #f7efe7;
-      --bg-deep: #e9d8c7;
-      --card: rgba(255, 255, 255, 0.75);
-      --card-strong: rgba(255, 255, 255, 0.9);
-      --line: rgba(104, 74, 56, 0.12);
-      --text: #2a1f1a;
-      --muted: #6d564d;
-      --brown: #8a5a3c;
-      --brown-deep: #472d23;
-      --amber: #d6a765;
-      --peach: #d88d62;
-      --gold: #f2d48d;
-      --shadow: 0 22px 60px rgba(85, 58, 41, 0.18);
-      --radius: 22px;
+      --bg: #f8f1ea;
+      --bg-2: #f0e0d0;
+      --card: rgba(255,255,255,0.74);
+      --card-strong: rgba(255,255,255,0.86);
+      --line: rgba(109, 76, 55, 0.12);
+      --text: #2a201d;
+      --muted: #68554d;
+      --brown: #8a5e3a;
+      --brown-deep: #492f25;
+      --amber: #d9b35a;
+      --peach: #d89267;
+      --gold: #f4d88f;
+      --shadow: 0 22px 56px rgba(71, 46, 34, 0.18);
+      --radius: 24px;
     }
 
     * { box-sizing: border-box; }
-
     html { scroll-behavior: smooth; }
 
     body {
       margin: 0;
+      min-height: 100vh;
       font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
       color: var(--text);
       background:
-        radial-gradient(circle at top left, rgba(216, 141, 98, 0.18), transparent 24%),
-        radial-gradient(circle at bottom right, rgba(214, 167, 101, 0.18), transparent 26%),
-        linear-gradient(135deg, var(--bg) 0%, #f3e8dc 45%, var(--bg-deep) 100%);
-      min-height: 100vh;
+        radial-gradient(circle at top left, rgba(216, 141, 98, 0.16), transparent 22%),
+        radial-gradient(circle at bottom right, rgba(217, 179, 90, 0.16), transparent 26%),
+        linear-gradient(135deg, var(--bg) 0%, #f6e9df 45%, var(--bg-2) 100%);
       position: relative;
       overflow-x: hidden;
     }
@@ -44,58 +43,58 @@
       position: fixed;
       inset: 0;
       background-image:
-        linear-gradient(rgba(98, 73, 58, 0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(98, 73, 58, 0.04) 1px, transparent 1px);
-      background-size: 26px 26px;
+        linear-gradient(rgba(71, 46, 34, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(71, 46, 34, 0.03) 1px, transparent 1px);
+      background-size: 24px 24px;
       pointer-events: none;
-      mask-image: radial-gradient(circle at center, black 45%, transparent 100%);
+      mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
     }
 
     .orb {
       position: fixed;
-      width: 300px;
-      height: 300px;
+      width: 320px;
+      height: 320px;
       border-radius: 50%;
       filter: blur(26px);
       opacity: 0.7;
       pointer-events: none;
       z-index: 0;
-      animation: float 14s ease-in-out infinite alternate;
+      animation: drift 14s ease-in-out infinite alternate;
     }
 
-    .orb1 { background: rgba(216, 141, 98, 0.18); left: -50px; top: 80px; }
-    .orb2 { background: rgba(214, 167, 101, 0.18); right: -40px; top: 200px; animation-delay: 2s; }
-    .orb3 { background: rgba(138, 90, 60, 0.12); left: 24%; bottom: 30px; animation-delay: 4s; }
+    .orb1 { left: -60px; top: 80px; background: rgba(216, 141, 98, 0.18); }
+    .orb2 { right: -60px; top: 200px; background: rgba(217, 179, 90, 0.18); animation-delay: 2s; }
+    .orb3 { left: 28%; bottom: 30px; background: rgba(138, 94, 58, 0.12); animation-delay: 4s; }
 
-    @keyframes float {
+    @keyframes drift {
       0% { transform: translate3d(0, 0, 0) scale(1); }
-      100% { transform: translate3d(26px, -30px, 0) scale(1.08); }
+      100% { transform: translate3d(24px, -30px, 0) scale(1.08); }
     }
 
     .page {
       position: relative;
       z-index: 1;
-      width: min(1200px, calc(100% - 32px));
-      margin: 42px auto 70px;
+      width: min(1200px, calc(100% - 28px));
+      margin: 40px auto 72px;
     }
 
     .hero {
-      background: linear-gradient(135deg, rgba(72, 45, 35, 0.96), rgba(138, 90, 60, 0.96), rgba(216, 141, 98, 0.9));
-      border: 1px solid rgba(255,255,255,0.15);
-      border-radius: 32px;
-      padding: 36px 32px 28px;
+      background: linear-gradient(135deg, rgba(73, 47, 37, 0.96), rgba(138, 94, 58, 0.96), rgba(216, 141, 98, 0.9));
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 34px;
+      padding: 34px 28px 22px;
       box-shadow: var(--shadow);
-      position: relative;
       overflow: hidden;
+      position: relative;
     }
 
     .hero::after {
       content: "";
       position: absolute;
-      width: 400px;
-      height: 400px;
-      right: -120px;
-      bottom: -220px;
+      width: 420px;
+      height: 420px;
+      right: -110px;
+      bottom: -240px;
       border-radius: 50%;
       background: rgba(255,255,255,0.08);
     }
@@ -105,8 +104,8 @@
       z-index: 1;
       display: flex;
       justify-content: space-between;
-      align-items: end;
-      gap: 22px;
+      align-items: flex-end;
+      gap: 18px;
       flex-wrap: wrap;
     }
 
@@ -116,160 +115,232 @@
       gap: 8px;
       padding: 8px 16px;
       border-radius: 999px;
-      border: 1px solid rgba(255,255,255,0.2);
-      background: rgba(255,255,255,0.1);
-      font-size: 12px;
-      letter-spacing: 1px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.18);
+      color: rgba(255,255,255,0.94);
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.92);
     }
 
     .badge::before {
       content: "";
-      width: 8px;
-      height: 8px;
-      background: var(--gold);
+      width: 9px;
+      height: 9px;
       border-radius: 50%;
-      box-shadow: 0 0 18px rgba(242, 212, 141, 0.9);
+      background: var(--gold);
+      box-shadow: 0 0 16px rgba(244, 216, 143, 0.9);
     }
 
     h1 {
       margin: 18px 0 12px;
-      color: #fffaf4;
-      font-size: clamp(2.1rem, 4vw, 4rem);
-      line-height: 1.1;
+      color: #fffaf5;
+      font-size: clamp(2.2rem, 4vw, 4rem);
+      line-height: 1.12;
       letter-spacing: 0.04em;
-      text-shadow: 0 3px 0 rgba(88, 66, 56, 0.32), 0 14px 30px rgba(44, 26, 18, 0.2);
+      text-shadow: 0 3px 0 rgba(68, 42, 35, 0.26), 0 16px 32px rgba(46, 29, 26, 0.2);
     }
 
     .subtitle {
-      max-width: 760px;
+      max-width: 780px;
       margin: 0;
       color: rgba(255,255,255,0.9);
-      font-size: 1.05rem;
       line-height: 1.8;
+      font-size: 1.02rem;
     }
 
     .summary {
       min-width: 220px;
-      padding: 18px 18px 14px;
-      background: rgba(255,255,255,0.1);
+      padding: 16px 18px 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.08);
       border: 1px solid rgba(255,255,255,0.18);
-      border-radius: 20px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
       backdrop-filter: blur(8px);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
     }
 
     .summary .label {
       display: block;
-      font-size: 12px;
-      letter-spacing: 0.18em;
+      margin-bottom: 10px;
+      font-size: 0.7rem;
+      letter-spacing: 0.16em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.7);
-      margin-bottom: 12px;
+      color: rgba(255,255,255,0.74);
     }
 
     .summary strong {
       display: block;
       color: #fff;
-      font-size: 2.4rem;
+      font-size: 2.8rem;
       line-height: 1;
       margin-bottom: 8px;
     }
 
     .summary span {
-      color: rgba(255,255,255,0.8);
-      line-height: 1.6;
+      display: block;
+      color: rgba(255,255,255,0.82);
+      line-height: 1.7;
       font-size: 0.9rem;
     }
 
     .stats {
-      margin-top: 22px;
+      margin-top: 18px;
       display: grid;
-      grid-template-columns: repeat(3, minmax(140px, 1fr));
-      gap: 18px;
+      grid-template-columns: repeat(3, minmax(120px, 1fr));
+      gap: 16px;
       position: relative;
       z-index: 1;
     }
 
     .stat {
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.12);
+      padding: 18px 14px;
       border-radius: 18px;
       text-align: center;
-      padding: 16px 12px;
-      backdrop-filter: blur(8px);
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
     }
 
     .stat strong {
       display: block;
-      color: #fff;
       font-size: 1.5rem;
+      color: #fff;
       margin-bottom: 6px;
     }
 
     .stat span {
-      color: rgba(255,255,255,0.75);
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
+      color: rgba(255,255,255,0.7);
+    }
+
+    .prompt-box {
+      margin-top: 26px;
+      padding: 22px 24px;
+      border-radius: 22px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.78), rgba(255,247,236,0.88));
+      border: 1px solid rgba(217, 179, 90, 0.42);
+      border-left: 6px solid var(--amber);
+      box-shadow: var(--shadow);
+    }
+
+    .prompt-box h2 {
+      margin: 0 0 12px;
+      color: var(--brown-deep);
+      font-size: 1.15rem;
+    }
+
+    .prompt-box blockquote {
+      margin: 0;
+      color: var(--text);
+      line-height: 1.9;
+      font-size: 1rem;
+      quotes: "“" "”";
+    }
+
+    .catalog {
+      margin-top: 30px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.7), rgba(255,248,243,0.8));
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 18px 18px 22px;
+      box-shadow: var(--shadow);
+    }
+
+    .catalog-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+      padding: 6px 6px 0;
+    }
+
+    .catalog-head h2 {
+      margin: 0;
+      font-size: clamp(1.4rem, 2vw, 2rem);
+      color: var(--brown-deep);
+    }
+
+    .catalog-head span {
+      display: inline-block;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(138, 94, 58, 0.08);
+      border: 1px solid rgba(138, 94, 58, 0.1);
+      color: var(--brown-deep);
+      font-size: 0.73rem;
       letter-spacing: 0.08em;
-      font-size: 0.74rem;
+      text-transform: uppercase;
+      font-weight: 700;
     }
 
     .grid {
-      margin-top: 28px;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
     }
 
     .card {
       position: relative;
-      background: linear-gradient(180deg, rgba(255,255,255,0.74), rgba(255,249,243,0.8));
-      border: 1px solid var(--line);
+      min-height: 150px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 18px 16px 16px;
       border-radius: var(--radius);
-      padding: 20px 18px 18px;
-      box-shadow: 0 18px 36px rgba(88, 64, 50, 0.12);
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,0.78), rgba(255,245,239,0.82));
+      box-shadow: 0 18px 34px rgba(88, 64, 50, 0.08);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
       overflow: hidden;
-      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
     }
 
     .card::before {
       content: "";
       position: absolute;
       inset: 0 0 auto 0;
-      height: 6px;
+      height: 5px;
       background: linear-gradient(90deg, var(--brown), var(--peach), var(--gold));
     }
 
     .card:hover {
-      transform: translateY(-6px) scale(1.01);
-      box-shadow: 0 26px 48px rgba(88, 64, 50, 0.16);
-      border-color: rgba(138, 90, 60, 0.24);
+      transform: translateY(-5px);
+      border-color: rgba(138, 94, 58, 0.2);
+      box-shadow: 0 24px 42px rgba(88, 64, 50, 0.12);
     }
 
-    .card h2 {
-      margin: 18px 0 12px;
-      font-size: 1.22rem;
+    .card h3 {
+      margin: 18px 0 10px;
+      font-size: 1.08rem;
       color: var(--brown-deep);
+      word-break: break-word;
     }
 
-    .card p {
-      margin: 0 0 18px;
+    .card small {
+      display: block;
       color: var(--muted);
-      line-height: 1.7;
-      min-height: 82px;
+      font-size: 0.78rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
     }
 
     .card a {
-      display: inline-block;
-      text-decoration: none;
-      padding: 10px 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: fit-content;
+      padding: 9px 14px;
       border-radius: 10px;
-      background: linear-gradient(135deg, var(--brown), var(--peach));
-      color: #fff;
+      text-decoration: none;
+      font-size: 0.82rem;
       font-weight: 700;
-      box-shadow: 0 12px 20px rgba(138, 90, 60, 0.2);
-      transition: transform 0.2s ease, filter 0.2s ease;
+      color: #fff;
+      background: linear-gradient(135deg, var(--brown), var(--peach));
+      box-shadow: 0 12px 20px rgba(138, 94, 58, 0.2);
+      transition: transform 0.18s ease, filter 0.18s ease;
     }
 
     .card a:hover {
@@ -277,97 +348,20 @@
       filter: brightness(1.06);
     }
 
-    .feature {
-      margin-top: 28px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.8), rgba(251,245,238,0.82));
-      border: 1px solid var(--line);
-      border-radius: 28px;
-      padding: 22px 20px;
-      box-shadow: var(--shadow);
-    }
-
-    .feature-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 14px;
-      flex-wrap: wrap;
-      margin-bottom: 18px;
-    }
-
-    .feature-head h3 {
-      margin: 0;
-      color: var(--brown-deep);
-      font-size: 1.2rem;
-    }
-
-    .tag-s {
-      padding: 7px 12px;
-      border-radius: 999px;
-      background: rgba(138, 90, 60, 0.08);
-      border: 1px solid rgba(138, 90, 60, 0.12);
-      color: var(--brown-deep);
-      font-size: 0.72rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      font-weight: 700;
-    }
-
-    .feature-list {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 12px;
-    }
-
-    .feature-list li {
-      background: rgba(255,255,255,0.45);
-      border: 1px solid rgba(138, 90, 60, 0.08);
-      border-radius: 16px;
-      padding: 14px 16px;
-      color: var(--text);
-      line-height: 1.7;
-    }
-
-    .prompt {
-      margin-top: 26px;
-      background: linear-gradient(135deg, rgba(255,255,255,0.82), rgba(255,247,236,0.9));
-      border: 1px solid rgba(242, 212, 141, 0.5);
-      border-left: 6px solid var(--amber);
-      border-radius: 18px;
-      padding: 20px 22px;
-      box-shadow: var(--shadow);
-    }
-
-    .prompt h3 {
-      margin: 0 0 10px;
-      color: var(--brown-deep);
-      font-size: 1.12rem;
-    }
-
-    .prompt p {
-      margin: 0;
-      color: var(--text);
-      line-height: 1.9;
-      font-size: 0.98rem;
-    }
-
     footer {
-      margin-top: 28px;
+      margin-top: 30px;
       text-align: center;
       color: var(--muted);
-      font-size: 0.8rem;
-      letter-spacing: 0.12em;
+      font-size: 0.76rem;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
     }
 
     @media (max-width: 720px) {
-      .hero { padding: 28px 22px 22px; }
+      .hero { padding: 28px 20px 20px; }
       .summary { width: 100%; }
       .stats { grid-template-columns: 1fr; }
-      .card p { min-height: auto; }
+      .card { min-height: 130px; }
     }
   </style>
 </head>
@@ -382,136 +376,255 @@
         <div>
           <span class="badge">课堂实践导航</span>
           <h1>魏士博的《高级网页设计》课堂实践</h1>
-          <p class="subtitle">本页面整合了当前目录中的全部网页作品，涵盖基础结构、CSS 样式、布局设计与综合页面实践，便于按主题快速查看各个学习成果。</p>
+          <p class="subtitle">本页面整合了当前目录中的全部网页作品，涵盖基础结构、CSS 样式、布局设计与综合页面实践，便于按主题快速查看每一份学习成果。</p>
         </div>
 
         <aside class="summary">
           <span class="label">作品总览</span>
-          <strong>14</strong>
-          <span>个原生 HTML/CSS 练习页面，完整展示课程学习脉络。</span>
+          <strong>26</strong>
+          <span>个原生 HTML/CSS 练习页面，完整呈现课程学习脉络。</span>
         </aside>
       </div>
 
       <div class="stats">
         <div class="stat">
+          <strong>26</strong>
+          <span>网页</span>
+        </div>
+        <div class="stat">
           <strong>HTML</strong>
-          <span>结构基础</span>
+          <span>结构</span>
         </div>
         <div class="stat">
           <strong>CSS</strong>
-          <span>视觉设计</span>
-        </div>
-        <div class="stat">
-          <strong>Practice</strong>
-          <span>课堂成果</span>
+          <span>设计</span>
         </div>
       </div>
     </header>
 
-    <main class="grid">
-      <section class="card">
-        <h2>1.html</h2>
-        <p>课程起步页面，适合练习基础标签、文本结构和页面内容组织方式。</p>
-        <a href="1.html" target="_blank" rel="noopener">打开页面</a>
-      </section>
+    <section class="prompt-box">
+      <h2>本提示词</h2>
+      <blockquote>“创建一个新页面，包括本目录下的所有网页的超链接，使用原生代码，不使用cdn，新页面名称为index.html，主题为魏士博的《高级网页设计》课堂实践，美化页面，页面中包括本提示词。”</blockquote>
+    </section>
 
-      <section class="card">
-        <h2>2-1.html</h2>
-        <p>第二单元练习，初步尝试布局与样式，让页面具备更清晰的层次和信息分区。</p>
-        <a href="2-1.html" target="_blank" rel="noopener">打开页面</a>
-      </section>
-
-      <section class="card">
-        <h2>2-2.html</h2>
-        <p>第二单元延伸页面，进一步强化版面美化与视觉表现，提升整体阅读体验。</p>
-        <a href="2-2.html" target="_blank" rel="noopener">打开页面</a>
-      </section>
-
-      <section class="card">
-        <h2>3-1.html</h2>
-        <p>第三单元内容练习，重点关注排版、分块和组合样式的应用方式。</p>
-        <a href="3-1.html" target="_blank" rel="noopener">打开页面</a>
-      </section>
-
-      <section class="card">
-        <h2>3-2css.html</h2>
-        <p>第三单元 CSS 设计案例，强调样式细节与视觉修饰，提升页面表现力。</p>
-        <a href="3-2css.html" target="_blank" rel="noopener">打开页面</a>
-      </section>
-
-      <section class="card">
-        <h2>4-1css.html</h2>
-        <p>第四单元 CSS 进阶，探讨选择器、层叠和组合样式的运用，增强复杂设计能力。</p>
-        <a href="4-1css.html" target="_blank" rel="noopener">打开页面</a>
-      </section>
-
-      <section class="card">
-        <h2>5-1 层叠与继承.html</h2>
-        <p>讲解层叠与继承原理的页面，帮助理解 CSS 规则优先级与样式覆盖逻辑。</p>
-        <a href="5-1%20%E5%B1%82%E5%8F%A0%E4%B8%8E%E7%BB%A7%E6%89%BF.html" target="_blank" rel="noopener">打开页面</a>
-      </section>
-
-      <section class="card">
-        <h2>5-2 盒模型.html</h2>
-        <p>针对盒模型的专题实战，用内容区、内边距、边框与外边距展示布局构成基础。</p>
-        <a href="5-2%20%E7%9B%92%E6%A8%A1%E5%9E%8B.html" target="_blank" rel="noopener">打开页面</a>
-      </section>
-
-      <section class="card">
-        <h2>6-1flex.html</h2>
-        <p>Flex 布局练习页，展示弹性盒模型如何实现对齐、分布与响应式排列。</p>
-        <a href="6-1flex.html" target="_blank" rel="noopener">打开页面</a>
-      </section>
-
-      <section class="card">
-        <h2>6-2.html</h2>
-        <p>进一步扩展布局应用，让页面在不同元素组合中提升结构稳定性与可读性。</p>
-        <a href="6-2.html" target="_blank" rel="noopener">打开页面</a>
-      </section>
-
-      <section class="card">
-        <h2>7-1 上图下文.html</h2>
-        <p>“上图下文”版式设计练习，用图文组合强化内容展示与视觉分层效果。</p>
-        <a href="7-1%20%E4%B8%8A%E5%9B%BE%E4%B8%8B%E6%96%87.html" target="_blank" rel="noopener">打开页面</a>
-      </section>
-
-      <section class="card">
-        <h2>7-2 左图右文.html</h2>
-        <p>“左图右文”版式设计页面，体现常见信息展示布局的编排与响应式处理。</p>
-        <a href="7-2%20%E5%B7%A6%E5%9B%BE%E5%8F%B3%E6%96%87.html" target="_blank" rel="noopener">打开页面</a>
-      </section>
-
-      <section class="card">
-        <h2>8-1.CSS3选择器.html</h2>
-        <p>CSS3 选择器练习，学习常用选择器及组合方式，增强结构化样式控制能力。</p>
-        <a href="8-1.CSS3%E9%80%89%E6%8B%A9%E5%99%A8.html" target="_blank" rel="noopener">打开页面</a>
-      </section>
-
-      <section class="card">
-        <h2>9-1 transition.html</h2>
-        <p>过渡动画练习页，用属性过渡和交互效果演示界面响应与动态展示。</p>
-        <a href="9-1%20transition.html" target="_blank" rel="noopener">打开页面</a>
-      </section>
-    </main>
-
-    <section class="feature">
-      <div class="feature-head">
-        <h3>课程亮点</h3>
-        <span class="tag-s">Design System</span>
+    <section class="catalog">
+      <div class="catalog-head">
+        <h2>全部课程页面</h2>
+        <span>导航目录</span>
       </div>
-      <ul class="feature-list">
-        <li>从基础网页结构开始，逐步掌握文本、列表、图像与布局元素的组合方式。</li>
-        <li>深入学习 CSS 规则、层叠继承、盒模型和 Flex 弹性布局，提升页面设计能力。</li>
-        <li>所有作品均使用原生 HTML 与 CSS 编写，没有使用 CDN，保持课程实践的纯原生风格。</li>
-      </ul>
+
+      <div class="grid">
+        <article class="card">
+          <div>
+            <small>基础课</small>
+            <h3>1.html</h3>
+          </div>
+          <a href="1.html" target="_blank" rel="noopener">打开页面</a>
+        </article>
+
+        <article class="card">
+          <div>
+            <small>基础课</small>
+            <h3>2-1.html</h3>
+          </div>
+          <a href="2-1.html" target="_blank" rel="noopener">打开页面</a>
+        </article>
+
+        <article class="card">
+          <div>
+            <small>基础课</small>
+            <h3>2-2.html</h3>
+          </div>
+          <a href="2-2.html" target="_blank" rel="noopener">打开页面</a>
+        </article>
+
+        <article class="card">
+          <div>
+            <small>样式练习</small>
+            <h3>3-1.html</h3>
+          </div>
+          <a href="3-1.html" target="_blank" rel="noopener">打开页面</a>
+        </article>
+
+        <article class="card">
+          <div>
+            <small>样式练习</small>
+            <h3>3-2css.html</h3>
+          </div>
+          <a href="3-2css.html" target="_blank" rel="noopener">打开页面</a>
+        </article>
+
+        <article class="card">
+          <div>
+            <small>CSS 进阶</small>
+            <h3>4-1css.html</h3>
+          </div>
+          <a href="4-1css.html" target="_blank" rel="noopener">打开页面</a>
+        </article>
+
+        <article class="card">
+          <div>
+            <small>CSS 原理</small>
+            <h3>5-1 层叠与继承.html</h3>
+          </div>
+          <a href="5-1%20%E5%B1%82%E5%8F%A0%E4%B8%8E%E7%BB%A7%E6%89%BF.html" target="_blank" rel="noopener">打开页面</a>
+        </article>
+
+        <article class="card">
+          <div>
+            <small>CSS 原理</small>
+            <h3>5-2 盒模型.html</h3>
+          </div>
+          <a href="5-2%20%E7%9B%92%E6%A8%A1%E5%9E%8B.html" target="_blank" rel="noopener">打开页面</a>
+        </article>
+
+        <article class="card">
+          <div>
+            <small>布局</small>
+            <h3>6-1flex.html</h3>
+          </div>
+          <a href="6-1flex.html" target="_blank" rel="noopener">打开页面</a>
+        </article>
+
+        <article class="card">
+          <div>
+            <small>布局</small>
+            <h3>6-2.html</h3>
+          </div>
+          <a href="6-2.html" target="_blank" rel="noopener">打开页面</a>
+        </article>
+
+        <article class="card">
+          <div>
+            <small>版式设计</small>
+            <h3>7-1 上图下文.html</h3>
+          </div>
+          <a href="7-1%20%E4%B8%8A%E5%9B%BE%E4%B8%8B%E6%96%87.html" target="_blank" rel="noopener">打开页面</a>
+        </article>
+
+        <article class="card">
+          <div>
+            <small>版式设计</small>
+            <h3>7-2 左图右文.html</h3>
+          </div>
+          <a href="7-2%20%E5%B7%A6%E5%9B%BE%E5%8F%B3%E6%96%87.html" target="_blank" rel="noopener">打开页面</a>
+        </article>
+
+        <article class="card">
+          <div>
+            <small>选择器</small>
+            <h3>8-1.CSS3选择器.html</h3>
+          </div>
+          <a href="8-1.CSS3%E9%80%89%E6%8B%A9%E5%99%A8.html" target="_blank" rel="noopener">打开页面</a>
+        </article>
+
+        <article class="card">
+          <div>
+            <small>动画</small>
+            <h3>9-1 transition.html</h3>
+          </div>
+          <a href="9-1%20transition.html" target="_blank" rel="noopener">打开页面</a>
+        </article>
+
+        <article class="card">
+          <div>
+            <small>动画</small>
+            <h3>10-1-animation.html</h3>
+          </div>
+          <a href="10-1-animation.html" target="_blank" rel="noopener">打开页面</a>
+        </article>
+
+        <article class="card">
+          <div>
+            <small>动画</small>
+            <h3>10-2.html</h3>
+          </div>
+          <a href="10-2.html" target="_blank" rel="noopener">打开页面</a>
+        </article>
+
+        <article class="card">
+          <div>
+            <small>动画</small>
+            <h3>10-3.html</h3>
+          </div>
+          <a href="10-3.html" target="_blank" rel="noopener">打开页面</a>
+        </article>
+
+        <article class="card">
+          <div>
+            <small>动画</small>
+            <h3>10-4.html</h3>
+          </div>
+          <a href="10-4.html" target="_blank" rel="noopener">打开页面</a>
+        </article>
+
+        <article class="card">
+          <div>
+            <small>高级练习</small>
+            <h3>11-1.html</h3>
+          </div>
+          <a href="11-1.html" target="_blank" rel="noopener">打开页面</a>
+        </article>
+
+        <article class="card">
+          <div>
+            <small>高级练习</small>
+            <h3>11-3.html</h3>
+          </div>
+          <a href="11-3.html" target="_blank" rel="noopener">打开页面</a>
+        </article>
+
+        <article class="card">
+          <div>
+            <small>综合练习</small>
+            <h3>13-1.html</h3>
+          </div>
+          <a href="13-1.html" target="_blank" rel="noopener">打开页面</a>
+        </article>
+
+        <article class="card">
+          <div>
+            <small>综合练习</small>
+            <h3>13-2.html</h3>
+          </div>
+          <a href="13-2.html" target="_blank" rel="noopener">打开页面</a>
+        </article>
+
+        <article class="card">
+          <div>
+            <small>综合练习</small>
+            <h3>13-3.html</h3>
+          </div>
+          <a href="13-3.html" target="_blank" rel="noopener">打开页面</a>
+        </article>
+
+        <article class="card">
+          <div>
+            <small>综合练习</small>
+            <h3>13-4.html</h3>
+          </div>
+          <a href="13-4.html" target="_blank" rel="noopener">打开页面</a>
+        </article>
+
+        <article class="card">
+          <div>
+            <small>毕业篇</small>
+            <h3>14-1.html</h3>
+          </div>
+          <a href="14-1.html" target="_blank" rel="noopener">打开页面</a>
+        </article>
+
+        <article class="card">
+          <div>
+            <small>毕业篇</small>
+            <h3>14-2.html</h3>
+          </div>
+          <a href="14-2.html" target="_blank" rel="noopener">打开页面</a>
+        </article>
+      </div>
     </section>
 
-    <section class="prompt">
-      <h3>本提示词</h3>
-      <p>“创建一个新页面，包括本目录下的所有网页的超链接，使用原生代码，不使用cdn，新页面名称为index.html，主题为魏士博的《高级网页设计》课堂实践，美化页面，页面中包括本提示词。”</p>
-    </section>
-
-    <footer>Advanced Web Design Practice Collection</footer>
+    <footer>魏士博 · 高级网页设计 · 课堂实践导航</footer>
   </div>
 </body>
 </html>

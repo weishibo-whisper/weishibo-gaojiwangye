@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#f4ede3">
+<title>13-3 固定底部导航（字体图标）—— 魏士博</title>
+<link rel="stylesheet" href="./font/download/font_5244721_1queqp6edo8/iconfont.css">
+<style>
+  /* ================= 1. 基础与主题 ================= */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --page: #f4ede3;
+    --shell: #fffaf4;
+    --card: #fffdf9;
+    --input: #f7f0e7;
+    --ink: #2b211a;
+    --muted: #8d7d6f;
+    --line: rgba(72, 48, 30, .10);
+    --line-strong: rgba(72, 48, 30, .18);
+    --accent: #e26227;
+    --accent-deep: #b84618;
+    --accent-soft: #fbe7db;
+    --red: #ef4444;
+    --nav-bg: rgba(255, 252, 247, .88);
+    --nav-line: rgba(72, 48, 30, .10);
+    --nav-ring: #fffaf4;
+    --nav-muted: #9a8a7d;
+    --shadow: 0 30px 70px -40px rgba(74, 43, 18, .45);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    min-height: 100vh;
+    font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", system-ui, sans-serif;
+    line-height: 1.6;
+    color: var(--ink);
+    background:
+      radial-gradient(40rem 30rem at 12% -4%, rgba(226, 98, 39, .15), transparent 62%),
+      radial-gradient(34rem 26rem at 92% 4%, rgba(219, 168, 74, .14), transparent 62%),
+      var(--page);
+    overflow-x: hidden;
+  }
+
+  /* ================= 2. 手机应用外壳 ================= */
+  .app {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    padding: 24px clamp(20px, 5vw, 64px) calc(118px + env(safe-area-inset-bottom));
+    background: var(--shell);
+    overflow: hidden;
+  }
+
+  /* 顶部柔光 */
+  .app::before {
+    content: "";
+    position: absolute;
+    top: -120px;
+    right: -90px;
+    width: 280px;
+    height: 280px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(240, 160, 75, .18), transparent 68%);
+    pointer-events: none;
+  }
+
+  /* ================= 3. 顶部栏 ================= */
+  .topbar {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 26px;
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: .88rem;
+    font-weight: 800;
+    letter-spacing: .03em;
+  }
+
+  .brand-mark {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 11px;
+    color: #fff;
+    font-size: .9rem;
+    font-weight: 800;
+    background: linear-gradient(145deg, #e26227, #f0a04b);
+    box-shadow: 0 8px 16px -8px rgba(226, 98, 39, .8);
+  }
+
+  .brand small {
+    display: block;
+    font-size: .56rem;
+    font-weight: 700;
+    letter-spacing: .16em;
+    color: var(--muted);
+  }
+
+  .mode {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 11px;
+    font-size: .64rem;
+    font-weight: 700;
+    color: var(--muted);
+    text-decoration: none;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    transition: color .25s, border-color .25s, transform .25s;
+  }
+
+  .mode b { color: var(--accent); }
+  .mode:hover { color: var(--ink); border-color: var(--accent); transform: translateY(-2px); }
+
+  /* ================= 4. 问候与搜索 ================= */
+  .hello { position: relative; z-index: 1; }
+
+  .eyebrow {
+    font-size: .6rem;
+    font-weight: 800;
+    letter-spacing: .2em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .hello h1 {
+    margin-top: 6px;
+    font-size: clamp(1.65rem, 7vw, 2.1rem);
+    line-height: 1.32;
+    letter-spacing: -.03em;
+  }
+
+  .hello h1 span { color: var(--accent); }
+  .hello .sub { margin-top: 4px; font-size: .84rem; color: var(--muted); }
+
+  .search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 20px 0 22px;
+    padding: 13px 15px;
+    background: var(--input);
+    border: 1px solid transparent;
+    border-radius: 15px;
+    transition: border-color .25s, box-shadow .25s, background .25s;
+  }
+
+  .search:focus-within {
+    background: #fff;
+    border-color: rgba(226, 98, 39, .45);
+    box-shadow: 0 0 0 4px rgba(226, 98, 39, .10);
+  }
+
+  .search .iconfont { font-size: 18px !important; color: var(--accent); }
+  .search input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    font: inherit;
+    font-size: .84rem;
+    color: var(--ink);
+  }
+  .search input::placeholder { color: var(--muted); }
+
+  .search .kbd {
+    padding: 2px 6px;
+    font-size: .56rem;
+    font-weight: 700;
+    color: var(--muted);
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+  }
+
+  /* ================= 5. 活动卡片 ================= */
+  .promo {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    overflow: hidden;
+    padding: 22px;
+    color: #fff;
+    background: linear-gradient(135deg, #df5a20 0%, #ef8a3d 62%, #f5b95f 100%);
+    border-radius: 24px;
+    box-shadow: 0 22px 36px -24px rgba(210, 87, 29, .8);
+  }
+
+  .promo::after {
+    content: "";
+    position: absolute;
+    top: -60px;
+    right: 34%;
+    width: 170px;
+    height: 170px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .13);
+    filter: blur(2px);
+    pointer-events: none;
+  }
+
+  .promo-copy { position: relative; z-index: 1; flex: 1; }
+
+  .promo-tag {
+    display: inline-block;
+    padding: 4px 9px;
+    font-size: .56rem;
+    font-weight: 800;
+    letter-spacing: .14em;
+    background: rgba(255, 255, 255, .18);
+    border: 1px solid rgba(255, 255, 255, .32);
+    border-radius: 999px;
+  }
+
+  .promo h2 {
+    margin: 10px 0 3px;
+    font-size: 1.55rem;
+    line-height: 1.25;
+    letter-spacing: -.02em;
+  }
+
+  .promo p {
+    max-width: 20ch;
+    font-size: .72rem;
+    line-height: 1.65;
+    opacity: .9;
+  }
+
+  .promo-btn {
+    margin-top: 16px;
+    padding: 9px 15px;
+    font: inherit;
+    font-size: .72rem;
+    font-weight: 800;
+    color: var(--accent-deep);
+    background: #fff;
+    border: 0;
+    border-radius: 999px;
+    cursor: pointer;
+    box-shadow: 0 8px 16px -8px rgba(130, 52, 12, .6);
+    transition: transform .2s, box-shadow .2s;
+  }
+  .promo-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 20px -10px rgba(130, 52, 12, .7); }
+  .promo-btn:active { transform: scale(.97); }
+
+  .promo-icon {
+    position: relative;
+    z-index: 1;
+    flex: none;
+    font-size: 88px !important;
+    line-height: 1;
+    opacity: .92;
+    transform: rotate(-8deg);
+    filter: drop-shadow(0 14px 18px rgba(120, 46, 8, .3));
+  }
+
+  /* ================= 6. 内容区块 ================= */
+  .block { margin-top: 27px; }
+
+  .block-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .block-head h2 { font-size: 1rem; letter-spacing: -.01em; }
+
+  .more {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: .64rem;
+    font-weight: 700;
+    color: var(--muted);
+    text-decoration: none;
+  }
+  .more .chev { font-size: .98rem; line-height: 1; transform: translateY(-1px); }
+  .more:hover { color: var(--accent); }
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .item-card {
+    padding: 14px 9px 13px;
+    text-align: center;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 17px;
+    transition: transform .25s, border-color .25s, box-shadow .25s;
+  }
+
+  .item-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(226, 98, 39, .3);
+    box-shadow: 0 16px 24px -20px rgba(72, 40, 18, .5);
+  }
+
+  .item-icon {
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    margin: 0 auto 10px;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-radius: 14px;
+  }
+
+  .item-icon .iconfont { font-size: 24px !important; }
+  .item-card h3 { font-size: .74rem; font-weight: 800; }
+  .item-card p { margin-top: 2px; font-size: .6rem; color: var(--muted); }
+  .price { margin-top: 8px; font-size: .72rem; font-weight: 800; color: var(--accent); }
+
+  /* 社区卡片 */
+  .post {
+    display: flex;
+    gap: 12px;
+    padding: 15px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+  }
+
+  .avatar {
+    display: grid;
+    place-items: center;
+    flex: 0 0 38px;
+    width: 38px;
+    height: 38px;
+    color: #fff;
+    background: linear-gradient(145deg, #8d6a52, #c9a27c);
+    border-radius: 50%;
+  }
+
+  .avatar .iconfont { font-size: 20px !important; }
+  .post-body { flex: 1; min-width: 0; }
+
+  .post-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: .72rem;
+    font-weight: 800;
+  }
+
+  .post-top span { font-size: .58rem; font-weight: 600; color: var(--muted); }
+  .post-body > p { margin: 6px 0 10px; font-size: .74rem; line-height: 1.7; color: var(--muted); }
+
+  .post-actions { display: flex; flex-wrap: wrap; gap: 15px; font-size: .62rem; color: var(--muted); }
+  .post-actions span { display: inline-flex; align-items: center; gap: 4px; }
+  .post-actions .iconfont { font-size: 15px !important; }
+  .post-actions .liked { color: var(--accent); font-weight: 700; }
+
+  /* ================= 7. 说明卡片 ================= */
+  .note {
+    margin-top: 26px;
+    padding: 17px 18px;
+    background: linear-gradient(150deg, rgba(251, 231, 219, .65), rgba(255, 253, 249, .2));
+    border: 1px dashed var(--line-strong);
+    border-radius: 18px;
+  }
+
+  .note-title {
+    margin-bottom: 8px;
+    font-size: .6rem;
+    font-weight: 800;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .note p { font-size: .68rem; line-height: 1.85; color: var(--muted); }
+  .note code {
+    padding: 1px 5px;
+    font-family: "Cascadia Code", Consolas, monospace;
+    font-size: .92em;
+    color: var(--accent-deep);
+    background: rgba(226, 98, 39, .08);
+    border-radius: 4px;
+  }
+
+  .note-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .note-tags span {
+    padding: 4px 8px;
+    font-size: .58rem;
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-radius: 999px;
+  }
+
+  .page-foot {
+    margin-top: 18px;
+    font-size: .6rem;
+    text-align: center;
+    color: var(--muted);
+  }
+
+  /* ================= 8. 固定底部导航 ================= */
+  /* 固定定位在视口底部，宽度始终 100%，随屏幕自适应 */
+  .bottom-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100;
+    display: flex;
+    width: 100%;
+    padding: 9px 8px calc(9px + env(safe-area-inset-bottom));
+    background: var(--nav-bg);
+    border-top: 1px solid var(--nav-line);
+    box-shadow: 0 -14px 36px -24px rgba(66, 38, 18, .45);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+
+  .nav-item {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 4px;
+    color: var(--nav-muted);
+    text-decoration: none;
+    border-radius: 16px;
+    transition: color .25s, background .25s, transform .15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .nav-item:hover { background: rgba(226, 98, 39, .055); }
+  .nav-item:active { transform: scale(.95); }
+  .nav-item.is-active { color: var(--accent); }
+
+  .nav-icon {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 28px;
+    border-radius: 10px;
+    transition: background .25s;
+  }
+
+  .nav-item.is-active .nav-icon { background: var(--accent-soft); }
+
+  .nav-icon .iconfont {
+    font-size: 23px !important;
+    line-height: 1;
+  }
+
+  .nav-text {
+    font-size: .6rem;
+    font-weight: 800;
+    letter-spacing: .03em;
+  }
+
+  /* 数字徽章：商城右上角 */
+  .badge {
+    position: absolute;
+    top: -6px;
+    right: -10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 17px;
+    height: 17px;
+    padding: 0 4px;
+    font-size: .56rem;
+    font-weight: 800;
+    line-height: 1;
+    color: #fff;
+    background: var(--red);
+    border: 2px solid var(--nav-ring);
+    border-radius: 999px;
+    box-shadow: 0 3px 8px rgba(239, 68, 68, .38);
+  }
+
+  /* 红点：发现右上角 */
+  .dot {
+    position: absolute;
+    top: -2px;
+    right: -3px;
+    width: 10px;
+    height: 10px;
+    background: var(--red);
+    border: 2px solid var(--nav-ring);
+    border-radius: 50%;
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, .45);
+    animation: dot-pulse 2s ease-out infinite;
+  }
+
+  @keyframes dot-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, .42); }
+    70% { box-shadow: 0 0 0 7px rgba(239, 68, 68, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+  }
+
+  /* ================= 9. 响应式 ================= */
+  @media (max-width: 540px) {
+    .app { padding-top: calc(20px + env(safe-area-inset-top)); }
+  }
+
+  @media (max-width: 360px) {
+    .app { padding-left: 15px; padding-right: 15px; }
+    .promo { padding: 18px; }
+    .promo-icon { font-size: 70px !important; }
+    .cards { gap: 7px; }
+    .item-card { padding-left: 6px; padding-right: 6px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation: none !important;
+      transition: none !important;
+      scroll-behavior: auto !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<main class="app">
+  <!-- 顶部栏 -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">鹿</span>
+      <span>
+        鹿角咖啡
+        <small>ANTLER COFFEE</small>
+      </span>
+    </div>
+    <a class="mode" href="./13-4.html">SVG 图标版 <b>↗</b></a>
+  </header>
+
+  <!-- 问候 -->
+  <section class="hello">
+    <p class="eyebrow">Wednesday · 10:24</p>
+    <h1>下午好，<span>魏士博</span></h1>
+    <p class="sub">今天想喝点什么？</p>
+
+    <label class="search">
+      <i class="iconfont icon-sousuo" aria-hidden="true"></i>
+      <input type="search" placeholder="搜索咖啡、甜点或好物" aria-label="搜索">
+      <span class="kbd">⌘ K</span>
+    </label>
+  </section>
+
+  <!-- 活动卡片 -->
+  <section class="promo" aria-label="春日限定活动">
+    <div class="promo-copy">
+      <span class="promo-tag">春日限定</span>
+      <h2>桂花拿铁</h2>
+      <p>一口喝下整个春天，第二杯半价。</p>
+      <button class="promo-btn" type="button">立即品尝 →</button>
+    </div>
+    <i class="iconfont icon-icon_ruixingkafei promo-icon" aria-hidden="true"></i>
+  </section>
+
+  <!-- 今日推荐 -->
+  <section class="block">
+    <div class="block-head">
+      <h2>今日推荐</h2>
+      <a class="more" href="#today">全部 <span class="chev" aria-hidden="true">›</span></a>
+    </div>
+
+    <div class="cards">
+      <article class="item-card">
+        <div class="item-icon"><i class="iconfont icon-niunai" aria-hidden="true"></i></div>
+        <h3>厚乳拿铁</h3>
+        <p>丝滑奶香</p>
+        <div class="price">¥ 16</div>
+      </article>
+
+      <article class="item-card">
+        <div class="item-icon"><i class="iconfont icon-huajuan" aria-hidden="true"></i></div>
+        <h3>黄油花卷</h3>
+        <p>每日现烤</p>
+        <div class="price">¥ 9</div>
+      </article>
+
+      <article class="item-card">
+        <div class="item-icon"><i class="iconfont icon-pingguo" aria-hidden="true"></i></div>
+        <h3>红富士</h3>
+        <p>脆甜多汁</p>
+        <div class="price">¥ 7</div>
+      </article>
+    </div>
+  </section>
+
+  <!-- 社区动态 -->
+  <section class="block">
+    <div class="block-head">
+      <h2>社区新鲜事</h2>
+      <a class="more" href="#community">更多 <span class="chev" aria-hidden="true">›</span></a>
+    </div>
+
+    <article class="post">
+      <div class="avatar"><i class="iconfont icon-my_fill_light" aria-hidden="true"></i></div>
+      <div class="post-body">
+        <div class="post-top">
+          小鹿同学
+          <span>2 分钟前</span>
+        </div>
+        <p>今天的桂花拿铁拉花成功！秋天的第一杯咖啡，要和喜欢的人一起喝。</p>
+        <div class="post-actions">
+          <span class="liked"><i class="iconfont icon-dianzan" aria-hidden="true"></i> 128</span>
+          <span><i class="iconfont icon-shoucang" aria-hidden="true"></i> 收藏</span>
+          <span><i class="iconfont icon-shipin" aria-hidden="true"></i> 视频</span>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <!-- 组件说明 -->
+  <aside class="note">
+    <p class="note-title">Bottom Navigation</p>
+    <p>
+      底栏使用 <code>position: fixed</code> 固定在屏幕底部，宽度
+      <code>100%</code> 铺满视口，四个导航项用 <code>flex: 1</code>
+      等分宽度，随屏幕自适应。
+      图标为 <code>iconfont</code> 字体图标，颜色跟随 <code>color</code> 变化。
+    </p>
+    <div class="note-tags">
+      <span>固定底栏</span>
+      <span>4 项自适应</span>
+      <span>数字徽章</span>
+      <span>红点提醒</span>
+      <span>safe-area 适配</span>
+    </div>
+  </aside>
+
+  <p class="page-foot">13-3 · 字体图标方案 · 魏士博 · 高级网页设计</p>
+</main>
+
+<!-- 固定底部导航 -->
+<nav class="bottom-nav" aria-label="底部主导航">
+  <a class="nav-item is-active" href="#home" aria-current="page">
+    <span class="nav-icon">
+      <i class="iconfont icon-shouye" aria-hidden="true"></i>
+    </span>
+    <span class="nav-text">首页</span>
+  </a>
+
+  <a class="nav-item" href="#discover">
+    <span class="nav-icon">
+      <i class="iconfont icon-faxian" aria-hidden="true"></i>
+      <span class="dot" role="status" aria-label="有新内容"></span>
+    </span>
+    <span class="nav-text">发现</span>
+  </a>
+
+  <a class="nav-item" href="#shop">
+    <span class="nav-icon">
+      <i class="iconfont icon-shangcheng" aria-hidden="true"></i>
+      <span class="badge" aria-label="商城中有 6 件商品">6</span>
+    </span>
+    <span class="nav-text">商城</span>
+  </a>
+
+  <a class="nav-item" href="#me">
+    <span class="nav-icon">
+      <i class="iconfont icon-my_fill_light" aria-hidden="true"></i>
+    </span>
+    <span class="nav-text">我的</span>
+  </a>
+</nav>
+
+<script>
+  // 点击切换激活项（演示用）
+  var navItems = document.querySelectorAll('.nav-item');
+
+  navItems.forEach(function (item) {
+    item.addEventListener('click', function (event) {
+      event.preventDefault();
+
+      navItems.forEach(function (other) {
+        other.classList.remove('is-active');
+        other.removeAttribute('aria-current');
+      });
+
+      item.classList.add('is-active');
+      item.setAttribute('aria-current', 'page');
+    });
+  });
+</script>
+</body>
+</html>
