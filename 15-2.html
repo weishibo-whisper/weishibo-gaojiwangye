@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<!--
+    作者：魏士博
+    建立时间：2026-10-26 13:40
+    使用的大模型功能名称：Trae GLM-5.3-Flash
+-->
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript 程序结构演示</title>
+    <style>
+        body {
+            font-family: "Microsoft YaHei", Arial, sans-serif;
+            background: #f0f2f5;
+            margin: 0;
+            padding: 30px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            max-width: 800px;
+            margin: 0 auto 25px;
+            padding: 20px 25px;
+        }
+
+        .card h2 {
+            margin-top: 0;
+            color: #4a90d9;
+            font-size: 20px;
+            border-bottom: 2px solid #eef3f8;
+            padding-bottom: 10px;
+        }
+
+        button {
+            background: #4a90d9;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 18px;
+            font-size: 15px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        button:hover {
+            background: #3a7bc0;
+        }
+
+        pre.output {
+            background: #282c34;
+            color: #98c379;
+            border-radius: 6px;
+            padding: 12px 15px;
+            font-size: 14px;
+            line-height: 1.7;
+            min-height: 40px;
+            white-space: pre-wrap;
+        }
+
+        input[type="number"] {
+            padding: 7px 10px;
+            border: 2px solid #d0d7de;
+            border-radius: 6px;
+            font-size: 15px;
+            width: 100px;
+        }
+    </style>
+</head>
+<body>
+    <h1>JavaScript 程序结构演示</h1>
+
+    <!-- 一、条件结构：if-else -->
+    <div class="card">
+        <h2>一、条件结构（if-else）：成绩等级判断</h2>
+        <input type="number" id="scoreInput" min="0" max="100" placeholder="输入0~100">
+        <button onclick="checkScore()">判断等级</button>
+        <pre class="output" id="ifOutput">点击按钮运行…</pre>
+    </div>
+
+    <!-- 二、条件结构：switch -->
+    <div class="card">
+        <h2>二、条件结构（switch）：星期判断</h2>
+        <button onclick="showWeek()">运行 switch</button>
+        <pre class="output" id="switchOutput">点击按钮运行…</pre>
+    </div>
+
+    <!-- 三、循环结构：for -->
+    <div class="card">
+        <h2>三、循环结构（for）：九九乘法表 + 1~100求和</h2>
+        <button onclick="runForLoop()">运行 for 循环</button>
+        <pre class="output" id="forOutput">点击按钮运行…</pre>
+    </div>
+
+    <!-- 四、循环结构：while -->
+    <div class="card">
+        <h2>四、循环结构（while / do-while）：累加偶数</h2>
+        <button onclick="runWhileLoop()">运行 while 循环</button>
+        <pre class="output" id="whileOutput">点击按钮运行…</pre>
+    </div>
+
+    <script>
+        /* ========== 一、条件结构 if-else ========== */
+        function checkScore() {
+            var score = Number(document.getElementById('scoreInput').value);
+            var result;
+
+            if (isNaN(score) || score < 0 || score > 100) {
+                result = '请输入 0~100 之间的有效分数！';
+            } else if (score >= 90) {
+                result = '成绩 ' + score + ' 分：优秀';
+            } else if (score >= 80) {
+                result = '成绩 ' + score + ' 分：良好';
+            } else if (score >= 60) {
+                result = '成绩 ' + score + ' 分：及格';
+            } else {
+                result = '成绩 ' + score + ' 分：不及格';
+            }
+            document.getElementById('ifOutput').textContent = result;
+        }
+
+        /* ========== 二、条件结构 switch ========== */
+        function showWeek() {
+            var day = new Date().getDay();  // 0=周日
+            var name;
+            switch (day) {
+                case 0: name = '星期日'; break;
+                case 1: name = '星期一'; break;
+                case 2: name = '星期二'; break;
+                case 3: name = '星期三'; break;
+                case 4: name = '星期四'; break;
+                case 5: name = '星期五'; break;
+                case 6: name = '星期六'; break;
+                default: name = '未知';
+            }
+            document.getElementById('switchOutput').textContent =
+                '今天是 ' + name + '（switch 匹配值 day = ' + day + '）';
+        }
+
+        /* ========== 三、循环结构 for ========== */
+        function runForLoop() {
+            var text = '';
+
+            // 1. for 循环求 1~100 的和
+            var sum = 0;
+            for (var i = 1; i <= 100; i++) {
+                sum += i;
+            }
+            text += 'for 循环计算 1+2+…+100 = ' + sum + '\n\n';
+
+            // 2. 双重 for 循环打印九九乘法表
+            for (var row = 1; row <= 9; row++) {
+                var line = '';
+                for (var col = 1; col <= row; col++) {
+                    line += col + '×' + row + '=' + (row * col) + '\t';
+                }
+                text += line + '\n';
+            }
+            document.getElementById('forOutput').textContent = text;
+        }
+
+        /* ========== 四、循环结构 while / do-while ========== */
+        function runWhileLoop() {
+            var text = '';
+
+            // while 循环：累加 1~100 中的偶数
+            var i = 2, sum = 0;
+            while (i <= 100) {
+                sum += i;
+                i += 2;
+            }
+            text += 'while 循环计算 2+4+…+100 = ' + sum + '\n';
+
+            // do-while 循环：至少执行一次
+            var j = 1, count = 0;
+            do {
+                count++;
+                j++;
+            } while (j <= 10);
+            text += 'do-while 循环共执行了 ' + count + ' 次';
+
+            document.getElementById('whileOutput').textContent = text;
+        }
+    </script>
+</body>
+</html>
