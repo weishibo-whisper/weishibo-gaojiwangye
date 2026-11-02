@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<!--
+    作者：魏士博
+    建立时间：2026-10-27
+    使用的大模型功能名称：Trae DeepSeek-V4.1-Flash
+    项目说明：《高级网页设计 I》图像解决方案实验——基于本地 iconfont 字体图标的自适应下导航
+    类名约定：统一使用 wsb- 前缀（魏士博姓名缩写）
+-->
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>赛氪 · 移动端下导航</title>
+    <!-- 本地 iconfont 字体图标（Project id 5244721 · 魏士博高级网页），非 CDN -->
+    <link rel="stylesheet" href="./font/download/font_5244721_1queqp6edo8/iconfont.css">
+    <style>
+        /* ============ 全局公共 CSS ============ */
+        :root {
+            --wsb-brand: #12b886;
+            --wsb-brand-deep: #0b9b74;
+            --wsb-brand-soft: #e9f9f3;
+            --wsb-ink: #1f2329;
+            --wsb-ink-2: #4e5969;
+            --wsb-grey: #86909c;
+            --wsb-line: #eef0f3;
+            --wsb-orange: #ff8a1f;
+            --wsb-radius: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Microsoft YaHei", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+            color: var(--wsb-ink);
+            background:
+                radial-gradient(circle at 20% 0%, rgba(18, 184, 134, 0.1), transparent 34%),
+                radial-gradient(circle at 85% 12%, rgba(255, 184, 77, 0.12), transparent 30%),
+                linear-gradient(160deg, #f2f7f5 0%, #eef2f7 100%);
+            font-size: 14px;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        ul,
+        ol {
+            list-style: none;
+        }
+
+        img {
+            display: block;
+            max-width: 100%;
+        }
+
+        .wsb-icon {
+            font-size: 18px;
+            line-height: 1;
+        }
+
+        /* ============ 页面容器（自适应宽度） ============ */
+        .wsb-app {
+            position: relative;
+            width: 100%;
+            max-width: 480px;
+            min-height: 100vh;
+            margin: 0 auto;
+            background: #f7f8fa;
+            box-shadow: 0 0 46px rgba(31, 35, 41, 0.12);
+        }
+
+        /* ============ 顶部搜索与分类导航 ============ */
+        .wsb-top {
+            position: sticky;
+            top: 0;
+            z-index: 30;
+            background: #fff;
+            padding: 10px 12px 0;
+            box-shadow: 0 1px 0 rgba(31, 35, 41, 0.04);
+        }
+
+        .wsb-searchbar {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            height: 38px;
+            padding: 0 12px;
+            border-radius: 999px;
+            background: #f4f5f7;
+            color: #9aa3ad;
+            font-size: 13px;
+        }
+
+        .wsb-searchbar .wsb-icon {
+            font-size: 16px;
+            color: #9aa3ad;
+        }
+
+        .wsb-search-text {
+            flex: 1;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .wsb-scan {
+            flex: none;
+            width: 18px;
+            height: 18px;
+            border: 1.5px solid #b6bec8;
+            border-radius: 4px;
+            position: relative;
+        }
+
+        .wsb-scan::before,
+        .wsb-scan::after {
+            content: "";
+            position: absolute;
+            background: #b6bec8;
+        }
+
+        .wsb-scan::before {
+            left: 4px;
+            right: 4px;
+            top: 7px;
+            height: 1.5px;
+        }
+
+        .wsb-scan::after {
+            top: 4px;
+            bottom: 4px;
+            left: 7px;
+            width: 1.5px;
+        }
+
+        .wsb-catnav {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-top: 8px;
+            padding: 6px 2px 10px;
+            overflow-x: auto;
+            white-space: nowrap;
+            scrollbar-width: none;
+        }
+
+        .wsb-catnav::-webkit-scrollbar {
+            display: none;
+        }
+
+        .wsb-cat {
+            flex: none;
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 15px;
+            color: var(--wsb-ink-2);
+            padding-bottom: 4px;
+        }
+
+        .wsb-cat .wsb-icon {
+            font-size: 17px;
+            color: var(--wsb-grey);
+        }
+
+        .wsb-cat.active {
+            color: var(--wsb-orange);
+            font-weight: 700;
+        }
+
+        .wsb-cat.active .wsb-icon {
+            color: var(--wsb-orange);
+        }
+
+        .wsb-cat.active::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            bottom: 0;
+            transform: translateX(-50%);
+            width: 18px;
+            height: 3px;
+            border-radius: 2px;
+            background: linear-gradient(90deg, #ffb552, var(--wsb-orange));
+        }
+
+        .wsb-hot-tag {
+            position: absolute;
+            top: -7px;
+            right: -13px;
+            padding: 0 4px;
+            border-radius: 3px;
+            background: linear-gradient(135deg, #ff6b6b, #f03e3e);
+            color: #fff;
+            font-size: 8px;
+            font-style: normal;
+            line-height: 12px;
+            font-weight: 700;
+            transform: scale(0.9);
+        }
+
+        /* ============ 主内容区 ============ */
+        .wsb-main {
+            padding: 12px 12px calc(86px + env(safe-area-inset-bottom, 0px));
+        }
+
+        /* 活动 Banner：图片打底 + 文字叠加 */
+        .wsb-banner {
+            position: relative;
+            height: 172px;
+            border-radius: 14px;
+            overflow: hidden;
+            background: #b8182a;
+            box-shadow: 0 10px 22px rgba(184, 24, 42, 0.22);
+        }
+
+        .wsb-banner-img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center 78%;
+        }
+
+        .wsb-banner-mask {
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(180deg, rgba(120, 8, 22, 0.55) 0%, rgba(120, 8, 22, 0) 46%),
+                linear-gradient(90deg, rgba(150, 14, 30, 0.95) 0%, rgba(168, 18, 36, 0.82) 46%, rgba(168, 18, 36, 0.4) 100%);
+        }
+
+        .wsb-banner-copy {
+            position: relative;
+            z-index: 2;
+            height: 100%;
+            padding: 14px 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            color: #fff;
+        }
+
+        .wsb-banner-tag {
+            align-self: flex-start;
+            padding: 1px 9px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.16);
+            border: 1px solid rgba(255, 255, 255, 0.34);
+            font-size: 10.5px;
+            letter-spacing: 1px;
+        }
+
+        .wsb-banner-title {
+            margin-top: 7px;
+            font-size: 24px;
+            font-weight: 800;
+            line-height: 1.24;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 8px rgba(99, 4, 15, 0.35);
+        }
+
+        .wsb-banner-line {
+            margin-top: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #ffe9bb;
+            letter-spacing: 0.5px;
+        }
+
+        .wsb-banner-line b {
+            margin-right: 5px;
+            font-size: 17px;
+            font-style: italic;
+            color: #ffd666;
+        }
+
+        .wsb-banner-sub {
+            margin-top: 2px;
+            font-size: 11.5px;
+            color: rgba(255, 255, 255, 0.88);
+            letter-spacing: 0.5px;
+        }
+
+        /* 快捷入口 */
+        .wsb-quick {
+            display: flex;
+            justify-content: space-between;
+            gap: 6px;
+            margin-top: 16px;
+            padding: 14px 6px;
+            border-radius: 14px;
+            background: #fff;
+        }
+
+        .wsb-quick-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            font-size: 11.5px;
+            color: var(--wsb-ink-2);
+            white-space: nowrap;
+        }
+
+        .wsb-quick-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 21px;
+        }
+
+        .wsb-quick-icon.tone-orange {
+            color: #ff8a1f;
+            background: linear-gradient(150deg, #fff6e8, #ffe7c7);
+        }
+
+        .wsb-quick-icon.tone-blue {
+            color: #3d7eff;
+            background: linear-gradient(150deg, #eef4ff, #dbe8ff);
+        }
+
+        .wsb-quick-icon.tone-green {
+            color: var(--wsb-brand);
+            background: linear-gradient(150deg, #ebfbf5, #d2f5e8);
+        }
+
+        .wsb-quick-icon.tone-pink {
+            color: #eb2f96;
+            background: linear-gradient(150deg, #fff0f6, #ffdcec);
+        }
+
+        .wsb-quick-icon.tone-purple {
+            color: #7c5cff;
+            background: linear-gradient(150deg, #f3f0ff, #e5ddff);
+        }
+
+        /* 推荐竞赛 */
+        .wsb-section {
+            margin-top: 16px;
+            border-radius: 14px;
+            background: #fff;
+            padding: 14px 14px 4px;
+        }
+
+        .wsb-sec-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .wsb-sec-title {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+
+        .wsb-sec-title .wsb-icon {
+            font-size: 21px;
+            color: #f5a623;
+        }
+
+        .wsb-more {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            padding: 3px 10px;
+            border: 1px solid #e3e7eb;
+            border-radius: 999px;
+            color: var(--wsb-ink-2);
+            font-size: 12px;
+        }
+
+        .wsb-more .wsb-icon {
+            font-size: 12px;
+            color: #a9b1bb;
+        }
+
+        .wsb-more-arrow {
+            width: 6px;
+            height: 6px;
+            border-top: 1.5px solid #a9b1bb;
+            border-right: 1.5px solid #a9b1bb;
+            transform: rotate(45deg);
+        }
+
+        /* CSS 绘制的榜单柱状图标 */
+        .wsb-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            height: 20px;
+            color: inherit;
+        }
+
+        .wsb-bars i {
+            width: 4px;
+            border-radius: 2px;
+            background: currentColor;
+        }
+
+        .wsb-bars i:nth-child(1) {
+            height: 9px;
+        }
+
+        .wsb-bars i:nth-child(2) {
+            height: 15px;
+        }
+
+        .wsb-bars i:nth-child(3) {
+            height: 20px;
+        }
+
+        /* 动态条 */
+        .wsb-ticker {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 10px 0 4px;
+            padding: 9px 10px;
+            border-radius: 9px;
+            background: #fffaf2;
+            border: 1px solid #ffecd2;
+            font-size: 12px;
+            color: #8a5a18;
+        }
+
+        .wsb-ticker-tag {
+            flex: none;
+            padding: 1px 7px;
+            border-radius: 4px;
+            background: linear-gradient(135deg, #ffa940, #fa8c16);
+            color: #fff;
+            font-size: 10.5px;
+            line-height: 16px;
+        }
+
+        .wsb-ticker-text {
+            flex: 1;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .wsb-ticker-arrow {
+            flex: none;
+            width: 7px;
+            height: 7px;
+            border-top: 1.5px solid #c79a5b;
+            border-right: 1.5px solid #c79a5b;
+            transform: rotate(45deg);
+        }
+
+        /* 竞赛列表（左图右文） */
+        .wsb-list-item {
+            display: flex;
+            gap: 12px;
+            padding: 13px 0;
+            border-bottom: 1px solid var(--wsb-line);
+        }
+
+        .wsb-list-item:last-child {
+            border-bottom: none;
+        }
+
+        .wsb-list-thumb {
+            flex: none;
+            width: 88px;
+            height: 88px;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #eef1f4;
+        }
+
+        .wsb-list-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .wsb-list-info {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .wsb-list-title {
+            font-size: 14.5px;
+            font-weight: 700;
+            line-height: 1.45;
+            color: var(--wsb-ink);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .wsb-list-tag {
+            align-self: flex-start;
+            margin-top: 6px;
+            padding: 1px 7px;
+            border-radius: 4px;
+            background: #fff3e8;
+            border: 1px solid #ffe0c2;
+            color: #ff7a00;
+            font-size: 10.5px;
+            line-height: 16px;
+        }
+
+        .wsb-list-date {
+            margin-top: 5px;
+            font-size: 11.5px;
+            color: var(--wsb-grey);
+        }
+
+        .wsb-list-date span {
+            color: #a9b1bb;
+        }
+
+        /* 实验说明卡片 */
+        .wsb-note {
+            margin-top: 16px;
+            padding: 14px;
+            border-radius: 14px;
+            background: linear-gradient(150deg, #f3fcf8, #ecf9f3);
+            border: 1px solid #d5f0e5;
+        }
+
+        .wsb-note-title {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--wsb-brand-deep);
+        }
+
+        .wsb-note-title .wsb-icon {
+            font-size: 16px;
+        }
+
+        .wsb-note-text {
+            margin-top: 6px;
+            font-size: 12px;
+            line-height: 1.8;
+            color: #4b6b60;
+        }
+
+        .wsb-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 7px;
+            margin-top: 9px;
+        }
+
+        .wsb-chips li {
+            padding: 2px 10px;
+            border-radius: 999px;
+            background: #fff;
+            border: 1px solid #cdeede;
+            color: var(--wsb-brand-deep);
+            font-size: 11px;
+        }
+
+        .wsb-note-sign {
+            margin-top: 10px;
+            font-size: 11px;
+            color: #7f9a90;
+        }
+
+        /* ============ 重点：固定下导航 ============ */
+        .wsb-tabbar {
+            position: fixed;
+            left: 50%;
+            bottom: 0;
+            transform: translateX(-50%);
+            z-index: 100;
+            width: 100%;
+            max-width: 480px;
+            display: flex;
+            align-items: stretch;
+            padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
+            background: rgba(255, 255, 255, 0.98);
+            border-top: 1px solid rgba(31, 35, 41, 0.06);
+            box-shadow: 0 -10px 28px rgba(31, 35, 41, 0.09);
+            backdrop-filter: blur(10px);
+        }
+
+        .wsb-tab {
+            position: relative;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            padding: 4px 0 2px;
+            color: #9aa3ad;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        .wsb-tab-icon {
+            width: 42px;
+            height: 27px;
+            border-radius: 999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+        }
+
+        .wsb-tab-text {
+            line-height: 1.4;
+            transition: color 0.2s ease;
+        }
+
+        .wsb-tab.active {
+            color: var(--wsb-brand);
+        }
+
+        .wsb-tab.active .wsb-tab-icon {
+            background: var(--wsb-brand-soft);
+            color: var(--wsb-brand);
+            transform: translateY(-1px);
+        }
+
+        .wsb-tab.active .wsb-tab-text {
+            color: var(--wsb-brand-deep);
+            font-weight: 700;
+        }
+
+        .wsb-tab.active::before {
+            content: "";
+            position: absolute;
+            top: -7px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 28px;
+            height: 3px;
+            border-radius: 0 0 3px 3px;
+            background: linear-gradient(90deg, #38d6a6, var(--wsb-brand-deep));
+        }
+
+        /* ============ 响应式适配 ============ */
+        @media (max-width: 520px) {
+            .wsb-app {
+                box-shadow: none;
+            }
+
+            .wsb-banner {
+                height: 164px;
+            }
+
+            .wsb-banner-title {
+                font-size: 22px;
+            }
+
+            .wsb-quick {
+                padding: 12px 2px;
+            }
+
+            .wsb-quick-item {
+                font-size: 11px;
+            }
+
+            .wsb-quick-icon {
+                width: 38px;
+                height: 38px;
+                font-size: 19px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .wsb-catnav {
+                gap: 15px;
+            }
+
+            .wsb-cat {
+                font-size: 14px;
+            }
+
+            .wsb-list-thumb {
+                width: 78px;
+                height: 78px;
+            }
+
+            .wsb-list-title {
+                font-size: 13.5px;
+            }
+        }
+
+        @media (min-width: 900px) {
+            .wsb-app {
+                min-height: 100vh;
+                margin: 0 auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wsb-app">
+        <!-- 顶部搜索 + 分类导航 -->
+        <header class="wsb-top">
+            <div class="wsb-searchbar">
+                <i class="iconfont wsb-icon icon-sousuo" aria-hidden="true"></i>
+                <span class="wsb-search-text">搜一搜 发现精彩</span>
+                <span class="wsb-scan" aria-hidden="true"></span>
+            </div>
+
+            <nav class="wsb-catnav" aria-label="栏目导航">
+                <a class="wsb-cat active" href="#">
+                    <i class="iconfont wsb-icon icon-faxian" aria-hidden="true"></i>精选
+                </a>
+                <a class="wsb-cat" href="#">竞赛广场</a>
+                <a class="wsb-cat" href="#">活动广场</a>
+                <a class="wsb-cat" href="#">
+                    保研升学<em class="wsb-hot-tag">HOT</em>
+                </a>
+                <a class="wsb-cat" href="#">资讯</a>
+            </nav>
+        </header>
+
+        <main class="wsb-main">
+            <!-- 活动 Banner -->
+            <section class="wsb-banner">
+                <img class="wsb-banner-img" src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=red%20and%20gold%20chinese%20university%20competition%20poster%2C%20english%20translation%20contest%2C%20trophy%20and%20books%2C%20bold%20festive%20layout&amp;image_size=landscape_4_3" alt="第四届DECC大学生外交英语词汇大赛活动图">
+                <div class="wsb-banner-mask"></div>
+                <div class="wsb-banner-copy">
+                    <span class="wsb-banner-tag">DICE · 第四届</span>
+                    <h1 class="wsb-banner-title">大学生外交英语<br>词汇大赛</h1>
+                    <p class="wsb-banner-line"><b>突破！</b>百校参与 · 千人已考</p>
+                    <p class="wsb-banner-sub">下学期推荐高含金词汇赛！</p>
+                </div>
+            </section>
+
+            <!-- 快捷入口（字体图标 + CSS 彩色底） -->
+            <nav class="wsb-quick" aria-label="快捷入口">
+                <a class="wsb-quick-item" href="#">
+                    <span class="wsb-quick-icon tone-orange"><i class="iconfont icon-faxian" aria-hidden="true"></i></span>
+                    发现竞赛
+                </a>
+                <a class="wsb-quick-item" href="#">
+                    <span class="wsb-quick-icon tone-blue"><i class="iconfont icon-shipin" aria-hidden="true"></i></span>
+                    精彩活动
+                </a>
+                <a class="wsb-quick-item" href="#">
+                    <span class="wsb-quick-icon tone-green"><i class="iconfont icon-bianji" aria-hidden="true"></i></span>
+                    学习提升
+                </a>
+                <a class="wsb-quick-item" href="#">
+                    <span class="wsb-quick-icon tone-pink"><span class="wsb-bars" aria-hidden="true"><i></i><i></i><i></i></span></span>
+                    看榜单
+                </a>
+                <a class="wsb-quick-item" href="#">
+                    <span class="wsb-quick-icon tone-purple"><i class="iconfont icon-sousuo" aria-hidden="true"></i></span>
+                    查成绩
+                </a>
+            </nav>
+
+            <!-- 推荐竞赛 -->
+            <section class="wsb-section">
+                <div class="wsb-sec-head">
+                    <h2 class="wsb-sec-title">
+                        <i class="iconfont wsb-icon icon-shoucang" aria-hidden="true"></i>推荐竞赛
+                    </h2>
+                    <a class="wsb-more" href="#">更多<span class="wsb-more-arrow" aria-hidden="true"></span></a>
+                </div>
+
+                <div class="wsb-ticker">
+                    <span class="wsb-ticker-tag">动态</span>
+                    <span class="wsb-ticker-text">黎*岚 刚刚报名了 2026年第六届《英语世界》杯全国大学生翻译大赛</span>
+                    <span class="wsb-ticker-arrow" aria-hidden="true"></span>
+                </div>
+
+                <ul class="wsb-list">
+                    <li class="wsb-list-item">
+                        <a class="wsb-list-thumb" href="#">
+                            <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=dark%20blue%20futuristic%20technology%20poster%2C%20industrial%20internet%20and%20smart%20factory%2C%20circuit%20lines%2C%20chinese%20competition%2C%20bold%20layout&amp;image_size=landscape_4_3" alt="计算机素养赛道宣传图">
+                        </a>
+                        <div class="wsb-list-info">
+                            <h3 class="wsb-list-title">【本周开考！赛后三天可领证书】计算机素养赛道</h3>
+                            <span class="wsb-list-tag">火热报名中</span>
+                            <p class="wsb-list-date"><span>报名时间：</span>2026.08.25-2026.10.30</p>
+                        </div>
+                    </li>
+
+                    <li class="wsb-list-item">
+                        <a class="wsb-list-thumb" href="#">
+                            <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=light%20blue%20education%20poster%2C%20english%20teacher%20skill%20competition%2C%20classroom%20and%20graduation%20caps%2C%20clean%20academic%20style&amp;image_size=landscape_4_3" alt="全国大学生英语翻译大赛宣传图">
+                        </a>
+                        <div class="wsb-list-info">
+                            <h3 class="wsb-list-title">【大英赛主办方】2026年全国大学生英语翻译大赛</h3>
+                            <span class="wsb-list-tag">热门竞赛TOP1</span>
+                            <p class="wsb-list-date"><span>报名时间：</span>2026.09.01-2026.12.11</p>
+                        </div>
+                    </li>
+
+                    <li class="wsb-list-item">
+                        <a class="wsb-list-thumb" href="#">
+                            <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=warm%20red%20literary%20poster%2C%20youth%20writing%20competition%2C%20books%20and%20autumn%20leaves%2C%20elegant%20chinese%20style&amp;image_size=landscape_4_3" alt="第四届DECC大学生外交英语词汇大赛宣传图">
+                        </a>
+                        <div class="wsb-list-info">
+                            <h3 class="wsb-list-title">【大学生信息差！此赛必参加！】第四届DECC大学生外交英语词汇大赛</h3>
+                            <span class="wsb-list-tag">热门竞赛TOP10</span>
+                            <p class="wsb-list-date"><span>报名时间：</span>2026.08.21-2026.11.20</p>
+                        </div>
+                    </li>
+
+                    <li class="wsb-list-item">
+                        <a class="wsb-list-thumb" href="#">
+                            <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=purple%20competition%20poster%2C%20translation%20contest%2C%20open%20books%20and%20world%20map%2C%20chinese%20university%20event%2C%20elegant%20layout&amp;image_size=landscape_4_3" alt="第六届英语世界杯全国大学生翻译大赛宣传图">
+                        </a>
+                        <div class="wsb-list-info">
+                            <h3 class="wsb-list-title">2026年第六届《英语世界》杯全国大学生英语翻译大赛</h3>
+                            <span class="wsb-list-tag">热门竞赛TOP3</span>
+                            <p class="wsb-list-date"><span>报名时间：</span>2026.09.11-2026.11.08</p>
+                        </div>
+                    </li>
+                </ul>
+            </section>
+
+            <!-- 实验说明 -->
+            <section class="wsb-note">
+                <h2 class="wsb-note-title">
+                    <i class="iconfont wsb-icon icon-shoucang" aria-hidden="true"></i>下导航设计说明
+                </h2>
+                <p class="wsb-note-text">本页重点演示固定于页面底部的四项下导航：图标取自本地 iconfont 字体图标（Project 5244721），通过 CSS 控制字号、颜色与选中态，导航宽度自适应并适配底部安全区。</p>
+                <ul class="wsb-chips">
+                    <li>固定底部</li>
+                    <li>字体图标</li>
+                    <li>自适应宽度</li>
+                    <li>安全区适配</li>
+                </ul>
+                <p class="wsb-note-sign">魏士博 · 高级网页设计 I · 图像解决方案实验</p>
+            </section>
+        </main>
+
+        <!-- 本次实验重点：固定下导航 -->
+        <nav class="wsb-tabbar" aria-label="底部主导航">
+            <a class="wsb-tab active" href="#">
+                <span class="wsb-tab-icon"><i class="iconfont icon-index" aria-hidden="true"></i></span>
+                <span class="wsb-tab-text">首页</span>
+            </a>
+            <a class="wsb-tab" href="#">
+                <span class="wsb-tab-icon"><i class="iconfont icon-faxian" aria-hidden="true"></i></span>
+                <span class="wsb-tab-text">小蓝书</span>
+            </a>
+            <a class="wsb-tab" href="#">
+                <span class="wsb-tab-icon"><i class="iconfont icon-shangcheng" aria-hidden="true"></i></span>
+                <span class="wsb-tab-text">校搭</span>
+            </a>
+            <a class="wsb-tab" href="#">
+                <span class="wsb-tab-icon"><i class="iconfont icon-my_fill_light" aria-hidden="true"></i></span>
+                <span class="wsb-tab-text">我的</span>
+            </a>
+        </nav>
+    </div>
+
+    <script>
+        // 下导航选中态切换：仅使用类选择器，无 id
+        var wsbTabs = document.querySelectorAll('.wsb-tab');
+        for (var i = 0; i < wsbTabs.length; i++) {
+            wsbTabs[i].addEventListener('click', function (event) {
+                event.preventDefault();
+                for (var j = 0; j < wsbTabs.length; j++) {
+                    wsbTabs[j].classList.remove('active');
+                }
+                this.classList.add('active');
+            });
+        }
+    </script>
+</body>
+</html>

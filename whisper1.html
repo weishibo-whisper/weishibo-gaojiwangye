@@ -1,0 +1,1972 @@
+<!DOCTYPE html>
+<!--
+    作者：魏士博
+    建立时间：2026-10-27
+    使用的大模型功能名称：Trae DeepSeek-V4.1-Flash
+    项目说明：《高级网页设计 I》网页元素设计四级项目——依据赛氪官网视觉稿还原演示
+-->
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>赛氪 · 找竞赛 · 拓实践 · 创未来</title>
+    <style>
+        /* ============ 全局公共 CSS ============ */
+        :root {
+            --brand: #17a98a;
+            --brand-deep: #0e8a72;
+            --brand-soft: #effaf6;
+            --ink: #1f2329;
+            --ink-2: #4e5969;
+            --muted: #86909c;
+            --line: #edf0f3;
+            --gold: #f6d27a;
+            --radius: 14px;
+            --shadow: 0 10px 28px rgba(31, 35, 41, 0.07);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: "Microsoft YaHei", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+            color: var(--ink);
+            background: #fff;
+            font-size: 14px;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        ul,
+        ol {
+            list-style: none;
+        }
+
+        img {
+            display: block;
+            max-width: 100%;
+        }
+
+        .svg-sprite {
+            position: absolute;
+            width: 0;
+            height: 0;
+            overflow: hidden;
+        }
+
+        .ico {
+            width: 1em;
+            height: 1em;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            display: inline-block;
+            vertical-align: -0.15em;
+            flex: none;
+        }
+
+        /* ============ 顶部活动通栏 ============ */
+        .topbar {
+            background: linear-gradient(90deg, #64101d 0%, #9c1e2c 48%, #701322 100%);
+            color: #fff;
+            padding: 8px 16px;
+        }
+
+        .topbar-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            font-size: 13px;
+        }
+
+        .topbar-title {
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .topbar-desc {
+            color: rgba(255, 255, 255, 0.82);
+            font-size: 12.5px;
+        }
+
+        .topbar-btn {
+            padding: 3px 15px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #ffe4a3, #f2c14e);
+            color: #7d1622;
+            font-weight: 700;
+            font-size: 12.5px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18);
+        }
+
+        /* ============ 典型部分一：导航 ============ */
+        .site-header {
+            background: #fff;
+            border-bottom: 1px solid var(--line);
+            position: relative;
+            z-index: 50;
+        }
+
+        .header-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            height: 68px;
+            display: flex;
+            align-items: center;
+            gap: 28px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            flex: none;
+        }
+
+        .logo-mark {
+            width: 36px;
+            height: 36px;
+            border-radius: 11px;
+            background: linear-gradient(140deg, #2ec9a4, #0e9b7c);
+            color: #fff;
+            font-size: 21px;
+            font-weight: 800;
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 14px rgba(23, 169, 138, 0.3);
+        }
+
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.15;
+        }
+
+        .logo-text strong {
+            font-size: 21px;
+            color: #0d7f68;
+            letter-spacing: 2px;
+            font-weight: 800;
+        }
+
+        .logo-text small {
+            font-size: 9px;
+            color: #9aa3ad;
+            letter-spacing: 2px;
+        }
+
+        .nav {
+            display: flex;
+            align-items: center;
+            gap: 26px;
+            flex: 1;
+        }
+
+        .nav-link {
+            padding: 23px 0;
+            font-size: 15px;
+            color: var(--ink);
+            position: relative;
+            white-space: nowrap;
+        }
+
+        .nav-link:hover {
+            color: var(--brand);
+        }
+
+        .nav-link.active {
+            color: var(--brand);
+            font-weight: 600;
+        }
+
+        .nav-link.active::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            bottom: 14px;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 3px;
+            border-radius: 2px;
+            background: var(--brand);
+        }
+
+        .header-search {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            width: 226px;
+            height: 36px;
+            padding: 0 12px;
+            border-radius: 999px;
+            background: #f2f4f7;
+            color: #9aa3ad;
+            font-size: 12.5px;
+            flex: none;
+        }
+
+        .header-search .ico {
+            width: 15px;
+            height: 15px;
+        }
+
+        .header-search span {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex: none;
+        }
+
+        .lecturer-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            background: linear-gradient(135deg, #fff0c2, #f7c948);
+            border: 1px solid #f2c14e;
+            color: #8a5400;
+            font-size: 11px;
+            font-weight: 700;
+            box-shadow: 0 4px 10px rgba(247, 201, 72, 0.3);
+        }
+
+        .lecturer-badge .ico {
+            width: 13px;
+            height: 13px;
+        }
+
+        .apply-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px;
+            color: var(--ink-2);
+        }
+
+        .apply-link .ico {
+            width: 14px;
+            height: 14px;
+        }
+
+        .publish-btn {
+            padding: 8px 20px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #2ec9a4, #0e9b7c);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 6px 14px rgba(23, 169, 138, 0.28);
+        }
+
+        .auth-links {
+            font-size: 13px;
+            color: var(--ink-2);
+            white-space: nowrap;
+        }
+
+        .auth-links b {
+            color: var(--brand);
+            font-weight: 500;
+        }
+
+        /* ============ 绿色 Hero 搜索区 ============ */
+        .hero {
+            position: relative;
+            overflow: hidden;
+            color: #fff;
+            text-align: center;
+            padding: 30px 20px 0;
+            background:
+                radial-gradient(680px 320px at 50% 100%, rgba(255, 255, 255, 0.13), transparent 70%),
+                radial-gradient(420px 280px at 8% 0%, rgba(255, 255, 255, 0.1), transparent 72%),
+                linear-gradient(118deg, #2ba88d 0%, #1d9a80 42%, #2fae93 100%);
+        }
+
+        .hero::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 50% 45%, transparent 30%, rgba(6, 88, 70, 0.16) 100%);
+            pointer-events: none;
+        }
+
+        .hero-trophy {
+            position: absolute;
+            right: 5%;
+            top: 6%;
+            width: 300px;
+            height: 330px;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .hero-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(30px);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .hero-blob-left {
+            width: 240px;
+            height: 240px;
+            left: -60px;
+            bottom: 70px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .hero-blob-right {
+            width: 200px;
+            height: 200px;
+            right: 18%;
+            bottom: 20px;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .hero-inner {
+            position: relative;
+            z-index: 2;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 18px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.16);
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            font-size: 12.5px;
+            color: rgba(255, 255, 255, 0.95);
+            letter-spacing: 0.5px;
+            margin-bottom: 18px;
+        }
+
+        .badge-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.9);
+        }
+
+        .hero-title {
+            font-size: clamp(32px, 4.4vw, 52px);
+            font-weight: 800;
+            letter-spacing: 4px;
+            line-height: 1.2;
+            margin-bottom: 14px;
+            text-shadow: 0 6px 22px rgba(0, 0, 0, 0.12);
+        }
+
+        .hero-sub {
+            max-width: 900px;
+            margin: 0 auto 24px;
+            font-size: 14px;
+            line-height: 1.8;
+            color: rgba(255, 255, 255, 0.92);
+        }
+
+        .hero-search {
+            max-width: 640px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 6px 6px 20px;
+            border-radius: 999px;
+            background: #fff;
+            box-shadow: 0 16px 32px rgba(0, 0, 0, 0.14);
+        }
+
+        .hero-search .ico {
+            width: 18px;
+            height: 18px;
+            color: #9aa3ad;
+        }
+
+        .hero-input {
+            flex: 1;
+            min-width: 0;
+            border: none;
+            outline: none;
+            background: transparent;
+            font-size: 14px;
+            color: var(--ink);
+        }
+
+        .hero-input::placeholder {
+            color: #a9b1bb;
+        }
+
+        .hero-search-btn {
+            flex: none;
+            padding: 10px 26px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #2ec9a4, #0e9b7c);
+            color: #fff;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .hero-hot {
+            margin-top: 16px;
+        }
+
+        .hero-hot-row {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .hero-hot-row span {
+            padding: 5px 13px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.95);
+            cursor: pointer;
+        }
+
+        .hero-hot-row span:hover {
+            text-decoration: underline;
+        }
+
+        .hero-stats {
+            margin-top: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .hero-stats .stat {
+            padding: 0 58px;
+            text-align: center;
+        }
+
+        .hero-stats .stat + .stat {
+            border-left: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .hero-stats strong {
+            display: block;
+            font-size: 36px;
+            font-weight: 800;
+            line-height: 1.2;
+            letter-spacing: 1px;
+        }
+
+        .hero-stats strong span {
+            font-size: 20px;
+            vertical-align: 8px;
+        }
+
+        .hero-stats em {
+            display: block;
+            margin-top: 4px;
+            font-style: normal;
+            font-size: 12px;
+            letter-spacing: 3px;
+            color: rgba(255, 255, 255, 0.78);
+        }
+
+        .hero-scroll {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            margin-top: 14px;
+            font-size: 12px;
+            letter-spacing: 4px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .scroll-chevrons {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .scroll-chevrons i {
+            width: 9px;
+            height: 9px;
+            border-right: 2px solid var(--gold);
+            border-bottom: 2px solid var(--gold);
+            transform: rotate(45deg);
+        }
+
+        .hero-wave {
+            display: block;
+            width: 100%;
+            height: 66px;
+            margin-top: 18px;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* ============ 右侧悬浮快捷栏 ============ */
+        .side-rail {
+            position: fixed;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 110;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .rail-item {
+            width: 46px;
+            padding: 7px 4px 6px;
+            border-radius: 9px;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            font-size: 10.5px;
+            line-height: 1.2;
+            text-align: center;
+            box-shadow: 0 8px 18px rgba(31, 35, 41, 0.18);
+        }
+
+        .rail-item .ico {
+            width: 19px;
+            height: 19px;
+        }
+
+        .rail-red {
+            background: linear-gradient(180deg, #ff6b6b, #e03131);
+        }
+
+        .rail-blue {
+            background: linear-gradient(180deg, #5b8cff, #2f6bff);
+        }
+
+        .rail-orange {
+            background: linear-gradient(180deg, #ffa940, #fa8c16);
+        }
+
+        .rail-green {
+            background: linear-gradient(180deg, #3dd598, #12b886);
+        }
+
+        .grid-fab {
+            position: fixed;
+            right: 16px;
+            bottom: 24px;
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: #fff;
+            border: 1px solid var(--line);
+            box-shadow: 0 8px 20px rgba(31, 35, 41, 0.12);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--muted);
+            z-index: 120;
+        }
+
+        .grid-fab .ico {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* ============ 通用区块 ============ */
+        .section {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 52px 20px 0;
+        }
+
+        .section-head {
+            text-align: center;
+        }
+
+        .section-title {
+            font-size: 30px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: var(--ink);
+        }
+
+        .section-title em {
+            font-style: normal;
+            color: var(--brand);
+            margin-right: 10px;
+        }
+
+        .section-sub {
+            margin-top: 8px;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        /* 分类标签 */
+        .tabs {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 22px 0 26px;
+        }
+
+        .tab {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            padding: 6px 17px;
+            border-radius: 999px;
+            background: #f5f7f9;
+            color: var(--ink-2);
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+
+        .tab:hover {
+            background: var(--brand-soft);
+            color: var(--brand);
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #2ec9a4, #0e9b7c);
+            color: #fff;
+            font-weight: 600;
+            box-shadow: 0 8px 16px rgba(23, 169, 138, 0.25);
+        }
+
+        .tab .ico {
+            width: 13px;
+            height: 13px;
+        }
+
+        /* ============ 典型部分二：上图下文（赛事精选） ============ */
+        .event-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        .event-card {
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(31, 35, 41, 0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .event-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 18px 34px rgba(31, 35, 41, 0.1);
+        }
+
+        .event-cover {
+            position: relative;
+            aspect-ratio: 16 / 10;
+            overflow: hidden;
+            background: #f2f4f7;
+        }
+
+        .event-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .cover-chip {
+            position: absolute;
+            left: 10px;
+            top: 10px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.94);
+            color: #1f2329;
+            font-size: 10px;
+            font-weight: 600;
+            line-height: 18px;
+        }
+
+        .cover-chip.right {
+            left: auto;
+            right: 10px;
+        }
+
+        .cover-chip.brand {
+            background: rgba(23, 169, 138, 0.94);
+            color: #fff;
+        }
+
+        .event-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            padding: 14px 16px 16px;
+        }
+
+        .event-title {
+            font-size: 16px;
+            font-weight: 700;
+            line-height: 1.5;
+            color: var(--ink);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            min-height: 48px;
+        }
+
+        .event-meta {
+            font-size: 12px;
+            color: #6b7683;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .event-meta span {
+            color: #a9b1bb;
+        }
+
+        .event-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 2px;
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: var(--brand-soft);
+            border: 1px solid #d4f0e6;
+            color: var(--brand);
+            font-size: 11px;
+            line-height: 18px;
+        }
+
+        .tag.pink {
+            background: #fff0f6;
+            border-color: #ffd6e7;
+            color: #eb2f96;
+        }
+
+        .tag.warm {
+            background: #fff7e8;
+            border-color: #ffe4ba;
+            color: #d48806;
+        }
+
+        .tag.blue {
+            background: #eff4ff;
+            border-color: #d6e4ff;
+            color: #3370ff;
+        }
+
+        .event-foot {
+            margin-top: auto;
+            padding-top: 10px;
+            border-top: 1px solid #f3f5f7;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 11.5px;
+            color: var(--muted);
+        }
+
+        .event-counts {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .event-counts span {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .event-counts .ico {
+            width: 13px;
+            height: 13px;
+        }
+
+        /* ============ 典型部分三：左图右文（实习实践） ============ */
+        .practice-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .practice-card {
+            display: flex;
+            min-height: 208px;
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(31, 35, 41, 0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .practice-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 18px 34px rgba(31, 35, 41, 0.1);
+        }
+
+        .practice-cover {
+            position: relative;
+            flex: 0 0 41%;
+            min-height: 208px;
+            overflow: hidden;
+            background: #f2f4f7;
+        }
+
+        .practice-cover img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .practice-body {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            padding: 15px 18px;
+        }
+
+        .practice-title {
+            font-size: 16px;
+            font-weight: 700;
+            line-height: 1.5;
+            color: var(--ink);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .practice-meta {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .practice-meta .ico {
+            width: 13px;
+            height: 13px;
+        }
+
+        .practice-foot {
+            margin-top: auto;
+            padding-top: 10px;
+            border-top: 1px solid #f3f5f7;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 11.5px;
+            color: var(--muted);
+        }
+
+        .detail-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            color: var(--brand);
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .detail-link .ico {
+            width: 12px;
+            height: 12px;
+        }
+
+        /* ============ 资讯瀑布流 ============ */
+        .news-masonry {
+            columns: 3;
+            column-gap: 20px;
+            margin-top: 26px;
+        }
+
+        .news-card {
+            display: inline-block;
+            width: 100%;
+            margin-bottom: 20px;
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(31, 35, 41, 0.05);
+            break-inside: avoid;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .news-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 18px 34px rgba(31, 35, 41, 0.1);
+        }
+
+        .news-cover {
+            overflow: hidden;
+            background: #f2f4f7;
+        }
+
+        .news-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .ratio-wide {
+            aspect-ratio: 16 / 9;
+        }
+
+        .ratio-4x3 {
+            aspect-ratio: 4 / 3;
+        }
+
+        .ratio-tall {
+            aspect-ratio: 3 / 4;
+        }
+
+        .news-body {
+            padding: 13px 16px 15px;
+        }
+
+        .news-title {
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 1.65;
+            color: var(--ink);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .news-date {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 9px;
+            font-size: 11.5px;
+            color: var(--muted);
+        }
+
+        .news-date .ico {
+            width: 12px;
+            height: 12px;
+        }
+
+        /* ============ 页脚 ============ */
+        .site-footer {
+            margin-top: 56px;
+            background: #f7f9fb;
+            border-top: 1px solid var(--line);
+            padding: 26px 20px 28px;
+        }
+
+        .footer-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+
+        .footer-brand {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+
+        .footer-brand .logo-mark {
+            width: 32px;
+            height: 32px;
+            font-size: 18px;
+            border-radius: 9px;
+        }
+
+        .footer-brand strong {
+            display: block;
+            font-size: 16px;
+            color: #0d7f68;
+            letter-spacing: 2px;
+        }
+
+        .footer-brand small {
+            display: block;
+            font-size: 11px;
+            color: #9aa3ad;
+        }
+
+        .footer-nav {
+            display: flex;
+            gap: 22px;
+            flex-wrap: wrap;
+            font-size: 13px;
+            color: #6b7683;
+        }
+
+        .footer-nav a:hover {
+            color: var(--brand);
+        }
+
+        .footer-copy {
+            width: 100%;
+            padding-top: 16px;
+            border-top: 1px solid var(--line);
+            font-size: 12px;
+            color: #9aa3ad;
+        }
+
+        /* ============ 响应式适配 ============ */
+        @media (max-width: 1180px) {
+            .header-inner {
+                gap: 20px;
+            }
+
+            .nav {
+                gap: 20px;
+            }
+
+            .header-search {
+                width: 200px;
+            }
+
+            .lecturer-badge {
+                display: none;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .event-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .hero-stats .stat {
+                padding: 0 38px;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .nav {
+                display: none;
+            }
+
+            .header-search {
+                margin-left: auto;
+            }
+
+            .apply-link {
+                display: none;
+            }
+
+            .hero-trophy {
+                width: 220px;
+                height: 250px;
+                right: 0;
+                top: 4%;
+                opacity: 0.6;
+            }
+
+            .practice-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .news-masonry {
+                columns: 2;
+            }
+
+            .site-footer {
+                margin-top: 44px;
+            }
+        }
+
+        @media (max-width: 760px) {
+            .header-search {
+                display: none;
+            }
+
+            .auth-links {
+                display: none;
+            }
+
+            .header-actions {
+                margin-left: auto;
+            }
+
+            .side-rail,
+            .grid-fab {
+                display: none;
+            }
+
+            .event-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 14px;
+            }
+
+            .event-title {
+                font-size: 15px;
+            }
+
+            .hero-title {
+                font-size: 30px;
+                letter-spacing: 2px;
+            }
+
+            .hero-sub {
+                font-size: 13px;
+            }
+
+            .hero-hot-row span {
+                padding: 4px 8px;
+                font-size: 12px;
+            }
+
+            .hero-stats .stat {
+                padding: 0 16px;
+            }
+
+            .hero-stats strong {
+                font-size: 26px;
+            }
+
+            .hero-stats strong span {
+                font-size: 15px;
+                vertical-align: 5px;
+            }
+
+            .hero-stats em {
+                font-size: 11px;
+                letter-spacing: 1px;
+            }
+
+            .section {
+                padding-top: 38px;
+            }
+
+            .section-title {
+                font-size: 24px;
+            }
+
+            .section-sub {
+                font-size: 12px;
+            }
+        }
+
+        @media (max-width: 520px) {
+            .topbar-desc {
+                display: none;
+            }
+
+            .topbar-title {
+                font-size: 12px;
+            }
+
+            .header-inner {
+                height: 60px;
+                padding: 0 14px;
+            }
+
+            .hero {
+                padding-left: 14px;
+                padding-right: 14px;
+            }
+
+            .hero-title {
+                font-size: 24px;
+                letter-spacing: 1px;
+            }
+
+            .hero-stats .stat {
+                padding: 0 8px;
+            }
+
+            .hero-stats strong {
+                font-size: 22px;
+            }
+
+            .hero-stats strong span {
+                font-size: 12px;
+                vertical-align: 4px;
+            }
+
+            .hero-stats em {
+                font-size: 10px;
+                letter-spacing: 0;
+            }
+
+            .event-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .event-title {
+                min-height: 0;
+            }
+
+            .practice-card {
+                flex-direction: column;
+                min-height: 0;
+            }
+
+            .practice-cover {
+                flex: none;
+                width: 100%;
+                min-height: 0;
+                aspect-ratio: 16 / 9;
+            }
+
+            .news-masonry {
+                columns: 1;
+            }
+
+            .hero-search {
+                padding: 5px 5px 5px 14px;
+            }
+
+            .hero-search-btn {
+                padding: 9px 18px;
+                font-size: 13px;
+            }
+
+            .tab {
+                padding: 5px 12px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- SVG 图标符号库 -->
+    <svg class="svg-sprite" aria-hidden="true" focusable="false">
+        <symbol id="i-search" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="M16.5 16.5 21 21"></path>
+        </symbol>
+        <symbol id="i-building" viewBox="0 0 24 24">
+            <rect x="4" y="3" width="16" height="18" rx="1.5"></rect>
+            <path d="M8 7h2M14 7h2M8 11h2M14 11h2M8 15h2M14 15h2"></path>
+        </symbol>
+        <symbol id="i-calendar" viewBox="0 0 24 24">
+            <rect x="3" y="5" width="18" height="16" rx="2"></rect>
+            <path d="M8 3v4M16 3v4M3 10h18"></path>
+        </symbol>
+        <symbol id="i-eye" viewBox="0 0 24 24">
+            <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+        </symbol>
+        <symbol id="i-heart" viewBox="0 0 24 24">
+            <path d="M12 20s-7-4.5-7-9a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 4.5-7 9-7 9Z"></path>
+        </symbol>
+        <symbol id="i-chevron-right" viewBox="0 0 24 24">
+            <path d="m9 6 6 6-6 6"></path>
+        </symbol>
+        <symbol id="i-chevron-down" viewBox="0 0 24 24">
+            <path d="m6 9 6 6 6-6"></path>
+        </symbol>
+        <symbol id="i-crown" viewBox="0 0 24 24">
+            <path d="M4 18h16l1-9-5 3-4-6-4 6-5-3 1 9Z"></path>
+        </symbol>
+        <symbol id="i-bolt" viewBox="0 0 24 24">
+            <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"></path>
+        </symbol>
+        <symbol id="i-headset" viewBox="0 0 24 24">
+            <path d="M4 14v-2a8 8 0 0 1 16 0v2"></path>
+            <rect x="3" y="13" width="4" height="7" rx="2"></rect>
+            <rect x="17" y="13" width="4" height="7" rx="2"></rect>
+        </symbol>
+        <symbol id="i-medal" viewBox="0 0 24 24">
+            <circle cx="12" cy="9" r="5"></circle>
+            <path d="M9 13l-2 8 5-3 5 3-2-8"></path>
+        </symbol>
+        <symbol id="i-trophy" viewBox="0 0 24 24">
+            <path d="M8 4h8v5a4 4 0 0 1-8 0V4Z"></path>
+            <path d="M8 6H5a3 3 0 0 0 3 5"></path>
+            <path d="M16 6h3a3 3 0 0 1-3 5"></path>
+            <path d="M12 13v4"></path>
+            <path d="M10 17h4v4h-4z"></path>
+            <path d="M9 21h6"></path>
+        </symbol>
+        <symbol id="i-grid" viewBox="0 0 24 24">
+            <rect x="4" y="4" width="7" height="7" rx="1.5"></rect>
+            <rect x="13" y="4" width="7" height="7" rx="1.5"></rect>
+            <rect x="4" y="13" width="7" height="7" rx="1.5"></rect>
+            <rect x="13" y="13" width="7" height="7" rx="1.5"></rect>
+        </symbol>
+    </svg>
+
+    <!-- 顶部活动通栏 -->
+    <div class="topbar">
+        <div class="topbar-inner">
+            <span class="topbar-title">第五届“BETT杯”全国大学生英语词汇大赛</span>
+            <span class="topbar-desc">权威双证书+多所高校认可+助力加分评优、考研保研及奖学金</span>
+            <a class="topbar-btn" href="#">报名进行中</a>
+        </div>
+    </div>
+
+    <!-- 典型部分一：导航（Logo + 菜单 + 搜索 + 操作区） -->
+    <header class="site-header">
+        <div class="header-inner">
+            <a class="logo" href="#">
+                <span class="logo-mark">S</span>
+                <span class="logo-text">
+                    <strong>赛氪</strong>
+                    <small>竞赛 · 实践 · 成长</small>
+                </span>
+            </a>
+
+            <nav class="nav">
+                <a class="nav-link active" href="#">首页</a>
+                <a class="nav-link" href="#">赛事中心</a>
+                <a class="nav-link" href="#">实习就业</a>
+                <a class="nav-link" href="#">学习提升</a>
+                <a class="nav-link" href="#">新闻资讯</a>
+                <a class="nav-link" href="#">关于我们</a>
+            </nav>
+
+            <div class="header-search">
+                <svg class="ico"><use href="#i-search"></use></svg>
+                <span>搜一搜 发现更多精彩</span>
+            </div>
+
+            <div class="header-actions">
+                <span class="lecturer-badge">
+                    <svg class="ico"><use href="#i-crown"></use></svg>超级讲师
+                </span>
+                <a class="apply-link" href="#">
+                    <svg class="ico"><use href="#i-building"></use></svg>入驻申请
+                </a>
+                <a class="publish-btn" href="#">发布</a>
+                <span class="auth-links">登录 / <b>注册</b></span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero 搜索区 -->
+    <section class="hero wsb-hero">
+        <svg class="hero-trophy" viewBox="0 0 200 240" aria-hidden="true">
+            <path d="M58 24h84v46c0 40-19 66-42 80-23-14-42-40-42-80V24Z" fill="rgba(255,255,255,0.10)"></path>
+            <path d="M58 34H28c0 38 12 56 32 60" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="9"></path>
+            <path d="M142 34h30c0 38-12 56-32 60" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="9"></path>
+            <rect x="94" y="150" width="12" height="34" fill="rgba(255,255,255,0.10)"></rect>
+            <rect x="68" y="184" width="64" height="10" rx="4" fill="rgba(255,255,255,0.12)"></rect>
+            <rect x="58" y="194" width="84" height="12" rx="4" fill="rgba(255,255,255,0.10)"></rect>
+        </svg>
+        <div class="hero-blob hero-blob-left"></div>
+        <div class="hero-blob hero-blob-right"></div>
+
+        <div class="hero-inner">
+            <div class="hero-badge">
+                <span class="badge-dot"></span>2026 赛季已全面开启 · 5210+ 项赛事火热报名中
+            </div>
+
+            <h1 class="hero-title">找竞赛 · 拓实践 · 创未来</h1>
+            <p class="hero-sub">赛氪｜一站式大学生赛事与科创实践平台，汇聚全国多元竞赛资源，助力广大参赛者突破自我、斩获佳绩。</p>
+
+            <div class="hero-search">
+                <svg class="ico"><use href="#i-search"></use></svg>
+                <input class="hero-input" type="text" placeholder="搜寻各类竞赛、活动、实践项目" aria-label="搜索竞赛">
+                <span class="hero-search-btn">立即探索</span>
+            </div>
+
+            <div class="hero-hot">
+                <div class="hero-hot-row">
+                    <span>热门竞赛</span>
+                    <span>热门活动</span>
+                    <span>我的竞赛</span>
+                    <span>课程中心</span>
+                    <span>题库练习</span>
+                    <span>OJ平台</span>
+                    <span>证书查询</span>
+                    <span>证书领取</span>
+                </div>
+                <div class="hero-hot-row">
+                    <span>入驻流程</span>
+                    <span>实训实践</span>
+                    <span>实习就业</span>
+                    <span>竞赛辅导</span>
+                    <span>科研论文</span>
+                    <span>保研服务</span>
+                    <span>合作咨询</span>
+                    <span>常见问题</span>
+                </div>
+            </div>
+
+            <div class="hero-stats">
+                <div class="stat">
+                    <strong>4159<span>+</span></strong>
+                    <em>组织单位</em>
+                </div>
+                <div class="stat">
+                    <strong>59979<span>+</span></strong>
+                    <em>赛事承办</em>
+                </div>
+                <div class="stat">
+                    <strong>5210<span>+</span></strong>
+                    <em>活动呈现</em>
+                </div>
+            </div>
+
+            <div class="hero-scroll">
+                <span class="scroll-chevrons"><i></i><i></i></span>
+                向下探索
+            </div>
+        </div>
+
+        <svg class="hero-wave" viewBox="0 0 1440 72" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0,44 C220,10 430,2 720,20 C1010,38 1220,66 1440,28 L1440,72 L0,72 Z" fill="#ffffff"></path>
+        </svg>
+    </section>
+
+    <!-- 右侧悬浮快捷入口 -->
+    <aside class="side-rail" aria-label="快捷入口">
+        <a class="rail-item rail-red" href="#">
+            <svg class="ico"><use href="#i-bolt"></use></svg>
+            <span>快速参赛</span>
+        </a>
+        <a class="rail-item rail-blue" href="#">
+            <svg class="ico"><use href="#i-headset"></use></svg>
+            <span>售后合作</span>
+        </a>
+        <a class="rail-item rail-orange" href="#">
+            <svg class="ico"><use href="#i-medal"></use></svg>
+            <span>证书查询</span>
+        </a>
+        <a class="rail-item rail-green" href="#">
+            <svg class="ico"><use href="#i-trophy"></use></svg>
+            <span>成绩查询</span>
+        </a>
+    </aside>
+
+    <a class="grid-fab" href="#" aria-label="更多功能">
+        <svg class="ico"><use href="#i-grid"></use></svg>
+    </a>
+
+    <main>
+        <!-- 典型部分二：上图下文——赛事精选卡片 -->
+        <section class="section wsb-events">
+            <div class="section-head">
+                <h2 class="section-title"><em>赛事精选</em>把握参赛机遇</h2>
+            </div>
+
+            <div class="tabs">
+                <span class="tab active">热门</span>
+                <span class="tab">最新</span>
+                <span class="tab">外语</span>
+                <span class="tab">AI赛</span>
+                <span class="tab">工科</span>
+                <span class="tab">理科</span>
+                <span class="tab">数模</span>
+                <span class="tab">文学</span>
+                <span class="tab">商科</span>
+                <span class="tab">计算机</span>
+                <span class="tab">媒体</span>
+                <span class="tab">设计</span>
+                <span class="tab">编程</span>
+                <span class="tab">更多<svg class="ico"><use href="#i-chevron-down"></use></svg></span>
+            </div>
+
+            <div class="event-grid">
+                <article class="event-card">
+                    <div class="event-cover">
+                        <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=red%20and%20gold%20chinese%20university%20competition%20poster%2C%20english%20translation%20contest%2C%20trophy%20and%20books%2C%20bold%20festive%20layout&amp;image_size=landscape_4_3" alt="2026年全国大学生英语翻译大赛宣传图">
+                        <span class="cover-chip brand">大英赛同主办方</span>
+                    </div>
+                    <div class="event-body">
+                        <h3 class="event-title">【大英赛主办方】2026年全国大学生英语翻译大赛</h3>
+                        <p class="event-meta"><span>主办方：</span>高等学校大学外语教学研究会</p>
+                        <p class="event-meta"><span>比赛时间：</span>2026.11.12 - 2026.12.16</p>
+                        <div class="event-tags">
+                            <span class="tag pink">大英赛主办方</span>
+                            <span class="tag">三年级加试</span>
+                            <span class="tag warm">翻译赛项提升</span>
+                        </div>
+                        <div class="event-foot">
+                            <div class="event-counts">
+                                <span><svg class="ico"><use href="#i-eye"></use></svg>694,230 浏览</span>
+                                <span><svg class="ico"><use href="#i-heart"></use></svg>9,904 关注</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="event-card">
+                    <div class="event-cover">
+                        <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=dark%20blue%20futuristic%20technology%20poster%2C%20industrial%20internet%20and%20smart%20factory%2C%20circuit%20lines%2C%20chinese%20competition%2C%20bold%20layout&amp;image_size=landscape_4_3" alt="2026年第二届工业互联网技术与应用挑战赛宣传图">
+                        <span class="cover-chip right">90分以上全部一等奖</span>
+                    </div>
+                    <div class="event-body">
+                        <h3 class="event-title">2026年第二届工业互联网技术与应用挑战赛</h3>
+                        <p class="event-meta"><span>主办方：</span>中国互联网协会智慧教育工作委员会</p>
+                        <p class="event-meta"><span>比赛时间：</span>2026.12.19 - 2026.12.20</p>
+                        <div class="event-tags">
+                            <span class="tag">线上赛</span>
+                            <span class="tag blue">工科类</span>
+                            <span class="tag warm">赛后三天评证</span>
+                        </div>
+                        <div class="event-foot">
+                            <div class="event-counts">
+                                <span><svg class="ico"><use href="#i-eye"></use></svg>46,077 浏览</span>
+                                <span><svg class="ico"><use href="#i-heart"></use></svg>934 关注</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="event-card">
+                    <div class="event-cover">
+                        <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=purple%20competition%20poster%2C%20translation%20contest%2C%20open%20books%20and%20world%20map%2C%20chinese%20university%20event%2C%20elegant%20layout&amp;image_size=landscape_4_3" alt="第六届英语世界杯全国大学生翻译大赛宣传图">
+                        <span class="cover-chip brand">第六届《英语世界》杯</span>
+                    </div>
+                    <div class="event-body">
+                        <h3 class="event-title">【下周开考】第六届《英语世界》杯全国大学生翻译大赛</h3>
+                        <p class="event-meta"><span>主办方：</span>商务印书馆《英语世界》杂志社</p>
+                        <p class="event-meta"><span>比赛时间：</span>2026.11.09 - 2026.11.08</p>
+                        <div class="event-tags">
+                            <span class="tag pink">综合加分项参考</span>
+                            <span class="tag">证书直发</span>
+                            <span class="tag warm">第六届</span>
+                        </div>
+                        <div class="event-foot">
+                            <div class="event-counts">
+                                <span><svg class="ico"><use href="#i-eye"></use></svg>170,235 浏览</span>
+                                <span><svg class="ico"><use href="#i-heart"></use></svg>3,859 关注</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="event-card">
+                    <div class="event-cover">
+                        <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=warm%20red%20literary%20poster%2C%20youth%20writing%20competition%2C%20books%20and%20autumn%20leaves%2C%20elegant%20chinese%20style&amp;image_size=landscape_4_3" alt="悦读者杯青少年文学大赛宣传图">
+                        <span class="cover-chip">文学创作</span>
+                    </div>
+                    <div class="event-body">
+                        <h3 class="event-title">【作品征集】“悦·读者杯”—2026年青少年文学大赛</h3>
+                        <p class="event-meta"><span>主办方：</span>读者杂志社</p>
+                        <p class="event-meta"><span>比赛时间：</span>2026.05.15 - 2026.11.07</p>
+                        <div class="event-tags">
+                            <span class="tag pink">文学创作</span>
+                            <span class="tag">征文比赛</span>
+                            <span class="tag blue">人文素养</span>
+                        </div>
+                        <div class="event-foot">
+                            <div class="event-counts">
+                                <span><svg class="ico"><use href="#i-eye"></use></svg>38,529 浏览</span>
+                                <span><svg class="ico"><use href="#i-heart"></use></svg>941 关注</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="event-card">
+                    <div class="event-cover">
+                        <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=blue%20academic%20poster%2C%20english%20vocabulary%20contest%2C%20students%20and%20books%2C%20modern%20clean%20layout&amp;image_size=landscape_4_3" alt="第四届DECC大学生外交英语词汇大赛宣传图">
+                        <span class="cover-chip">免费参赛</span>
+                    </div>
+                    <div class="event-body">
+                        <h3 class="event-title">第四届DECC大学生外交英语词汇大赛</h3>
+                        <p class="event-meta"><span>主办方：</span>外语教学与研究出版社</p>
+                        <p class="event-meta"><span>比赛时间：</span>2026.10.20 - 2026.11.30</p>
+                        <div class="event-tags">
+                            <span class="tag">词汇赛</span>
+                            <span class="tag blue">外语类</span>
+                            <span class="tag warm">免费参赛</span>
+                        </div>
+                        <div class="event-foot">
+                            <div class="event-counts">
+                                <span><svg class="ico"><use href="#i-eye"></use></svg>25,806 浏览</span>
+                                <span><svg class="ico"><use href="#i-heart"></use></svg>612 关注</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="event-card">
+                    <div class="event-cover">
+                        <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=light%20blue%20education%20poster%2C%20english%20teacher%20skill%20competition%2C%20classroom%20and%20graduation%20caps%2C%20clean%20academic%20style&amp;image_size=landscape_4_3" alt="全国高师学生英语教师职业技能竞赛宣传图">
+                        <span class="cover-chip">师范生专场</span>
+                    </div>
+                    <div class="event-body">
+                        <h3 class="event-title">2026年全国高师学生英语教师职业技能竞赛</h3>
+                        <p class="event-meta"><span>主办方：</span>全国高等师范院校外语教学研究会</p>
+                        <p class="event-meta"><span>比赛时间：</span>2026.10.18 - 2026.12.06</p>
+                        <div class="event-tags">
+                            <span class="tag">教学技能</span>
+                            <span class="tag blue">师范生</span>
+                            <span class="tag pink">实践证书</span>
+                        </div>
+                        <div class="event-foot">
+                            <div class="event-counts">
+                                <span><svg class="ico"><use href="#i-eye"></use></svg>18,392 浏览</span>
+                                <span><svg class="ico"><use href="#i-heart"></use></svg>437 关注</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="event-card">
+                    <div class="event-cover">
+                        <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=red%20and%20yellow%20writing%20contest%20poster%2C%20chinese%20composition%20competition%2C%20pen%20and%20paper%2C%20energetic%20layout&amp;image_size=landscape_4_3" alt="2026年全国大学生作文竞赛宣传图">
+                        <span class="cover-chip brand">全国赛</span>
+                    </div>
+                    <div class="event-body">
+                        <h3 class="event-title">2026年全国大学生作文竞赛</h3>
+                        <p class="event-meta"><span>主办方：</span>中国写作学会</p>
+                        <p class="event-meta"><span>比赛时间：</span>2026.11.01 - 2026.12.15</p>
+                        <div class="event-tags">
+                            <span class="tag pink">作文竞赛</span>
+                            <span class="tag">文学创作</span>
+                            <span class="tag warm">全国赛</span>
+                        </div>
+                        <div class="event-foot">
+                            <div class="event-counts">
+                                <span><svg class="ico"><use href="#i-eye"></use></svg>52,610 浏览</span>
+                                <span><svg class="ico"><use href="#i-heart"></use></svg>1,208 关注</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="event-card">
+                    <div class="event-cover">
+                        <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=deep%20blue%20business%20poster%2C%20business%20english%20vocabulary%20contest%2C%20globe%20and%20charts%2C%20professional%20layout&amp;image_size=landscape_4_3" alt="高校大学生商务外语词汇大赛宣传图">
+                        <span class="cover-chip">证书直发</span>
+                    </div>
+                    <div class="event-body">
+                        <h3 class="event-title">2026年高校大学生商务外语词汇大赛</h3>
+                        <p class="event-meta"><span>主办方：</span>中国国际贸易学会</p>
+                        <p class="event-meta"><span>比赛时间：</span>2026.11.20 - 2026.12.28</p>
+                        <div class="event-tags">
+                            <span class="tag blue">商务外语</span>
+                            <span class="tag">词汇赛</span>
+                            <span class="tag warm">证书直发</span>
+                        </div>
+                        <div class="event-foot">
+                            <div class="event-counts">
+                                <span><svg class="ico"><use href="#i-eye"></use></svg>30,144 浏览</span>
+                                <span><svg class="ico"><use href="#i-heart"></use></svg>755 关注</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- 典型部分三：左图右文——实习实践列表 -->
+        <section class="section wsb-practice">
+            <div class="section-head">
+                <h2 class="section-title"><em>实习实践</em>积淀职场履历</h2>
+                <p class="section-sub">名企实战项目 · 远程实习 · 技能认证，把课堂所学沉淀成简历的硬核经历</p>
+            </div>
+
+            <div class="tabs">
+                <span class="tab active">热门</span>
+                <span class="tab">在线科研</span>
+                <span class="tab">名企实训</span>
+                <span class="tab">实习就业</span>
+                <span class="tab">技能认证</span>
+                <span class="tab">更多<svg class="ico"><use href="#i-chevron-down"></use></svg></span>
+            </div>
+
+            <div class="practice-grid">
+                <article class="practice-card">
+                    <div class="practice-cover">
+                        <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=blue%20and%20white%20research%20project%20cover%2C%20sensor%20chip%20and%20laboratory%2C%20technology%2C%20clean%20minimal%20design&amp;image_size=landscape_4_3" alt="传感器理论最新技术及其应用研究项目封面">
+                        <span class="cover-chip">在线科研项目</span>
+                    </div>
+                    <div class="practice-body">
+                        <h3 class="practice-title">传感器理论最新技术及其应用研究</h3>
+                        <p class="practice-meta"><svg class="ico"><use href="#i-building"></use></svg>优研升</p>
+                        <p class="practice-meta"><svg class="ico"><use href="#i-calendar"></use></svg>2026.09.24 - 2026.10.14</p>
+                        <div class="event-tags">
+                            <span class="tag">科研项目</span>
+                            <span class="tag blue">工科</span>
+                            <span class="tag pink">传感器</span>
+                        </div>
+                        <div class="practice-foot">
+                            <span>157 人已浏览</span>
+                            <a class="detail-link" href="#">查看详情<svg class="ico"><use href="#i-chevron-right"></use></svg></a>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="practice-card">
+                    <div class="practice-cover">
+                        <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=dark%20blue%20technology%20course%20cover%2C%20robotic%20arm%20and%20neural%20network%2C%20deep%20learning%2C%20futuristic&amp;image_size=landscape_4_3" alt="基于深度学习的机器人轨迹预测研究项目封面">
+                        <span class="cover-chip brand">在线科研项目-工科方向</span>
+                    </div>
+                    <div class="practice-body">
+                        <h3 class="practice-title">AI方向—基于深度学习的机器人轨迹预测研究</h3>
+                        <p class="practice-meta"><svg class="ico"><use href="#i-building"></use></svg>优研升</p>
+                        <p class="practice-meta"><svg class="ico"><use href="#i-calendar"></use></svg>2026.09.30 - 2026.10.31</p>
+                        <div class="event-tags">
+                            <span class="tag">在线科研项目</span>
+                            <span class="tag blue">工科</span>
+                            <span class="tag warm">机器人</span>
+                        </div>
+                        <div class="practice-foot">
+                            <span>6,384 人已浏览</span>
+                            <a class="detail-link" href="#">查看详情<svg class="ico"><use href="#i-chevron-right"></use></svg></a>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="practice-card">
+                    <div class="practice-cover">
+                        <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=brown%20and%20red%20academic%20poster%2C%20economic%20data%20charts%20and%20analysis%2C%20research%20project%20cover&amp;image_size=landscape_4_3" alt="从现实问题到实证分析科研项目封面">
+                        <span class="cover-chip">在线科研项目-商科经济</span>
+                    </div>
+                    <div class="practice-body">
+                        <h3 class="practice-title">从现实问题到实证分析</h3>
+                        <p class="practice-meta"><svg class="ico"><use href="#i-building"></use></svg>优研升</p>
+                        <p class="practice-meta"><svg class="ico"><use href="#i-calendar"></use></svg>2026.09.01 - 2026.10.01</p>
+                        <div class="event-tags">
+                            <span class="tag">科研项目</span>
+                            <span class="tag warm">商科</span>
+                            <span class="tag blue">经济学</span>
+                        </div>
+                        <div class="practice-foot">
+                            <span>2,315 人已浏览</span>
+                            <a class="detail-link" href="#">查看详情<svg class="ico"><use href="#i-chevron-right"></use></svg></a>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="practice-card">
+                    <div class="practice-cover">
+                        <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=teal%20corporate%20training%20cover%2C%20ai%20large%20model%2C%20students%20and%20computer%20screen%2C%20modern&amp;image_size=landscape_4_3" alt="高校大学生AI大模型企业实战训练营封面">
+                        <span class="cover-chip">热门实训营</span>
+                    </div>
+                    <div class="practice-body">
+                        <h3 class="practice-title">高校大学生AI大模型企业实战训练营</h3>
+                        <p class="practice-meta"><svg class="ico"><use href="#i-building"></use></svg>天树探界</p>
+                        <p class="practice-meta"><svg class="ico"><use href="#i-calendar"></use></svg>2026.08.24 - 2026.10.08</p>
+                        <div class="event-tags">
+                            <span class="tag">实战实训</span>
+                            <span class="tag warm">企业导师带教</span>
+                        </div>
+                        <div class="practice-foot">
+                            <span>1,796 人已浏览</span>
+                            <a class="detail-link" href="#">查看详情<svg class="ico"><use href="#i-chevron-right"></use></svg></a>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="practice-card">
+                    <div class="practice-cover">
+                        <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=green%20technology%20training%20cover%2C%20quadruped%20robot%20dog%20in%20industrial%20plant%2C%20realistic&amp;image_size=landscape_4_3" alt="四足机器人无人巡检实训营封面">
+                        <span class="cover-chip">就业实操营</span>
+                    </div>
+                    <div class="practice-body">
+                        <h3 class="practice-title">四足机器人无人巡检实训营</h3>
+                        <p class="practice-meta"><svg class="ico"><use href="#i-building"></use></svg>天树探界</p>
+                        <p class="practice-meta"><svg class="ico"><use href="#i-calendar"></use></svg>2026.09.09 - 2026.10.31</p>
+                        <div class="event-tags">
+                            <span class="tag">实践实训</span>
+                            <span class="tag warm">企业导师带教</span>
+                        </div>
+                        <div class="practice-foot">
+                            <span>794 人已浏览</span>
+                            <a class="detail-link" href="#">查看详情<svg class="ico"><use href="#i-chevron-right"></use></svg></a>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="practice-card">
+                    <div class="practice-cover">
+                        <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=blue%20purple%20aigc%20course%20cover%2C%20creative%20software%20interface%2C%20digital%20art%2C%20modern&amp;image_size=landscape_4_3" alt="AIGC全能应用实训营封面">
+                        <span class="cover-chip">AIGC热门</span>
+                    </div>
+                    <div class="practice-body">
+                        <h3 class="practice-title">AIGC全能应用实训营</h3>
+                        <p class="practice-meta"><svg class="ico"><use href="#i-building"></use></svg>北京郡秀信息科技有限公司</p>
+                        <p class="practice-meta"><svg class="ico"><use href="#i-calendar"></use></svg>时间待定</p>
+                        <div class="event-tags">
+                            <span class="tag pink">影视制作</span>
+                            <span class="tag blue">艺术设计</span>
+                            <span class="tag">办公效率</span>
+                            <span class="tag warm">商业设计</span>
+                        </div>
+                        <div class="practice-foot">
+                            <span>2,047 人已浏览</span>
+                            <a class="detail-link" href="#">查看详情<svg class="ico"><use href="#i-chevron-right"></use></svg></a>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- 资讯瀑布流 -->
+        <section class="section wsb-news">
+            <div class="section-head">
+                <h2 class="section-title"><em>探索资讯</em>洞察前沿</h2>
+                <p class="section-sub">洞察前沿动态，聚焦热点资讯，感知行业脉动，引领启智未来。</p>
+            </div>
+
+            <div class="news-masonry">
+                <article class="news-card">
+                    <div class="news-cover ratio-wide">
+                        <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=large%20chinese%20higher%20education%20expo%20hall%2C%20big%20stage%20and%20screens%2C%20crowd%2C%20blue%20lighting%2C%20event%20photo&amp;image_size=landscape_16_9" alt="第64届高等教育博览会现场照片">
+                    </div>
+                    <div class="news-body">
+                        <h3 class="news-title">第64届高博会之旅圆满收官：聚力·笃行·致远！</h3>
+                        <p class="news-date"><svg class="ico"><use href="#i-calendar"></use></svg>发布于 2026-05-25</p>
+                    </div>
+                </article>
+
+                <article class="news-card">
+                    <div class="news-cover ratio-4x3">
+                        <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=award%20ceremony%20stage%20with%20red%20screen%20and%20audience%2C%20chinese%20conference%2C%20event%20photography&amp;image_size=landscape_4_3" alt="CCF算法能力大赛颁奖典礼现场">
+                    </div>
+                    <div class="news-body">
+                        <h3 class="news-title">第二届CCF算法能力大赛颁奖典礼圆满落幕</h3>
+                        <p class="news-date"><svg class="ico"><use href="#i-calendar"></use></svg>发布于 2026-05-18</p>
+                    </div>
+                </article>
+
+                <article class="news-card">
+                    <div class="news-cover ratio-tall">
+                        <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=aerial%20view%20of%20modern%20chinese%20smart%20city%20and%20green%20hills%2C%20bright%20sky%2C%20photo&amp;image_size=portrait_4_3" alt="中国温州智能谷航拍照片">
+                    </div>
+                    <div class="news-body">
+                        <h3 class="news-title">赛氪受邀参加CAAI中国（温州）智能谷考察交流会，共探AI产业新机遇</h3>
+                        <p class="news-date"><svg class="ico"><use href="#i-calendar"></use></svg>发布于 2026-04-02</p>
+                    </div>
+                </article>
+
+                <article class="news-card">
+                    <div class="news-cover ratio-4x3">
+                        <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=chinese%20ai%20competition%20final%20stage%20with%20blue%20screens%20and%20audience%2C%20event%20photo&amp;image_size=landscape_4_3" alt="天翼云息壤杯高校AI大赛总决赛现场">
+                    </div>
+                    <div class="news-body">
+                        <h3 class="news-title">“天翼云息壤杯”高校AI大赛总决赛圆满收官</h3>
+                        <p class="news-date"><svg class="ico"><use href="#i-calendar"></use></svg>发布于 2026-04-12</p>
+                    </div>
+                </article>
+
+                <article class="news-card">
+                    <div class="news-cover ratio-tall">
+                        <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=humanoid%20robot%20on%20festive%20red%20stage%2C%20chinese%20tv%20gala%2C%20glowing%20lights%2C%20photo&amp;image_size=portrait_4_3" alt="春晚舞台上的具身大模型机器人">
+                    </div>
+                    <div class="news-body">
+                        <h3 class="news-title">环球赛乐荣获2026年春节联欢晚会指定具身大模型机器人</h3>
+                        <p class="news-date"><svg class="ico"><use href="#i-calendar"></use></svg>发布于 2026-03-24</p>
+                    </div>
+                </article>
+
+                <article class="news-card">
+                    <div class="news-cover ratio-4x3">
+                        <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=chinese%20university%20students%20in%20ai%20training%20class%20with%20laptops%2C%20bright%20classroom%2C%20photo&amp;image_size=landscape_4_3" alt="高校AI大模型实战训练营课堂">
+                    </div>
+                    <div class="news-body">
+                        <h3 class="news-title">高校大学生AI大模型企业实战训练营顺利开营</h3>
+                        <p class="news-date"><svg class="ico"><use href="#i-calendar"></use></svg>发布于 2026-03-18</p>
+                    </div>
+                </article>
+
+                <article class="news-card">
+                    <div class="news-cover ratio-4x3">
+                        <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=group%20of%20chinese%20student%20volunteers%20in%20blue%20vests%20at%20exhibition%20hall%2C%20photo&amp;image_size=landscape_4_3" alt="高博会学生志愿者团队合影">
+                    </div>
+                    <div class="news-body">
+                        <h3 class="news-title">高博会志愿者风采：用专业与热情服务每一位参会者</h3>
+                        <p class="news-date"><svg class="ico"><use href="#i-calendar"></use></svg>发布于 2026-05-24</p>
+                    </div>
+                </article>
+
+                <article class="news-card">
+                    <div class="news-cover ratio-4x3">
+                        <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=chinese%20technology%20forum%20with%20speakers%20on%20stage%20and%20audience%2C%20photo&amp;image_size=landscape_4_3" alt="智能教育前沿论坛现场">
+                    </div>
+                    <div class="news-body">
+                        <h3 class="news-title">智能教育前沿论坛：共话AI时代人才培养新路径</h3>
+                        <p class="news-date"><svg class="ico"><use href="#i-calendar"></use></svg>发布于 2026-04-20</p>
+                    </div>
+                </article>
+
+                <article class="news-card">
+                    <div class="news-cover ratio-4x3">
+                        <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=chinese%20university%20job%20fair%20with%20booths%20and%20students%2C%20photo&amp;image_size=landscape_4_3" alt="2026年春季校园招聘会现场">
+                    </div>
+                    <div class="news-body">
+                        <h3 class="news-title">2026年春季校园招聘会现场直击</h3>
+                        <p class="news-date"><svg class="ico"><use href="#i-calendar"></use></svg>发布于 2026-03-30</p>
+                    </div>
+                </article>
+            </div>
+        </section>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <span class="logo-mark">S</span>
+                <div>
+                    <strong>赛氪</strong>
+                    <small>一站式大学生赛事与科创实践平台</small>
+                </div>
+            </div>
+
+            <nav class="footer-nav">
+                <a href="#">关于我们</a>
+                <a href="#">合作咨询</a>
+                <a href="#">常见问题</a>
+                <a href="#">隐私政策</a>
+            </nav>
+
+            <p class="footer-copy">© 2026 赛氪 Saikr.com · 本页面为《高级网页设计 I》网页元素设计实践作品（魏士博）</p>
+        </div>
+    </footer>
+</body>
+</html>
