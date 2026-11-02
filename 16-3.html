@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<!--
+    作者：魏士博
+    建立时间：2026-11-02
+    使用的大模型功能名称：Trae DeepSeek-V4.1-Flash
+    页面说明：课堂测试第 2 组素材——点击排行 Tab 选项卡（实时点击 / 24小时排行）
+-->
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>点击排行 · Tab 选项卡</title>
+    <link rel="stylesheet" href="font/download/font_5244721_1queqp6edo8/iconfont.css">
+    <style>
+        /* ============ 全局公共 CSS ============ */
+        :root {
+            --orange: #ed5c03;
+            --title: #222;
+            --text: #5d5d5d;
+            --muted: #a8a8a8;
+            --tab-bg: #e4e4e4;
+            --line: #e2e2e2;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #fff;
+            color: var(--text);
+            font-family: "Microsoft YaHei", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+            font-size: 15px;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        img {
+            display: block;
+            max-width: 100%;
+        }
+
+        button {
+            font-family: inherit;
+            border: 0;
+            background: none;
+        }
+
+        /* ============ 排行榜组件 ============ */
+        .rank-widget {
+            width: 300px;
+            margin: 58px auto 0;
+        }
+
+        .rank-head {
+            display: flex;
+            align-items: center;
+            height: 40px;
+            padding-bottom: 7px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .rank-head img {
+            height: 33px;
+            width: auto;
+        }
+
+        /* ============ Tab 选项卡 ============ */
+        .rank-tabs {
+            position: relative;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            height: 34px;
+            margin-top: 4px;
+        }
+
+        .rank-tab {
+            position: relative;
+            cursor: pointer;
+            background: var(--tab-bg);
+            color: #666;
+            font-size: 15px;
+            letter-spacing: 0.5px;
+            transition: color 0.15s ease, background 0.15s ease;
+        }
+
+        .rank-tab:hover {
+            color: #333;
+        }
+
+        .rank-tab.is-active {
+            background: #fff;
+            color: var(--orange);
+            font-weight: 700;
+        }
+
+        .rank-tab.is-active::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 2px;
+            background: var(--orange);
+        }
+
+        .rank-tab.is-active::before {
+            content: "";
+            position: absolute;
+            left: 50%;
+            bottom: -6px;
+            width: 10px;
+            height: 10px;
+            margin-left: -5px;
+            background: #fff;
+            border-right: 2px solid var(--orange);
+            border-bottom: 2px solid var(--orange);
+            transform: rotate(45deg);
+        }
+
+        /* ============ 榜单列表 ============ */
+        .rank-list {
+            list-style: none;
+            margin-top: 10px;
+        }
+
+        .rank-row {
+            display: flex;
+            align-items: center;
+            height: 35px;
+        }
+
+        .rank-no {
+            flex: none;
+            width: 16px;
+            margin-left: 4px;
+            text-align: center;
+            color: var(--orange);
+            font-size: 13px;
+            line-height: 16px;
+        }
+
+        .rank-no.is-top {
+            width: 16px;
+            height: 16px;
+            background: url("img/16-3/k.jpg") no-repeat center / 16px 16px;
+            font-size: 11px;
+            line-height: 16px;
+        }
+
+        .rank-title {
+            flex: 1;
+            min-width: 0;
+            margin-left: 9px;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .rank-views {
+            flex: none;
+            margin-left: 8px;
+            padding-right: 4px;
+            color: var(--muted);
+            font-size: 13px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* ============ 操作提示 ============ */
+        .rank-hint {
+            margin-top: 18px;
+            color: #b0b0b0;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .rank-hint .iconfont {
+            margin-right: 4px;
+            color: var(--orange);
+            font-size: 13px;
+            vertical-align: -1px;
+        }
+
+        /* ============ 响应式适配 ============ */
+        @media (max-width: 400px) {
+            .rank-widget {
+                width: calc(100% - 36px);
+                max-width: 300px;
+                margin: 32px auto 0;
+            }
+
+            .rank-row {
+                height: 34px;
+            }
+
+            .rank-title {
+                font-size: 14px;
+            }
+
+            .rank-views {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <section class="rank-widget" aria-label="点击排行榜">
+        <!-- 标题图使用课堂测试 2 号素材 tit06.jpg -->
+        <h1 class="rank-head">
+            <img src="img/16-3/tit06.jpg" alt="点击排行">
+        </h1>
+
+        <!-- Tab 选项卡 -->
+        <div class="rank-tabs" role="tablist" aria-label="排行榜切换">
+            <button class="rank-tab" type="button" role="tab" aria-selected="false" data-tab="realtime">实时点击</button>
+            <button class="rank-tab is-active" type="button" role="tab" aria-selected="true" data-tab="daily">24小时排行</button>
+        </div>
+
+        <!-- 榜单内容，点击不同选项卡显示对应数据 -->
+        <ol class="rank-list" role="tabpanel" aria-live="polite"></ol>
+
+        <p class="rank-hint">
+            <i class="iconfont icon-dianzan" aria-hidden="true"></i>点击上方选项卡，切换不同榜单
+        </p>
+    </section>
+
+    <script>
+        var rankData = {
+            daily: [
+                { title: "灯塔水母：地球上唯一不死生物", views: "356322" },
+                { title: "阿里巴巴全资收购UC 俞永福称UC将独立发展", views: "311246" },
+                { title: "亚马逊惊现三米长巨滑舌鱼用肺呼吸", views: "295883" },
+                { title: "奉化男子上山抓野味 遭遇极濒保护动物", views: "266061" },
+                { title: "大白鲨深海失踪 或被大型生物吞噬", views: "243936" },
+                { title: "南非小犀牛目睹母亲被猎杀不肯离开", views: "224346" },
+                { title: "余额宝周岁：收益率“过山车”", views: "172694" },
+                { title: "“尸油入餐桌”纯属无稽之谈", views: "128789" }
+            ],
+            realtime: [
+                { title: "神舟十九号乘组完成第三次出舱活动", views: "1986532" },
+                { title: "全国多地迎来今冬首场降雪", views: "1763204" },
+                { title: "新能源汽车充电桩数量突破千万台", views: "1548721" },
+                { title: "大学生返乡创业带动乡村就业", views: "1320657" },
+                { title: "国产大模型日活跃用户再创新高", views: "1189430" },
+                { title: "城市马拉松周末开跑 多条道路管制", views: "987216" },
+                { title: "冬季流感高发 医生提醒做好防护", views: "865402" },
+                { title: "高校图书馆延长开放时间", views: "742189" }
+            ]
+        };
+
+        var rankList = document.querySelector(".rank-list");
+        var rankTabs = document.querySelectorAll("[data-tab]");
+
+        function renderRank(key) {
+            rankList.innerHTML = rankData[key].map(function (item, index) {
+                var topClass = index < 3 ? " is-top" : "";
+                return '<li class="rank-row">' +
+                    '<span class="rank-no' + topClass + '">' + (index + 1) + "</span>" +
+                    '<span class="rank-title">' + item.title + "</span>" +
+                    '<span class="rank-views">' + item.views + "</span>" +
+                "</li>";
+            }).join("");
+        }
+
+        rankTabs.forEach(function (tab) {
+            tab.addEventListener("click", function () {
+                rankTabs.forEach(function (item) {
+                    item.classList.remove("is-active");
+                    item.setAttribute("aria-selected", "false");
+                });
+                tab.classList.add("is-active");
+                tab.setAttribute("aria-selected", "true");
+                renderRank(tab.getAttribute("data-tab"));
+            });
+        });
+
+        renderRank("daily");
+    </script>
+</body>
+</html>
