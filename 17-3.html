@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<!--
+    作者：魏士博
+    建立时间：2026-11-02
+    使用的大模型功能名称：Claude Code（DeepSeek-Chat）
+    页面说明：第 17 课列表与列表详情（列表页）——使用 fetch 获取商品列表，点击卡片跳转详情页
+-->
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商品列表 · 列表与列表详情</title>
+    <style>
+        /* ============ 基础样式 ============ */
+        :root {
+            --ink: #0b1220;
+            --text: #334155;
+            --muted: #71809a;
+            --line: #e6eaf2;
+            --brand: #4f46e5;
+            --brand-2: #7c3aed;
+            --green: #10b981;
+            --red: #ef4444;
+            --amber: #f59e0b;
+            --mono: "Cascadia Code", Consolas, "JetBrains Mono", "Courier New", monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            color: var(--text);
+            background: #f5f6fa;
+            background-image:
+                radial-gradient(900px 420px at 10% -10%, rgba(79, 70, 229, 0.10), transparent 60%),
+                radial-gradient(760px 380px at 96% 2%, rgba(16, 185, 129, 0.06), transparent 58%);
+            background-repeat: no-repeat;
+            font-family: "Microsoft YaHei", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+            font-size: 15px;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        button,
+        input {
+            font-family: inherit;
+        }
+
+        img {
+            display: block;
+            max-width: 100%;
+        }
+
+        ::selection {
+            background: rgba(79, 70, 229, 0.18);
+        }
+
+        .wrap {
+            max-width: 1140px;
+            margin: 0 auto;
+            padding: 0 24px 64px;
+        }
+
+        /* ============ 顶部 ============ */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 30px 0 18px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            min-width: 0;
+        }
+
+        .brand-mark {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: none;
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            box-shadow: 0 10px 22px rgba(79, 70, 229, 0.28);
+            color: #fff;
+            line-height: 1;
+        }
+
+        .brand-mark b {
+            font-family: var(--mono);
+            font-size: 17px;
+            letter-spacing: -0.5px;
+        }
+
+        .brand-mark small {
+            margin-top: 4px;
+            font-family: var(--mono);
+            font-size: 7.5px;
+            letter-spacing: 1px;
+            opacity: 0.75;
+        }
+
+        .brand h1 {
+            color: var(--ink);
+            font-size: 21px;
+            line-height: 1.3;
+            letter-spacing: -0.4px;
+        }
+
+        .brand p {
+            margin-top: 2px;
+            color: var(--muted);
+            font-size: 12.5px;
+        }
+
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: none;
+        }
+
+        .lesson-chip {
+            padding: 6px 11px;
+            border-radius: 999px;
+            background: #eef2ff;
+            color: var(--brand);
+            font-size: 11.5px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+
+        .back-link {
+            padding: 7px 13px;
+            border: 1px solid var(--line);
+            border-radius: 9px;
+            background: #fff;
+            color: #475569;
+            font-size: 12.5px;
+            text-decoration: none;
+            transition: 0.18s ease;
+        }
+
+        .back-link:hover {
+            border-color: #b9c5e8;
+            color: var(--brand);
+        }
+
+        .lead {
+            max-width: 760px;
+            margin: 4px 0 18px;
+            color: var(--muted);
+            font-size: 13.5px;
+            line-height: 1.85;
+        }
+
+        .lead code,
+        .api-meta code {
+            padding: 1px 6px;
+            border-radius: 5px;
+            background: #eef2ff;
+            color: var(--brand);
+            font-family: var(--mono);
+            font-size: 12px;
+        }
+
+        /* ============ 接口地址 ============ */
+        .api-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 13px 16px;
+            border-radius: 14px;
+            background: #0f172a;
+            box-shadow: 0 14px 30px rgba(15, 23, 42, 0.16);
+        }
+
+        .method {
+            flex: none;
+            padding: 4px 10px;
+            border-radius: 6px;
+            background: rgba(16, 185, 129, 0.16);
+            color: #34d399;
+            font-family: var(--mono);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .endpoint {
+            flex: 1;
+            min-width: 0;
+            overflow-x: auto;
+            color: #cbd5e1;
+            font-family: var(--mono);
+            font-size: 12.5px;
+            white-space: nowrap;
+            scrollbar-width: none;
+        }
+
+        .endpoint::-webkit-scrollbar {
+            display: none;
+        }
+
+        .copy-btn {
+            flex: none;
+            padding: 5px 11px;
+            border: 1px solid #2c3b57;
+            border-radius: 7px;
+            background: transparent;
+            color: #a9bad6;
+            font-size: 11.5px;
+            cursor: pointer;
+            transition: 0.18s ease;
+        }
+
+        .copy-btn:hover {
+            border-color: #4d6488;
+            color: #fff;
+        }
+
+        .api-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 18px;
+            margin: 9px 0 24px 4px;
+            color: #94a3b8;
+            font-size: 11.5px;
+        }
+
+        .api-meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .api-meta span::before {
+            content: "";
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: #cbd5e1;
+        }
+
+        /* ============ 状态行 ============ */
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0 0 16px 2px;
+            color: var(--muted);
+            font-size: 12.5px;
+            transition: color 0.2s ease;
+        }
+
+        .status::before {
+            content: "";
+            flex: none;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .status[data-state="loading"] {
+            color: #2563eb;
+        }
+
+        .status[data-state="loading"]::before {
+            animation: pulse 1.1s ease-in-out infinite;
+        }
+
+        .status[data-state="ok"] {
+            color: #059669;
+        }
+
+        .status[data-state="error"] {
+            color: #dc2626;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.35; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        /* ============ 列表标题 ============ */
+        .list-head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 12px;
+            margin: 0 2px 14px;
+        }
+
+        .list-head h2 {
+            color: var(--ink);
+            font-size: 16px;
+        }
+
+        .result-meta {
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        /* ============ 商品网格 ============ */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 16px;
+            min-height: 220px;
+        }
+
+        .product {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            background: #fff;
+            color: inherit;
+            text-decoration: none;
+            animation: fadeUp 0.45s ease both;
+            animation-delay: calc(var(--i, 0) * 45ms);
+            transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+        }
+
+        .product:hover,
+        .product:focus-visible {
+            border-color: #d9e0ee;
+            box-shadow: 0 16px 32px rgba(15, 23, 42, 0.1);
+            transform: translateY(-4px);
+        }
+
+        .product:focus-visible {
+            outline: 2px solid #6366f1;
+            outline-offset: 2px;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .thumb {
+            position: relative;
+            aspect-ratio: 4 / 3;
+            overflow: hidden;
+            background: #f5f7fb;
+        }
+
+        .thumb img {
+            width: 100%;
+            height: 100%;
+            padding: 16px;
+            object-fit: contain;
+            transition: transform 0.3s ease;
+        }
+
+        .product:hover .thumb img {
+            transform: scale(1.05);
+        }
+
+        .thumb.img-failed::after {
+            content: "图片加载失败";
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            color: #94a3b8;
+            font-size: 12px;
+        }
+
+        .cat-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 3px 8px;
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(6px);
+            color: #475569;
+            font-size: 10.5px;
+            letter-spacing: 0.3px;
+        }
+
+        .id-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 3px 8px;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.72);
+            color: #fff;
+            font-family: var(--mono);
+            font-size: 10.5px;
+            letter-spacing: 0.3px;
+        }
+
+        .body {
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+            padding: 13px 14px 15px;
+        }
+
+        .body h3 {
+            display: -webkit-box;
+            min-height: 42px;
+            overflow: hidden;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            margin-bottom: 5px;
+            color: var(--ink);
+            font-size: 14.5px;
+            line-height: 1.45;
+        }
+
+        .desc {
+            display: -webkit-box;
+            min-height: 37px;
+            overflow: hidden;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            margin-bottom: 9px;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.55;
+        }
+
+        .meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--muted);
+            font-size: 11.5px;
+        }
+
+        .rating {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            color: #b45309;
+            font-weight: 600;
+        }
+
+        .rating svg {
+            width: 11px;
+            height: 11px;
+            fill: currentColor;
+        }
+
+        .stock {
+            margin-left: auto;
+        }
+
+        .price-row {
+            display: flex;
+            align-items: baseline;
+            gap: 7px;
+            margin-top: auto;
+            padding-top: 10px;
+        }
+
+        .price {
+            color: var(--ink);
+            font-size: 17.5px;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+        }
+
+        .old-price {
+            color: #a0aec2;
+            font-size: 11.5px;
+            text-decoration: line-through;
+        }
+
+        .go {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            margin-left: auto;
+            color: var(--brand);
+            font-size: 11.5px;
+            font-weight: 700;
+        }
+
+        .go span {
+            transition: transform 0.2s ease;
+        }
+
+        .product:hover .go span {
+            transform: translateX(3px);
+        }
+
+        /* ============ 骨架屏 ============ */
+        .product.skeleton {
+            cursor: default;
+            animation: none;
+            box-shadow: none;
+            pointer-events: none;
+        }
+
+        .sk {
+            border-radius: 8px;
+            background: linear-gradient(90deg, #eef1f7 25%, #f8faff 37%, #eef1f7 63%);
+            background-size: 400% 100%;
+            animation: shimmer 1.3s ease infinite;
+        }
+
+        .sk-img {
+            aspect-ratio: 4 / 3;
+            border-radius: 0;
+        }
+
+        .sk-body {
+            display: grid;
+            gap: 9px;
+            padding: 14px;
+        }
+
+        .sk-line {
+            height: 11px;
+        }
+
+        .sk-line.w80 { width: 80%; }
+        .sk-line.w60 { width: 60%; }
+        .sk-line.w40 { width: 40%; }
+
+        .sk-price {
+            width: 45%;
+            height: 18px;
+            margin-top: 4px;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 100% 0; }
+            100% { background-position: -100% 0; }
+        }
+
+        /* ============ 错误状态 ============ */
+        .error-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            grid-column: 1 / -1;
+            padding: 56px 22px;
+            border: 1px dashed #f0caca;
+            border-radius: 16px;
+            background: #fff;
+            text-align: center;
+        }
+
+        .state-icon {
+            display: grid;
+            place-items: center;
+            width: 52px;
+            height: 52px;
+            margin-bottom: 14px;
+            border-radius: 50%;
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .state-icon svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .error-state h3 {
+            margin-bottom: 6px;
+            color: var(--ink);
+            font-size: 15.5px;
+        }
+
+        .error-state p {
+            max-width: 460px;
+            color: var(--muted);
+            font-size: 12.5px;
+            line-height: 1.8;
+        }
+
+        .state-hint {
+            margin-top: 4px;
+            color: #94a3b8 !important;
+            font-size: 11.5px !important;
+        }
+
+        .state-btn {
+            margin-top: 16px;
+            padding: 8px 16px;
+            border: 1px solid var(--line);
+            border-radius: 9px;
+            background: #fff;
+            color: #475569;
+            font-size: 12.5px;
+            cursor: pointer;
+            transition: 0.18s ease;
+        }
+
+        .state-btn:hover {
+            border-color: #b9c5e8;
+            color: var(--brand);
+        }
+
+        /* ============ 列表 → 详情 流程 ============ */
+        .flow {
+            margin-top: 26px;
+            padding: 24px 26px;
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            background: #fff;
+            box-shadow: 0 12px 32px rgba(15, 23, 42, 0.045);
+        }
+
+        .flow-eyebrow {
+            color: var(--brand);
+            font-family: var(--mono);
+            font-size: 10.5px;
+            font-weight: 700;
+            letter-spacing: 1.6px;
+        }
+
+        .flow h2 {
+            margin: 4px 0 18px;
+            color: var(--ink);
+            font-size: 17px;
+        }
+
+        .flow-steps {
+            display: flex;
+            align-items: stretch;
+            gap: 12px;
+        }
+
+        .flow-step {
+            flex: 1;
+            min-width: 0;
+            padding: 14px 16px;
+            border: 1px solid #eef1f7;
+            border-radius: 12px;
+            background: #fbfcfe;
+        }
+
+        .step-no {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            margin-bottom: 9px;
+            border-radius: 7px;
+            background: #eef2ff;
+            color: var(--brand);
+            font-family: var(--mono);
+            font-size: 10.5px;
+            font-weight: 700;
+        }
+
+        .flow-step h3 {
+            margin-bottom: 5px;
+            color: var(--ink);
+            font-size: 13.5px;
+        }
+
+        .flow-step code {
+            display: inline-block;
+            color: #475569;
+            font-family: var(--mono);
+            font-size: 11.5px;
+        }
+
+        .flow-step small {
+            display: block;
+            margin-top: 5px;
+            color: var(--muted);
+            font-size: 11.5px;
+            line-height: 1.65;
+        }
+
+        .flow-arrow {
+            display: flex;
+            align-items: center;
+            color: #b8c3d8;
+            font-size: 18px;
+        }
+
+        /* ============ 页脚 ============ */
+        .foot-note {
+            max-width: 840px;
+            margin-top: 16px;
+            color: #94a3b8;
+            font-size: 12px;
+            line-height: 1.85;
+        }
+
+        /* ============ 响应式 ============ */
+        @media (max-width: 1024px) {
+            .grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 860px) {
+            .grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 640px) {
+            .wrap {
+                padding: 0 14px 48px;
+            }
+
+            .topbar {
+                flex-wrap: wrap;
+                padding-top: 22px;
+            }
+
+            .brand p {
+                display: none;
+            }
+
+            .top-actions {
+                margin-left: auto;
+            }
+
+            .lesson-chip {
+                display: none;
+            }
+
+            .lead {
+                font-size: 12.5px;
+            }
+
+            .api-bar {
+                flex-wrap: wrap;
+                gap: 8px 9px;
+                padding: 12px;
+            }
+
+            .endpoint {
+                order: 3;
+                flex: 1 0 100%;
+                overflow: visible;
+                font-size: 11.5px;
+                line-height: 1.5;
+                white-space: normal;
+                word-break: break-all;
+            }
+
+            .copy-btn {
+                margin-left: auto;
+            }
+
+            .grid {
+                gap: 12px;
+            }
+
+            .body h3 {
+                font-size: 13.5px;
+            }
+
+            .flow {
+                padding: 20px;
+            }
+
+            .flow-steps {
+                flex-direction: column;
+            }
+
+            .flow-arrow {
+                justify-content: center;
+                transform: rotate(90deg);
+                line-height: 1;
+            }
+        }
+
+        @media (max-width: 430px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .product {
+                display: grid;
+                grid-template-columns: 118px minmax(0, 1fr);
+            }
+
+            .thumb {
+                aspect-ratio: auto;
+                height: 100%;
+                min-height: 150px;
+            }
+
+            .thumb img {
+                padding: 10px;
+            }
+
+            .body h3 {
+                min-height: 0;
+            }
+
+            .desc {
+                display: none;
+            }
+
+            .cat-badge {
+                top: 8px;
+                left: 8px;
+                font-size: 9.5px;
+            }
+
+            .id-badge {
+                top: 8px;
+                right: 8px;
+                font-size: 9.5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <header class="topbar">
+            <div class="brand">
+                <span class="brand-mark" aria-hidden="true"><b>17</b><small>LIST</small></span>
+                <div>
+                    <h1>商品列表</h1>
+                    <p>列表页 · 从接口获取商品，点击进入详情</p>
+                </div>
+            </div>
+            <div class="top-actions">
+                <span class="lesson-chip">第 17 课 · 列表 → 详情</span>
+                <a class="back-link" href="index.html">返回目录</a>
+            </div>
+        </header>
+
+        <p class="lead">
+            列表页请求 <code>/products?limit=8</code>，每件商品都带有唯一的 <code>id</code>。
+            点击卡片会跳转到 <code>17-3-detail.html?id=…</code>，详情页再根据这个 ID 请求 <code>/products/{id}</code>。
+        </p>
+
+        <section class="api-bar" aria-label="列表接口地址">
+            <span class="method">GET</span>
+            <code class="endpoint" id="endpoint">https://dummyjson.com/products?limit=8</code>
+            <button class="copy-btn" id="copyEndpoint" type="button">复制</button>
+        </section>
+        <p class="api-meta">
+            <span>列表接口 · limit=8</span>
+            <span>响应格式 JSON</span>
+            <span>允许跨域访问</span>
+        </p>
+
+        <p class="status" id="status" data-state="loading" aria-live="polite">正在请求商品列表…</p>
+
+        <div class="list-head">
+            <h2>商品列表</h2>
+            <span class="result-meta" id="resultMeta">等待数据…</span>
+        </div>
+
+        <main class="grid" id="grid" aria-live="polite" aria-busy="true"></main>
+
+        <section class="flow" aria-label="列表到详情的请求流程">
+            <span class="flow-eyebrow">LIST → DETAIL</span>
+            <h2>列表到详情的请求流程</h2>
+            <div class="flow-steps">
+                <div class="flow-step">
+                    <span class="step-no">01</span>
+                    <h3>请求列表</h3>
+                    <code>GET /products?limit=8</code>
+                    <small>拿到 8 件商品，并保存每件商品的 id。</small>
+                </div>
+                <span class="flow-arrow" aria-hidden="true">→</span>
+                <div class="flow-step">
+                    <span class="step-no">02</span>
+                    <h3>点击商品</h3>
+                    <code>17-3-detail.html?id=1</code>
+                    <small>把商品 id 通过 URL 查询参数传给详情页。</small>
+                </div>
+                <span class="flow-arrow" aria-hidden="true">→</span>
+                <div class="flow-step">
+                    <span class="step-no">03</span>
+                    <h3>请求详情</h3>
+                    <code>GET /products/1</code>
+                    <small>详情页读取 id，再请求单个商品并渲染完整信息。</small>
+                </div>
+            </div>
+        </section>
+
+        <p class="foot-note">
+            列表页与详情页是两个独立页面，各自发起 fetch 请求。列表页只负责展示摘要和传递 id，
+            详情页负责根据 id 获取并展示完整商品数据。
+        </p>
+    </div>
+
+    <script>
+        /* ==================== 配置与状态 ==================== */
+        var API_URL = "https://dummyjson.com/products?limit=8";
+
+        var grid = document.getElementById("grid");
+        var statusEl = document.getElementById("status");
+        var resultMeta = document.getElementById("resultMeta");
+        var copyEndpoint = document.getElementById("copyEndpoint");
+        var controller = null;
+
+        /* ==================== 工具函数 ==================== */
+        function esc(value) {
+            return String(value == null ? "" : value).replace(/[&<>"']/g, function (char) {
+                return {
+                    "&": "&amp;",
+                    "<": "&lt;",
+                    ">": "&gt;",
+                    '"': "&quot;",
+                    "'": "&#39;"
+                }[char];
+            });
+        }
+
+        function money(value) {
+            var number = Number(value);
+            return isFinite(number) ? "$" + number.toFixed(2) : "—";
+        }
+
+        function timeText() {
+            return new Date().toLocaleTimeString("zh-CN", { hour12: false });
+        }
+
+        function setStatus(text, state) {
+            statusEl.textContent = text;
+            statusEl.setAttribute("data-state", state);
+        }
+
+        function copyText(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                return navigator.clipboard.writeText(text).then(function () {
+                    return true;
+                }).catch(function () {
+                    return fallbackCopy(text);
+                });
+            }
+            return Promise.resolve(fallbackCopy(text));
+        }
+
+        function fallbackCopy(text) {
+            var area = document.createElement("textarea");
+            area.value = text;
+            area.style.position = "fixed";
+            area.style.opacity = "0";
+            document.body.appendChild(area);
+            area.select();
+            var ok = false;
+            try {
+                ok = document.execCommand("copy");
+            } catch (err) {
+                ok = false;
+            }
+            document.body.removeChild(area);
+            return ok;
+        }
+
+        /* ==================== 骨架屏 ==================== */
+        function renderSkeletons() {
+            var html = "";
+            for (var i = 0; i < 8; i++) {
+                html += '<div class="product skeleton" aria-hidden="true">' +
+                    '<div class="sk sk-img"></div>' +
+                    '<div class="sk-body">' +
+                        '<div class="sk sk-line w80"></div>' +
+                        '<div class="sk sk-line w60"></div>' +
+                        '<div class="sk sk-line w40"></div>' +
+                        '<div class="sk sk-price"></div>' +
+                    "</div>" +
+                "</div>";
+            }
+            grid.innerHTML = html;
+            grid.setAttribute("aria-busy", "true");
+        }
+
+        /* ==================== 商品卡片 ==================== */
+        function createProductCard(product, index) {
+            var discount = Number(product.discountPercentage) || 0;
+            var oldPrice = discount > 0 ? product.price / (1 - discount / 100) : null;
+            var detailUrl = "17-3-detail.html?id=" + encodeURIComponent(product.id);
+
+            var card = document.createElement("a");
+            card.className = "product";
+            card.href = detailUrl;
+            card.setAttribute("aria-label",
+                "查看 " + product.title + " 的详情，价格 " + money(product.price));
+            card.style.setProperty("--i", index);
+
+            var thumb = document.createElement("div");
+            thumb.className = "thumb";
+
+            var img = document.createElement("img");
+            img.src = product.thumbnail || "";
+            img.alt = product.title || "商品图片";
+            img.loading = "lazy";
+            img.decoding = "async";
+            img.addEventListener("error", function () {
+                img.remove();
+                thumb.classList.add("img-failed");
+            });
+            thumb.appendChild(img);
+
+            var cat = document.createElement("span");
+            cat.className = "cat-badge";
+            cat.textContent = product.category || "商品";
+            thumb.appendChild(cat);
+
+            var idBadge = document.createElement("span");
+            idBadge.className = "id-badge";
+            idBadge.textContent = "#" + product.id;
+            thumb.appendChild(idBadge);
+
+            var body = document.createElement("div");
+            body.className = "body";
+
+            var title = document.createElement("h3");
+            title.textContent = product.title || "未命名商品";
+            body.appendChild(title);
+
+            var desc = document.createElement("p");
+            desc.className = "desc";
+            desc.textContent = product.description || "暂无商品描述";
+            body.appendChild(desc);
+
+            var meta = document.createElement("div");
+            meta.className = "meta";
+
+            var rating = document.createElement("span");
+            rating.className = "rating";
+            rating.innerHTML =
+                '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+                '<path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path>' +
+                "</svg>" + Number(product.rating || 0).toFixed(1);
+            meta.appendChild(rating);
+
+            var stock = document.createElement("span");
+            stock.className = "stock";
+            stock.textContent = "库存 " + (product.stock == null ? "—" : product.stock);
+            meta.appendChild(stock);
+
+            body.appendChild(meta);
+
+            var priceRow = document.createElement("div");
+            priceRow.className = "price-row";
+
+            var price = document.createElement("span");
+            price.className = "price";
+            price.textContent = money(product.price);
+            priceRow.appendChild(price);
+
+            if (oldPrice) {
+                var old = document.createElement("span");
+                old.className = "old-price";
+                old.textContent = money(oldPrice);
+                priceRow.appendChild(old);
+            }
+
+            var go = document.createElement("span");
+            go.className = "go";
+            go.innerHTML = "查看详情 <span aria-hidden=\"true\">→</span>";
+            priceRow.appendChild(go);
+
+            body.appendChild(priceRow);
+            card.appendChild(thumb);
+            card.appendChild(body);
+
+            return card;
+        }
+
+        /* ==================== 错误状态 ==================== */
+        function createErrorState(message) {
+            var box = document.createElement("div");
+            box.className = "error-state";
+            box.innerHTML =
+                '<span class="state-icon" aria-hidden="true">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" ' +
+                    'stroke-linecap="round"><path d="M12 8v5"></path>' +
+                    '<circle cx="12" cy="16.5" r=".6" fill="currentColor"></circle>' +
+                    '<path d="M10.3 3.9 2.6 17.2A2 2 0 0 0 4.3 20h15.4a2 2 0 0 0 1.7-2.8L13.7 3.9a2 2 0 0 0-3.4 0Z"></path></svg>' +
+                "</span>" +
+                "<h3>商品列表加载失败</h3>" +
+                "<p>" + esc(message) + "</p>" +
+                '<p class="state-hint">请检查网络连接；如果浏览器提示跨域，请使用本地服务器打开页面。</p>';
+
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "state-btn";
+            btn.textContent = "重新请求";
+            btn.addEventListener("click", loadProducts);
+            box.appendChild(btn);
+            return box;
+        }
+
+        /* ==================== 请求列表 ==================== */
+        function loadProducts() {
+            if (controller) controller.abort();
+            controller = new AbortController();
+
+            renderSkeletons();
+            setStatus("正在请求商品列表…", "loading");
+            resultMeta.textContent = "等待数据…";
+
+            fetch(API_URL, {
+                method: "GET",
+                headers: { "Accept": "application/json" },
+                signal: controller.signal
+            })
+                .then(function (response) {
+                    if (!response.ok) {
+                        throw new Error("HTTP " + response.status + " " + response.statusText);
+                    }
+                    return response.json();
+                })
+                .then(function (data) {
+                    var products = data && Array.isArray(data.products) ? data.products : [];
+                    if (!products.length) {
+                        throw new Error("接口没有返回商品数据");
+                    }
+
+                    grid.innerHTML = "";
+                    products.forEach(function (product, index) {
+                        grid.appendChild(createProductCard(product, index));
+                    });
+                    grid.setAttribute("aria-busy", "false");
+
+                    resultMeta.textContent = "共 " + products.length + " 件商品";
+                    setStatus(
+                        "列表请求成功 · HTTP 200 · 已加载 " + products.length +
+                        " 件商品 · " + timeText(),
+                        "ok"
+                    );
+                })
+                .catch(function (error) {
+                    if (error.name === "AbortError") return;
+
+                    grid.innerHTML = "";
+                    grid.appendChild(createErrorState(error.message || "未知错误"));
+                    grid.setAttribute("aria-busy", "false");
+                    resultMeta.textContent = "加载失败";
+                    setStatus("列表请求失败：" + (error.message || "未知错误"), "error");
+                })
+                .finally(function () {
+                    controller = null;
+                });
+        }
+
+        /* ==================== 事件绑定 ==================== */
+        copyEndpoint.addEventListener("click", function () {
+            copyText(API_URL).then(function (ok) {
+                copyEndpoint.textContent = ok ? "已复制 ✓" : "复制失败";
+                setTimeout(function () {
+                    copyEndpoint.textContent = "复制";
+                }, 1400);
+            });
+        });
+
+        /* ==================== 初始化 ==================== */
+        loadProducts();
+    </script>
+</body>
+</html>

@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<!--
+    作者：魏士博
+    建立时间：2026-11-02
+    使用的大模型功能名称：Claude Code（DeepSeek-Chat）
+    页面说明：第 17 课 JSON 数据格式演示——JSON 字符串高亮、对象树解析、stringify/parse 与在线解析器
+-->
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON 数据格式 · 实时演示</title>
+    <style>
+        /* ============ 基础样式 ============ */
+        :root {
+            --ink: #152039;
+            --text: #3b475c;
+            --muted: #6b7890;
+            --line: #e3e8f0;
+            --brand: #2563eb;
+            --brand-2: #7c3aed;
+            --soft: #eef4ff;
+            --code-bg: #0b1324;
+            --mono: "Cascadia Code", Consolas, "JetBrains Mono", "Courier New", monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Microsoft YaHei", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+            color: var(--text);
+            background: #f4f6fb;
+            background-image:
+                radial-gradient(900px 420px at 12% -8%, rgba(59, 130, 246, 0.10), transparent 62%),
+                radial-gradient(760px 400px at 92% 4%, rgba(124, 58, 237, 0.08), transparent 60%);
+            background-repeat: no-repeat;
+            font-size: 15px;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        button,
+        textarea {
+            font-family: inherit;
+        }
+
+        ::selection {
+            background: rgba(37, 99, 235, 0.18);
+        }
+
+        .page {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 42px 24px 72px;
+        }
+
+        /* ============ 页头 ============ */
+        .hero {
+            padding: 4px 0 30px;
+        }
+
+        .kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 13px;
+            border-radius: 999px;
+            background: #eef2ff;
+            color: #4f46e5;
+            font-size: 11.5px;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+
+        .kicker::before {
+            content: "";
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.16);
+        }
+
+        .hero h1 {
+            margin: 16px 0 12px;
+            font-size: clamp(34px, 5vw, 50px);
+            line-height: 1.15;
+            letter-spacing: -1.5px;
+            color: var(--ink);
+        }
+
+        .hero h1 em {
+            font-style: normal;
+            background: linear-gradient(120deg, #2563eb, #7c3aed 70%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .hero p {
+            max-width: 680px;
+            color: var(--muted);
+            font-size: 15px;
+            line-height: 1.9;
+        }
+
+        .hero-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 18px;
+        }
+
+        .hero-tags span {
+            padding: 5px 11px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #fff;
+            color: #475569;
+            font-family: var(--mono);
+            font-size: 11.5px;
+        }
+
+        /* ============ 面板 ============ */
+        .panel {
+            margin-bottom: 22px;
+            padding: 26px;
+            border: 1px solid rgba(227, 232, 240, 0.9);
+            border-radius: 20px;
+            background: #fff;
+            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.05);
+        }
+
+        .panel-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--ink);
+            font-size: 19px;
+            line-height: 1.4;
+        }
+
+        .panel-title::before {
+            content: "";
+            flex: none;
+            width: 4px;
+            height: 18px;
+            border-radius: 3px;
+            background: linear-gradient(180deg, #2563eb, #7c3aed);
+        }
+
+        .panel-sub {
+            margin: 6px 0 0 14px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .panel-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 18px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        /* ============ 示例切换 ============ */
+        .samples {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .sample-btn {
+            padding: 8px 14px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: #fff;
+            color: #475569;
+            font-size: 13px;
+            cursor: pointer;
+            transition: 0.18s ease;
+        }
+
+        .sample-btn:hover {
+            border-color: #b9c6dd;
+            color: var(--brand);
+            transform: translateY(-1px);
+        }
+
+        .sample-btn.is-active {
+            border-color: var(--ink);
+            background: var(--ink);
+            color: #fff;
+        }
+
+        /* ============ 演示双栏 ============ */
+        .demo-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+
+        .code-card {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            overflow: hidden;
+            border: 1px solid #1e293b;
+            border-radius: 16px;
+            background: var(--code-bg);
+        }
+
+        .card-top {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex: none;
+            padding: 11px 14px;
+            border-bottom: 1px solid #1e293b;
+            background: #0e1830;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .dot.red { background: #ff5f57; }
+        .dot.yellow { background: #febc2e; }
+        .dot.green { background: #28c840; }
+
+        .card-file {
+            margin-left: 9px;
+            color: #8fa3c4;
+            font-family: var(--mono);
+            font-size: 12px;
+        }
+
+        .copy-btn {
+            margin-left: auto;
+            padding: 4px 10px;
+            border: 1px solid #2c3b57;
+            border-radius: 7px;
+            background: transparent;
+            color: #a9bad6;
+            font-size: 11.5px;
+            cursor: pointer;
+            transition: 0.18s ease;
+        }
+
+        .copy-btn:hover {
+            border-color: #4d6488;
+            color: #fff;
+        }
+
+        .code-scroll {
+            flex: 1;
+            max-height: 420px;
+            overflow: auto;
+            padding: 14px 0;
+        }
+
+        .code-scroll::-webkit-scrollbar,
+        .tree-scroll::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        .code-scroll::-webkit-scrollbar-thumb {
+            border: 3px solid var(--code-bg);
+            border-radius: 10px;
+            background: #33415c;
+        }
+
+        .tree-scroll::-webkit-scrollbar-thumb {
+            border: 3px solid #fff;
+            border-radius: 10px;
+            background: #cbd5e1;
+        }
+
+        .code-line {
+            display: flex;
+            min-width: max-content;
+            padding-right: 20px;
+        }
+
+        .ln {
+            position: sticky;
+            left: 0;
+            flex: none;
+            width: 44px;
+            padding-right: 14px;
+            background: var(--code-bg);
+            color: #3f4e69;
+            font-family: var(--mono);
+            font-size: 12px;
+            line-height: 1.8;
+            text-align: right;
+            user-select: none;
+        }
+
+        .lc {
+            color: #c7d2e5;
+            font-family: var(--mono);
+            font-size: 13px;
+            line-height: 1.8;
+            white-space: pre;
+        }
+
+        .tok-key { color: #7dd3fc; }
+        .tok-str { color: #86efac; }
+        .tok-num { color: #fbbf24; }
+        .tok-bool { color: #f472b6; }
+        .tok-null { color: #94a3b8; }
+        .tok-punct { color: #64748b; }
+
+        /* ============ 对象树 ============ */
+        .object-card {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            overflow: hidden;
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            background: #fff;
+        }
+
+        .object-card .card-top {
+            border-bottom-color: var(--line);
+            background: #f8faff;
+        }
+
+        .object-card .card-file {
+            margin-left: 0;
+            color: #334155;
+            font-family: inherit;
+            font-size: 12.5px;
+            font-weight: 700;
+        }
+
+        .type-badge {
+            margin-left: auto;
+            padding: 3px 10px;
+            border-radius: 999px;
+            background: #eef2ff;
+            color: #4f46e5;
+            font-family: var(--mono);
+            font-size: 11px;
+            white-space: nowrap;
+        }
+
+        .tree-scroll {
+            flex: 1;
+            max-height: 420px;
+            overflow: auto;
+        }
+
+        .tree {
+            padding: 14px 18px;
+            font-size: 13.5px;
+            line-height: 1.95;
+        }
+
+        .tree summary {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            cursor: pointer;
+            list-style: none;
+        }
+
+        .tree summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .tree summary::before {
+            content: "▸";
+            margin-right: 6px;
+            color: #94a3b8;
+            font-size: 10px;
+            transition: transform 0.15s ease;
+        }
+
+        .tree details[open] > summary::before {
+            transform: rotate(90deg);
+        }
+
+        .tree-key,
+        .tree-index {
+            font-family: var(--mono);
+            font-size: 12.5px;
+            font-weight: 600;
+        }
+
+        .tree-key { color: #1e293b; }
+        .tree-index { color: #7c3aed; }
+
+        .colon {
+            margin: 0 6px;
+            color: #94a3b8;
+        }
+
+        .type-chip {
+            margin-left: 8px;
+            padding: 1px 8px;
+            border-radius: 999px;
+            background: #eef2ff;
+            color: #4f46e5;
+            font-family: var(--mono);
+            font-size: 10.5px;
+            line-height: 1.6;
+            white-space: nowrap;
+        }
+
+        .tree-value {
+            font-family: var(--mono);
+            font-size: 12.5px;
+            word-break: break-word;
+        }
+
+        .tree-value.str { color: #047857; }
+        .tree-value.num { color: #b45309; }
+        .tree-value.bool { color: #be185d; }
+        .tree-value.null { color: #94a3b8; font-style: italic; }
+
+        .leaf {
+            display: flex;
+            align-items: baseline;
+            flex-wrap: wrap;
+            padding: 1px 0;
+        }
+
+        .children {
+            margin-left: 12px;
+            padding-left: 14px;
+            border-left: 1px dashed #dbe3ee;
+        }
+
+        /* ============ 统计条 ============ */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 20px;
+            padding-top: 18px;
+            border-top: 1px dashed var(--line);
+        }
+
+        .stat {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            padding: 12px 16px;
+            border: 1px solid #eef2f9;
+            border-radius: 12px;
+            background: #f8faff;
+        }
+
+        .stat strong {
+            color: var(--ink);
+            font-size: 22px;
+            line-height: 1.2;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .stat span {
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        /* ============ 按钮 ============ */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 9px 16px;
+            border: 0;
+            border-radius: 9px;
+            background: var(--ink);
+            color: #fff;
+            font-size: 13px;
+            cursor: pointer;
+            transition: 0.18s ease;
+        }
+
+        .btn:hover {
+            background: #1f3157;
+            transform: translateY(-1px);
+        }
+
+        .btn.ghost {
+            border: 1px solid var(--line);
+            background: #fff;
+            color: #334155;
+        }
+
+        .btn.ghost:hover {
+            border-color: #b8c4d8;
+            background: #f8faff;
+        }
+
+        /* ============ 转换演示 ============ */
+        .convert-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            margin-top: 18px;
+        }
+
+        .convert {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 18px;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: #fff;
+        }
+
+        .convert h3 {
+            color: #4f46e5;
+            font-family: var(--mono);
+            font-size: 15px;
+        }
+
+        .convert > p {
+            color: var(--muted);
+            font-size: 12.5px;
+        }
+
+        .mini-code {
+            overflow-x: auto;
+            padding: 9px 12px;
+            border: 1px solid #e8edf6;
+            border-radius: 8px;
+            background: #f5f7fc;
+            color: #334155;
+            font-family: var(--mono);
+            font-size: 12.5px;
+            white-space: pre;
+        }
+
+        .convert .btn {
+            align-self: flex-start;
+        }
+
+        .convert-out {
+            min-height: 64px;
+            overflow: hidden;
+            border-radius: 10px;
+            background: var(--code-bg);
+            color: #cbd5e1;
+            font-family: var(--mono);
+            font-size: 12.5px;
+            line-height: 1.7;
+        }
+
+        .convert-out.is-empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            border: 1px dashed #dfe6f1;
+            background: #f8faff;
+            color: #94a3b8;
+            font-family: inherit;
+            font-size: 12.5px;
+            text-align: center;
+        }
+
+        .out-note {
+            padding: 10px 13px;
+            border-bottom: 1px solid #1e293b;
+            background: rgba(59, 130, 246, 0.12);
+            color: #93c5fd;
+        }
+
+        .out-code {
+            max-height: 180px;
+            margin: 0;
+            padding: 12px 14px;
+            overflow: auto;
+            font-family: var(--mono);
+            font-size: 12px;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .access-list {
+            display: grid;
+            gap: 6px;
+            padding: 12px 14px;
+        }
+
+        .access-list code {
+            color: #7dd3fc;
+            font-family: var(--mono);
+            font-size: 12px;
+        }
+
+        .access-list .arrow {
+            color: #475569;
+        }
+
+        .access-list b {
+            color: #86efac;
+            font-weight: 500;
+        }
+
+        /* ============ 语法规则 ============ */
+        .rules {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+            margin-top: 18px;
+        }
+
+        .rule {
+            position: relative;
+            overflow: hidden;
+            padding: 16px 18px;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: #fff;
+        }
+
+        .rule::before {
+            content: attr(data-no);
+            position: absolute;
+            top: 2px;
+            right: 12px;
+            color: #eef2ff;
+            font-family: var(--mono);
+            font-size: 36px;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .rule h3 {
+            position: relative;
+            margin-bottom: 8px;
+            color: var(--ink);
+            font-size: 14.5px;
+        }
+
+        .rule p {
+            position: relative;
+            color: var(--muted);
+            font-size: 12.5px;
+            line-height: 1.8;
+        }
+
+        .rule code {
+            padding: 1px 5px;
+            border-radius: 5px;
+            background: #f3f6fc;
+            color: #4f46e5;
+            font-family: var(--mono);
+            font-size: 12px;
+        }
+
+        /* ============ 在线解析器 ============ */
+        .play-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            margin-top: 18px;
+        }
+
+        .play-box {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            gap: 10px;
+        }
+
+        .play-label {
+            color: #475569;
+            font-size: 12.5px;
+            font-weight: 700;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 232px;
+            padding: 14px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: #fbfcfe;
+            color: #1e293b;
+            font-family: var(--mono);
+            font-size: 13px;
+            line-height: 1.7;
+            resize: vertical;
+            outline: none;
+            tab-size: 2;
+            transition: border-color 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        textarea:focus {
+            border-color: #a5b4fc;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .play-status {
+            margin-top: 2px;
+            padding: 9px 12px;
+            border-radius: 8px;
+            font-size: 12.5px;
+            line-height: 1.6;
+        }
+
+        .play-status.ok {
+            border: 1px solid #b7f0d8;
+            background: #ecfdf5;
+            color: #047857;
+        }
+
+        .play-status.error {
+            border: 1px solid #fecaca;
+            background: #fef2f2;
+            color: #b91c1c;
+        }
+
+        .play-status.info {
+            border: 1px solid #dbeafe;
+            background: #eff6ff;
+            color: #1d4ed8;
+        }
+
+        .play-out {
+            min-height: 232px;
+            max-height: 380px;
+            margin: 0;
+            padding: 16px;
+            overflow: auto;
+            border-radius: 12px;
+            background: var(--code-bg);
+            color: #cbd5e1;
+            font-family: var(--mono);
+            font-size: 12.5px;
+            line-height: 1.75;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .play-out:empty::before {
+            content: "解析结果将显示在这里";
+            color: #5b6b86;
+        }
+
+        /* ============ 页脚 ============ */
+        .foot-note {
+            margin-top: 26px;
+            color: #94a3b8;
+            font-size: 12.5px;
+            text-align: center;
+            line-height: 1.9;
+        }
+
+        .foot-note code {
+            color: #64748b;
+            font-family: var(--mono);
+        }
+
+        /* ============ 响应式 ============ */
+        @media (max-width: 920px) {
+            .demo-grid,
+            .convert-grid,
+            .play-area {
+                grid-template-columns: 1fr;
+            }
+
+            .rules {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .stats {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 600px) {
+            .page {
+                padding: 28px 14px 54px;
+            }
+
+            .panel {
+                padding: 18px;
+                border-radius: 16px;
+            }
+
+            .panel-head {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .hero h1 {
+                font-size: 34px;
+            }
+
+            .rules {
+                grid-template-columns: 1fr;
+            }
+
+            .stats {
+                grid-template-columns: 1fr 1fr;
+                gap: 9px;
+            }
+
+            .stat {
+                padding: 10px 12px;
+            }
+
+            .stat strong {
+                font-size: 19px;
+            }
+
+            .code-scroll,
+            .tree-scroll {
+                max-height: 330px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <header class="hero">
+            <span class="kicker">LESSON 17 · DATA</span>
+            <h1>JSON <em>数据格式</em></h1>
+            <p>
+                JSON（JavaScript Object Notation）是一种轻量级的文本数据交换格式。
+                它以“键值对”描述数据，既能被 JavaScript 直接解析，也能被几乎所有后端语言读取，
+                是前后端接口通信最常用的数据格式。
+            </p>
+            <div class="hero-tags">
+                <span>JSON.stringify()</span>
+                <span>JSON.parse()</span>
+                <span>嵌套结构</span>
+                <span>接口通信</span>
+            </div>
+        </header>
+
+        <!-- 实时演示 -->
+        <section class="panel">
+            <div class="panel-head">
+                <div>
+                    <h2 class="panel-title">实时演示</h2>
+                    <p class="panel-sub">切换示例数据，观察 JSON 字符串与 JavaScript 对象之间的对应关系</p>
+                </div>
+                <div class="samples" id="samples"></div>
+            </div>
+
+            <div class="demo-grid">
+                <div class="code-card">
+                    <div class="card-top">
+                        <span class="dot red"></span>
+                        <span class="dot yellow"></span>
+                        <span class="dot green"></span>
+                        <span class="card-file">data.json</span>
+                        <button class="copy-btn" id="copyJson" type="button">复制 JSON</button>
+                    </div>
+                    <div class="code-scroll" id="jsonCode"></div>
+                </div>
+
+                <div class="object-card">
+                    <div class="card-top">
+                        <span class="card-file">JSON.parse() 解析结果</span>
+                        <span class="type-badge" id="rootType">Object</span>
+                    </div>
+                    <div class="tree-scroll">
+                        <div class="tree" id="tree"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats" id="stats"></div>
+        </section>
+
+        <!-- 转换演示 -->
+        <section class="panel">
+            <h2 class="panel-title">字符串 ⇄ 对象</h2>
+            <p class="panel-sub">JSON 本质上是一段字符串，使用两个内置方法即可与对象互相转换</p>
+
+            <div class="convert-grid">
+                <div class="convert">
+                    <h3>JSON.stringify()</h3>
+                    <p>对象 → 字符串：发送数据给后端之前，先把对象序列化</p>
+                    <div class="mini-code">JSON.stringify(data, null, 2)</div>
+                    <button class="btn" id="btnStringify" type="button">执行 stringify</button>
+                    <div class="convert-out is-empty" id="outStringify">执行后在这里查看结果</div>
+                </div>
+
+                <div class="convert">
+                    <h3>JSON.parse()</h3>
+                    <p>字符串 → 对象：收到接口数据之后，把字符串还原成对象</p>
+                    <div class="mini-code">JSON.parse(jsonString)</div>
+                    <button class="btn" id="btnParse" type="button">执行 parse</button>
+                    <div class="convert-out is-empty" id="outParse">执行后在这里查看结果</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 语法规则 -->
+        <section class="panel">
+            <h2 class="panel-title">JSON 语法规则</h2>
+            <p class="panel-sub">记住这六条，就能写出和读懂绝大多数接口数据</p>
+
+            <div class="rules">
+                <article class="rule" data-no="01">
+                    <h3>键必须使用双引号</h3>
+                    <p>属性名必须写成 <code>"name"</code>，不能使用单引号，也不能省略引号。</p>
+                </article>
+                <article class="rule" data-no="02">
+                    <h3>值类型有限</h3>
+                    <p>只允许字符串、数字、布尔值、<code>null</code>、对象和数组；没有 <code>undefined</code>、函数和日期对象。</p>
+                </article>
+                <article class="rule" data-no="03">
+                    <h3>不允许注释</h3>
+                    <p>JSON 中不能写 <code>//</code> 或 <code>/* */</code> 注释，也不能在最后一项后面留下多余逗号。</p>
+                </article>
+                <article class="rule" data-no="04">
+                    <h3>可以任意嵌套</h3>
+                    <p>对象里可以放数组，数组里也可以放对象，从而表达列表、详情等复杂结构。</p>
+                </article>
+                <article class="rule" data-no="05">
+                    <h3>JSON 是一段字符串</h3>
+                    <p>它与对象的外观相似，但本质是文本；传输和存储前必须先用 <code>stringify</code> 转换。</p>
+                </article>
+                <article class="rule" data-no="06">
+                    <h3>解析要处理异常</h3>
+                    <p>格式不正确时 <code>JSON.parse()</code> 会抛出错误，因此应放在 <code>try...catch</code> 中执行。</p>
+                </article>
+            </div>
+        </section>
+
+        <!-- 在线解析器 -->
+        <section class="panel">
+            <h2 class="panel-title">JSON 在线解析器</h2>
+            <p class="panel-sub">输入一段 JSON，点击“解析 JSON”查看格式化结果；按 Ctrl + Enter 也可以执行</p>
+
+            <div class="play-area">
+                <div class="play-box">
+                    <label class="play-label" for="jsonInput">输入 JSON</label>
+                    <textarea id="jsonInput" spellcheck="false" placeholder='例如：{ "name": "魏士博", "age": 20 }'></textarea>
+                    <div class="actions">
+                        <button class="btn" id="btnRun" type="button">解析 JSON</button>
+                        <button class="btn ghost" id="btnSample" type="button">填入示例</button>
+                        <button class="btn ghost" id="btnMinify" type="button">压缩输出</button>
+                    </div>
+                    <div class="play-status info" id="playStatus">等待输入 JSON 数据…</div>
+                </div>
+
+                <div class="play-box">
+                    <span class="play-label">格式化结果</span>
+                    <pre class="play-out" id="playOut" aria-live="polite"></pre>
+                </div>
+            </div>
+        </section>
+
+        <p class="foot-note">
+            17-1 · JSON 数据格式演示 &nbsp;|&nbsp; 原生 HTML / CSS / JavaScript，无任何外部依赖<br>
+            下一课：<code>17-2.html</code> 使用 fetch 获取真实接口数据并渲染
+        </p>
+    </div>
+
+    <script>
+        /* ==================== 示例数据 ==================== */
+        var sampleData = {
+            student: {
+                name: "魏士博",
+                age: 20,
+                isStudent: true,
+                skills: ["HTML", "CSS", "JavaScript"],
+                school: {
+                    name: "北京信息职业技术学院",
+                    major: "Web前端开发",
+                    grade: 2024
+                },
+                contact: null
+            },
+            order: {
+                orderId: "A20261102",
+                customer: "魏士博",
+                items: [
+                    { name: "机械键盘", price: 399, qty: 1 },
+                    { name: "无线鼠标", price: 129, qty: 2 },
+                    { name: "显示器支架", price: 199, qty: 1 }
+                ],
+                total: 856,
+                paid: true,
+                remark: "周末前发货"
+            },
+            weather: {
+                city: "北京",
+                temperature: 8,
+                condition: "多云",
+                humidity: 46,
+                forecast: [
+                    { date: "2026-11-03", high: 11, low: 2, icon: "cloudy" },
+                    { date: "2026-11-04", high: 13, low: 3, icon: "sunny" },
+                    { date: "2026-11-05", high: 9, low: 1, icon: "rain" }
+                ],
+                alert: null
+            }
+        };
+
+        var sampleLabels = {
+            student: "学生档案",
+            order: "订单数据",
+            weather: "天气预报"
+        };
+
+        var currentKey = "student";
+        var currentObject = sampleData.student;
+        var currentJson = "";
+
+        var codeBox = document.getElementById("jsonCode");
+        var treeBox = document.getElementById("tree");
+        var rootType = document.getElementById("rootType");
+        var statsBox = document.getElementById("stats");
+        var samplesBox = document.getElementById("samples");
+        var copyBtn = document.getElementById("copyJson");
+
+        /* ==================== 工具函数 ==================== */
+        function escapeHTML(value) {
+            return String(value)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+        }
+
+        function highlightJSON(json) {
+            var safe = escapeHTML(json);
+            return safe.replace(
+                /("(?:\\u[a-fA-F0-9]{4}|\\[^u]|[^\\"])*")(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d+)?(?:[eE][+\-]?\d+)?/g,
+                function (match, str, colon, literal) {
+                    if (str) {
+                        if (colon) {
+                            return '<span class="tok-key">' + str + '</span>' +
+                                '<span class="tok-punct">' + colon + '</span>';
+                        }
+                        return '<span class="tok-str">' + str + '</span>';
+                    }
+                    if (literal) {
+                        var cls = literal === "null" ? "tok-null" : "tok-bool";
+                        return '<span class="' + cls + '">' + match + '</span>';
+                    }
+                    return '<span class="tok-num">' + match + '</span>';
+                }
+            );
+        }
+
+        function typeName(value) {
+            if (value === null) return "null";
+            if (Array.isArray(value)) return "array";
+            return typeof value;
+        }
+
+        function leafValue(value) {
+            var type = typeName(value);
+            if (type === "string") return { text: '"' + value + '"', cls: "str" };
+            if (type === "null") return { text: "null", cls: "null" };
+            if (type === "boolean") return { text: String(value), cls: "bool" };
+            return { text: String(value), cls: "num" };
+        }
+
+        function keySpan(key, isIndex) {
+            var span = document.createElement("span");
+            span.className = isIndex ? "tree-index" : "tree-key";
+            span.textContent = isIndex ? "[" + key + "]" : key;
+            return span;
+        }
+
+        function colonSpan() {
+            var span = document.createElement("span");
+            span.className = "colon";
+            span.textContent = ":";
+            return span;
+        }
+
+        /* ==================== 对象树渲染 ==================== */
+        function buildNode(key, value, depth, isIndex) {
+            var isContainer = value !== null && typeof value === "object";
+
+            if (!isContainer) {
+                var leaf = document.createElement("div");
+                leaf.className = "leaf";
+                leaf.appendChild(keySpan(key, isIndex));
+                leaf.appendChild(colonSpan());
+                var info = leafValue(value);
+                var valueEl = document.createElement("span");
+                valueEl.className = "tree-value " + info.cls;
+                valueEl.textContent = info.text;
+                leaf.appendChild(valueEl);
+                return leaf;
+            }
+
+            var isArray = Array.isArray(value);
+            var entries = isArray
+                ? value.map(function (item, index) { return [index, item]; })
+                : Object.entries(value);
+
+            var details = document.createElement("details");
+            details.className = "tree-node";
+            if (depth < 2) details.open = true;
+
+            var summary = document.createElement("summary");
+            summary.appendChild(keySpan(key, isIndex));
+            summary.appendChild(colonSpan());
+
+            var chip = document.createElement("span");
+            chip.className = "type-chip";
+            chip.textContent = isArray
+                ? "Array · " + value.length + " 项"
+                : "Object · " + entries.length + " 个字段";
+            summary.appendChild(chip);
+            details.appendChild(summary);
+
+            var children = document.createElement("div");
+            children.className = "children";
+            entries.forEach(function (entry) {
+                children.appendChild(buildNode(entry[0], entry[1], depth + 1, isArray));
+            });
+            details.appendChild(children);
+
+            return details;
+        }
+
+        function renderTree(root) {
+            treeBox.innerHTML = "";
+            var isArray = Array.isArray(root);
+            var entries = isArray
+                ? root.map(function (item, index) { return [index, item]; })
+                : Object.entries(root);
+
+            entries.forEach(function (entry) {
+                treeBox.appendChild(buildNode(entry[0], entry[1], 0, isArray));
+            });
+        }
+
+        /* ==================== 统计 ==================== */
+        function collectStats(root) {
+            var stats = { fields: 0, depth: 0, arrays: 0 };
+
+            function walk(value, depth) {
+                if (value === null || typeof value !== "object") return;
+
+                var isArray = Array.isArray(value);
+                var entries = isArray
+                    ? value.map(function (item, index) { return [index, item]; })
+                    : Object.entries(value);
+
+                stats.fields += entries.length;
+                if (isArray) stats.arrays += 1;
+                stats.depth = Math.max(stats.depth, depth);
+
+                entries.forEach(function (entry) {
+                    walk(entry[1], depth + 1);
+                });
+            }
+
+            walk(root, 1);
+            return stats;
+        }
+
+        function renderStats(root) {
+            var stats = collectStats(root);
+            var items = [
+                { value: stats.fields, label: "数据字段" },
+                { value: stats.depth, label: "嵌套层级" },
+                { value: currentJson.length, label: "JSON 字符" },
+                { value: stats.arrays, label: "数组个数" }
+            ];
+
+            statsBox.innerHTML = items.map(function (item) {
+                return '<div class="stat"><strong>' + item.value +
+                    '</strong><span>' + item.label + "</span></div>";
+            }).join("");
+        }
+
+        /* ==================== 主渲染 ==================== */
+        function renderCode(json) {
+            var highlighted = highlightJSON(json);
+            var lines = highlighted.split("\n");
+            codeBox.innerHTML = lines.map(function (line, index) {
+                return '<div class="code-line">' +
+                    '<span class="ln">' + (index + 1) + "</span>" +
+                    '<span class="lc">' + (line || " ") + "</span>" +
+                    "</div>";
+            }).join("");
+        }
+
+        function renderAll() {
+            currentJson = JSON.stringify(currentObject, null, 2);
+            renderCode(currentJson);
+            renderTree(currentObject);
+            renderStats(currentObject);
+
+            rootType.textContent = Array.isArray(currentObject)
+                ? "Array · " + currentObject.length + " 项"
+                : "Object · " + Object.keys(currentObject).length + " 个字段";
+        }
+
+        /* ==================== 示例切换 ==================== */
+        function buildSampleButtons() {
+            Object.keys(sampleData).forEach(function (key) {
+                var btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "sample-btn" + (key === currentKey ? " is-active" : "");
+                btn.textContent = sampleLabels[key];
+                btn.setAttribute("data-sample", key);
+                btn.addEventListener("click", function () {
+                    currentKey = key;
+                    currentObject = sampleData[key];
+                    samplesBox.querySelectorAll(".sample-btn").forEach(function (item) {
+                        item.classList.toggle("is-active", item === btn);
+                    });
+                    renderAll();
+                });
+                samplesBox.appendChild(btn);
+            });
+        }
+
+        /* ==================== 复制 JSON ==================== */
+        function copyText(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                return navigator.clipboard.writeText(text).then(function () {
+                    return true;
+                }).catch(function () {
+                    return fallbackCopy(text);
+                });
+            }
+            return Promise.resolve(fallbackCopy(text));
+        }
+
+        function fallbackCopy(text) {
+            var area = document.createElement("textarea");
+            area.value = text;
+            area.style.position = "fixed";
+            area.style.opacity = "0";
+            document.body.appendChild(area);
+            area.select();
+            var ok = false;
+            try {
+                ok = document.execCommand("copy");
+            } catch (err) {
+                ok = false;
+            }
+            document.body.removeChild(area);
+            return ok;
+        }
+
+        copyBtn.addEventListener("click", function () {
+            copyText(currentJson).then(function (ok) {
+                copyBtn.textContent = ok ? "已复制 ✓" : "复制失败";
+                setTimeout(function () {
+                    copyBtn.textContent = "复制 JSON";
+                }, 1400);
+            });
+        });
+
+        /* ==================== stringify / parse ==================== */
+        var outStringify = document.getElementById("outStringify");
+        var outParse = document.getElementById("outParse");
+
+        document.getElementById("btnStringify").addEventListener("click", function () {
+            outStringify.className = "convert-out";
+            outStringify.innerHTML =
+                '<div class="out-note">对象 → 字符串，共 ' + currentJson.length + " 个字符</div>" +
+                '<pre class="out-code">' + highlightJSON(currentJson) + "</pre>";
+        });
+
+        document.getElementById("btnParse").addEventListener("click", function () {
+            var parsed = JSON.parse(currentJson);
+            var isArray = Array.isArray(parsed);
+            var keys = isArray ? [] : Object.keys(parsed);
+            var rows = [];
+
+            if (isArray) {
+                rows.push(
+                    '<div><code>data.length</code> <span class="arrow">→</span> <b>' +
+                    parsed.length + " 项</b></div>"
+                );
+            } else {
+                keys.slice(0, 4).forEach(function (key) {
+                    var value = parsed[key];
+                    var shown;
+                    if (value !== null && typeof value === "object") {
+                        shown = Array.isArray(value) ? "[…] 数组" : "{…} 对象";
+                    } else if (typeof value === "string") {
+                        shown = '"' + (value.length > 16 ? value.slice(0, 16) + "…" : value) + '"';
+                    } else {
+                        shown = String(value);
+                    }
+                    rows.push(
+                        '<div><code>data.' + escapeHTML(key) + '</code> ' +
+                        '<span class="arrow">→</span> <b>' + escapeHTML(shown) + "</b></div>"
+                    );
+                });
+            }
+
+            outParse.className = "convert-out";
+            outParse.innerHTML =
+                '<div class="out-note">解析成功：得到真正的 ' + (isArray ? "数组" : "对象") +
+                "，共 " + (isArray ? parsed.length + " 项" : keys.length + " 个字段") + "</div>" +
+                '<div class="access-list">' + rows.join("") + "</div>";
+        });
+
+        /* ==================== 在线解析器 ==================== */
+        var input = document.getElementById("jsonInput");
+        var playOut = document.getElementById("playOut");
+        var playStatus = document.getElementById("playStatus");
+
+        var playgroundSample = [
+            "{",
+            '  "course": "高级网页设计",',
+            '  "lesson": 17,',
+            '  "topics": ["JSON", "Fetch", "API"],',
+            '  "student": {',
+            '    "name": "魏士博",',
+            '    "class": "Web前端开发",',
+            '    "contact": null',
+            "  },",
+            '  "passed": false',
+            "}"
+        ].join("\n");
+
+        function setPlayStatus(text, type) {
+            playStatus.textContent = text;
+            playStatus.className = "play-status " + type;
+        }
+
+        function describeRoot(value) {
+            if (Array.isArray(value)) {
+                return { label: "Array", count: value.length + " 项" };
+            }
+            if (value !== null && typeof value === "object") {
+                return { label: "Object", count: Object.keys(value).length + " 个字段" };
+            }
+            return { label: value === null ? "null" : typeof value, count: "原始值" };
+        }
+
+        function parseInput() {
+            var text = input.value.trim();
+            if (!text) {
+                setPlayStatus("请先输入 JSON 内容，或点击“填入示例”。", "error");
+                playOut.innerHTML = "";
+                return undefined;
+            }
+            try {
+                return JSON.parse(text);
+            } catch (err) {
+                playOut.innerHTML = "";
+                setPlayStatus("解析失败：" + err.message, "error");
+                return undefined;
+            }
+        }
+
+        document.getElementById("btnRun").addEventListener("click", function () {
+            var parsed = parseInput();
+            if (parsed === undefined) return;
+            var pretty = JSON.stringify(parsed, null, 2);
+            playOut.innerHTML = highlightJSON(pretty);
+            var root = describeRoot(parsed);
+            setPlayStatus(
+                "解析成功 · " + root.label + " · " + root.count +
+                " · 格式化后共 " + pretty.length + " 个字符",
+                "ok"
+            );
+        });
+
+        document.getElementById("btnSample").addEventListener("click", function () {
+            input.value = playgroundSample;
+            playOut.innerHTML = "";
+            setPlayStatus("已填入示例数据，点击“解析 JSON”查看结果。", "info");
+            input.focus();
+        });
+
+        document.getElementById("btnMinify").addEventListener("click", function () {
+            var parsed = parseInput();
+            if (parsed === undefined) return;
+            var minified = JSON.stringify(parsed);
+            playOut.innerHTML = highlightJSON(minified);
+            setPlayStatus(
+                "压缩完成 · 已移除所有缩进与换行，共 " + minified.length + " 个字符",
+                "ok"
+            );
+        });
+
+        input.addEventListener("keydown", function (event) {
+            if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+                event.preventDefault();
+                document.getElementById("btnRun").click();
+            }
+        });
+
+        /* ==================== 初始化 ==================== */
+        buildSampleButtons();
+        renderAll();
+        input.value = playgroundSample;
+        setPlayStatus("示例已就绪，点击“解析 JSON”查看格式化结果，或按 Ctrl + Enter。", "info");
+    </script>
+</body>
+</html>

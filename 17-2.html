@@ -1,0 +1,1660 @@
+<!DOCTYPE html>
+<!--
+    作者：魏士博
+    建立时间：2026-11-02
+    使用的大模型功能名称：Claude Code（DeepSeek-Chat）
+    页面说明：第 17 课接口请求练习——使用原生 fetch 获取 dummyjson 商品数据，并完成加载、筛选、详情与异常状态展示
+-->
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商品数据接口 · Fetch API 实践</title>
+    <style>
+        /* ============ 基础样式 ============ */
+        :root {
+            --ink: #0b1220;
+            --text: #334155;
+            --muted: #71809a;
+            --line: #e6eaf2;
+            --brand: #4f46e5;
+            --brand-2: #7c3aed;
+            --green: #10b981;
+            --red: #ef4444;
+            --amber: #f59e0b;
+            --mono: "Cascadia Code", Consolas, "JetBrains Mono", "Courier New", monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            color: var(--text);
+            background: #f5f6fa;
+            background-image:
+                radial-gradient(900px 420px at 10% -10%, rgba(79, 70, 229, 0.10), transparent 60%),
+                radial-gradient(760px 380px at 96% 2%, rgba(245, 158, 11, 0.07), transparent 58%);
+            background-repeat: no-repeat;
+            font-family: "Microsoft YaHei", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+            font-size: 15px;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        button,
+        input {
+            font-family: inherit;
+        }
+
+        img {
+            display: block;
+            max-width: 100%;
+        }
+
+        ::selection {
+            background: rgba(79, 70, 229, 0.18);
+        }
+
+        .wrap {
+            max-width: 1140px;
+            margin: 0 auto;
+            padding: 0 24px 64px;
+        }
+
+        /* ============ 顶部 ============ */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 30px 0 18px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            min-width: 0;
+        }
+
+        .brand-mark {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: none;
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            box-shadow: 0 10px 22px rgba(79, 70, 229, 0.28);
+            color: #fff;
+            line-height: 1;
+        }
+
+        .brand-mark b {
+            font-family: var(--mono);
+            font-size: 17px;
+            letter-spacing: -0.5px;
+        }
+
+        .brand-mark small {
+            margin-top: 4px;
+            font-family: var(--mono);
+            font-size: 8px;
+            letter-spacing: 1.4px;
+            opacity: 0.75;
+        }
+
+        .brand h1 {
+            color: var(--ink);
+            font-size: 21px;
+            line-height: 1.3;
+            letter-spacing: -0.4px;
+        }
+
+        .brand p {
+            margin-top: 2px;
+            color: var(--muted);
+            font-size: 12.5px;
+        }
+
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: none;
+        }
+
+        .lesson-chip {
+            padding: 6px 11px;
+            border-radius: 999px;
+            background: #eef2ff;
+            color: var(--brand);
+            font-size: 11.5px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+
+        .back-link {
+            padding: 7px 13px;
+            border: 1px solid var(--line);
+            border-radius: 9px;
+            background: #fff;
+            color: #475569;
+            font-size: 12.5px;
+            text-decoration: none;
+            transition: 0.18s ease;
+        }
+
+        .back-link:hover {
+            border-color: #b9c5e8;
+            color: var(--brand);
+        }
+
+        .lead {
+            max-width: 720px;
+            margin: 4px 0 18px;
+            color: var(--muted);
+            font-size: 13.5px;
+            line-height: 1.85;
+        }
+
+        /* ============ 接口地址 ============ */
+        .api-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 13px 16px;
+            border-radius: 14px;
+            background: #0f172a;
+            box-shadow: 0 14px 30px rgba(15, 23, 42, 0.16);
+        }
+
+        .method {
+            flex: none;
+            padding: 4px 10px;
+            border-radius: 6px;
+            background: rgba(16, 185, 129, 0.16);
+            color: #34d399;
+            font-family: var(--mono);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .endpoint {
+            flex: 1;
+            min-width: 0;
+            overflow-x: auto;
+            color: #cbd5e1;
+            font-family: var(--mono);
+            font-size: 12.5px;
+            white-space: nowrap;
+            scrollbar-width: none;
+        }
+
+        .endpoint::-webkit-scrollbar {
+            display: none;
+        }
+
+        .copy-btn {
+            flex: none;
+            padding: 5px 11px;
+            border: 1px solid #2c3b57;
+            border-radius: 7px;
+            background: transparent;
+            color: #a9bad6;
+            font-size: 11.5px;
+            cursor: pointer;
+            transition: 0.18s ease;
+        }
+
+        .copy-btn:hover {
+            border-color: #4d6488;
+            color: #fff;
+        }
+
+        .api-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 18px;
+            margin: 9px 0 22px 4px;
+            color: #94a3b8;
+            font-size: 11.5px;
+        }
+
+        .api-meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .api-meta span::before {
+            content: "";
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: #cbd5e1;
+        }
+
+        /* ============ 工具栏 ============ */
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .search-box {
+            position: relative;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .search-box svg {
+            position: absolute;
+            top: 50%;
+            left: 14px;
+            width: 17px;
+            height: 17px;
+            color: #94a3b8;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+
+        .search-box input {
+            width: 100%;
+            height: 46px;
+            padding: 0 16px 0 42px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: #fff;
+            color: var(--ink);
+            font-size: 13.5px;
+            outline: none;
+            transition: border-color 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .search-box input::placeholder {
+            color: #9aa6ba;
+        }
+
+        .search-box input:focus {
+            border-color: #a5b4fc;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
+        }
+
+        .reload-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            flex: none;
+            height: 46px;
+            padding: 0 18px;
+            border: 0;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #4f46e5, #6d28d9);
+            box-shadow: 0 8px 18px rgba(79, 70, 229, 0.22);
+            color: #fff;
+            font-size: 13.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s ease;
+        }
+
+        .reload-btn svg {
+            width: 15px;
+            height: 15px;
+        }
+
+        .reload-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 12px 22px rgba(79, 70, 229, 0.3);
+        }
+
+        .reload-btn:disabled {
+            opacity: 0.62;
+            cursor: wait;
+            transform: none;
+        }
+
+        /* ============ 状态行 ============ */
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0 0 16px 2px;
+            color: var(--muted);
+            font-size: 12.5px;
+            transition: color 0.2s ease;
+        }
+
+        .status::before {
+            content: "";
+            flex: none;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .status[data-state="loading"] {
+            color: #2563eb;
+        }
+
+        .status[data-state="loading"]::before {
+            animation: pulse 1.1s ease-in-out infinite;
+        }
+
+        .status[data-state="ok"] {
+            color: #059669;
+        }
+
+        .status[data-state="error"] {
+            color: #dc2626;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.35; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        /* ============ 数据统计 ============ */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 22px;
+        }
+
+        .stat-tile {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            padding: 13px 16px;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: #fff;
+            box-shadow: 0 6px 16px rgba(15, 23, 42, 0.035);
+        }
+
+        .stat-tile strong {
+            color: var(--ink);
+            font-size: 20px;
+            line-height: 1.25;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .stat-tile span {
+            color: var(--muted);
+            font-size: 11.5px;
+        }
+
+        /* ============ 列表标题 ============ */
+        .list-head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 12px;
+            margin: 0 2px 12px;
+        }
+
+        .list-head h2 {
+            color: var(--ink);
+            font-size: 15px;
+        }
+
+        .result-meta {
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        /* ============ 商品网格 ============ */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 16px;
+            min-height: 220px;
+        }
+
+        .product {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            background: #fff;
+            cursor: pointer;
+            animation: fadeUp 0.45s ease both;
+            animation-delay: calc(var(--i, 0) * 45ms);
+            transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+        }
+
+        .product:hover,
+        .product:focus-visible {
+            border-color: #d9e0ee;
+            box-shadow: 0 16px 32px rgba(15, 23, 42, 0.1);
+            transform: translateY(-4px);
+        }
+
+        .product:focus-visible {
+            outline: 2px solid #6366f1;
+            outline-offset: 2px;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .thumb {
+            position: relative;
+            aspect-ratio: 4 / 3;
+            overflow: hidden;
+            background: #f5f7fb;
+        }
+
+        .thumb img {
+            width: 100%;
+            height: 100%;
+            padding: 16px;
+            object-fit: contain;
+            transition: transform 0.3s ease;
+        }
+
+        .product:hover .thumb img {
+            transform: scale(1.05);
+        }
+
+        .thumb.img-failed::after {
+            content: "图片加载失败";
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            color: #94a3b8;
+            font-size: 12px;
+        }
+
+        .cat-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 3px 8px;
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(6px);
+            color: #475569;
+            font-size: 10.5px;
+            letter-spacing: 0.3px;
+        }
+
+        .discount {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 3px 7px;
+            border-radius: 6px;
+            background: var(--red);
+            color: #fff;
+            font-size: 10.5px;
+            font-weight: 700;
+        }
+
+        .body {
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+            padding: 13px 14px 15px;
+        }
+
+        .body h3 {
+            display: -webkit-box;
+            min-height: 42px;
+            overflow: hidden;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            margin-bottom: 5px;
+            color: var(--ink);
+            font-size: 14.5px;
+            line-height: 1.45;
+        }
+
+        .desc {
+            display: -webkit-box;
+            min-height: 37px;
+            overflow: hidden;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            margin-bottom: 9px;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.55;
+        }
+
+        .meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--muted);
+            font-size: 11.5px;
+        }
+
+        .rating {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            color: #b45309;
+            font-weight: 600;
+        }
+
+        .rating svg {
+            width: 11px;
+            height: 11px;
+            fill: currentColor;
+        }
+
+        .stock {
+            margin-left: auto;
+        }
+
+        .price-row {
+            display: flex;
+            align-items: baseline;
+            gap: 7px;
+            margin-top: auto;
+            padding-top: 10px;
+        }
+
+        .price {
+            color: var(--ink);
+            font-size: 17.5px;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+        }
+
+        .old-price {
+            color: #a0aec2;
+            font-size: 11.5px;
+            text-decoration: line-through;
+        }
+
+        .detail-link {
+            margin-left: auto;
+            color: var(--brand);
+            font-size: 11.5px;
+            font-weight: 700;
+            opacity: 0;
+            transform: translateX(-4px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        .product:hover .detail-link,
+        .product:focus-visible .detail-link {
+            opacity: 1;
+            transform: none;
+        }
+
+        /* ============ 骨架屏 ============ */
+        .product.skeleton {
+            cursor: default;
+            animation: none;
+            box-shadow: none;
+            pointer-events: none;
+        }
+
+        .sk {
+            border-radius: 8px;
+            background: linear-gradient(90deg, #eef1f7 25%, #f8faff 37%, #eef1f7 63%);
+            background-size: 400% 100%;
+            animation: shimmer 1.3s ease infinite;
+        }
+
+        .sk-img {
+            aspect-ratio: 4 / 3;
+            border-radius: 0;
+        }
+
+        .sk-body {
+            display: grid;
+            gap: 9px;
+            padding: 14px;
+        }
+
+        .sk-line {
+            height: 11px;
+        }
+
+        .sk-line.w80 { width: 80%; }
+        .sk-line.w60 { width: 60%; }
+        .sk-line.w40 { width: 40%; }
+
+        .sk-price {
+            width: 45%;
+            height: 18px;
+            margin-top: 4px;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 100% 0; }
+            100% { background-position: -100% 0; }
+        }
+
+        /* ============ 空状态 / 错误状态 ============ */
+        .empty-state,
+        .error-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            grid-column: 1 / -1;
+            padding: 56px 22px;
+            border: 1px dashed #d9e1ef;
+            border-radius: 16px;
+            background: #fff;
+            text-align: center;
+        }
+
+        .state-icon {
+            display: grid;
+            place-items: center;
+            width: 52px;
+            height: 52px;
+            margin-bottom: 14px;
+            border-radius: 50%;
+            background: #f1f4fb;
+            color: #64748b;
+        }
+
+        .state-icon svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .error-state .state-icon {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .empty-state h3,
+        .error-state h3 {
+            color: var(--ink);
+            font-size: 15.5px;
+            margin-bottom: 6px;
+        }
+
+        .empty-state p,
+        .error-state p {
+            max-width: 460px;
+            color: var(--muted);
+            font-size: 12.5px;
+            line-height: 1.8;
+        }
+
+        .state-hint {
+            margin-top: 4px;
+            color: #94a3b8 !important;
+            font-size: 11.5px !important;
+        }
+
+        .state-btn {
+            margin-top: 16px;
+            padding: 8px 16px;
+            border: 1px solid var(--line);
+            border-radius: 9px;
+            background: #fff;
+            color: #475569;
+            font-size: 12.5px;
+            cursor: pointer;
+            transition: 0.18s ease;
+        }
+
+        .state-btn:hover {
+            border-color: #b9c5e8;
+            color: var(--brand);
+        }
+
+        /* ============ 原始 JSON ============ */
+        .raw {
+            margin-top: 24px;
+            overflow: hidden;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: #fff;
+        }
+
+        .raw summary {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 18px;
+            color: var(--ink);
+            font-size: 13px;
+            font-weight: 700;
+            list-style: none;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .raw summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .raw summary::before {
+            content: "▸";
+            color: var(--brand);
+            font-size: 11px;
+            transition: transform 0.15s ease;
+        }
+
+        .raw[open] summary::before {
+            transform: rotate(90deg);
+        }
+
+        .raw-size {
+            margin-left: auto;
+            color: #94a3b8;
+            font-family: var(--mono);
+            font-size: 11px;
+            font-weight: 400;
+        }
+
+        .raw pre {
+            max-height: 380px;
+            margin: 0;
+            padding: 18px;
+            overflow: auto;
+            border-top: 1px solid #1e293b;
+            background: #0f172a;
+            color: #cbd5e1;
+            font-family: var(--mono);
+            font-size: 12px;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        /* ============ 核心代码 ============ */
+        .foot-card {
+            margin-top: 26px;
+            overflow: hidden;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: #fff;
+        }
+
+        .foot-head {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--line);
+            color: var(--ink);
+            font-size: 12.5px;
+            font-weight: 700;
+        }
+
+        .foot-head::before {
+            content: "";
+            width: 4px;
+            height: 14px;
+            border-radius: 2px;
+            background: linear-gradient(180deg, #4f46e5, #7c3aed);
+        }
+
+        .foot-card pre {
+            margin: 0;
+            padding: 16px 18px;
+            overflow-x: auto;
+            background: #0f172a;
+            color: #cbd5e1;
+            font-family: var(--mono);
+            font-size: 12px;
+            line-height: 1.8;
+        }
+
+        .foot-note {
+            max-width: 840px;
+            margin-top: 12px;
+            color: #94a3b8;
+            font-size: 12px;
+            line-height: 1.85;
+        }
+
+        /* ============ 详情弹窗 ============ */
+        .detail-dialog {
+            width: min(860px, calc(100vw - 32px));
+            max-height: calc(100vh - 48px);
+            padding: 0;
+            border: 0;
+            border-radius: 20px;
+            background: #fff;
+            color: var(--text);
+            box-shadow: 0 30px 80px rgba(2, 6, 23, 0.35);
+            overflow: hidden;
+        }
+
+        .detail-dialog::backdrop {
+            background: rgba(8, 15, 30, 0.58);
+            backdrop-filter: blur(3px);
+        }
+
+        .detail-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            z-index: 3;
+            display: grid;
+            place-items: center;
+            width: 34px;
+            height: 34px;
+            border: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.92);
+            box-shadow: 0 2px 10px rgba(15, 23, 42, 0.15);
+            color: #475569;
+            font-size: 20px;
+            line-height: 1;
+            cursor: pointer;
+            transition: 0.18s ease;
+        }
+
+        .detail-close:hover {
+            background: #fff;
+            color: var(--ink);
+        }
+
+        .detail-wrap {
+            display: grid;
+            grid-template-columns: 1fr 1.05fr;
+            max-height: calc(100vh - 48px);
+            overflow: auto;
+        }
+
+        .detail-media {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+            padding: 28px;
+            background: #f5f7fb;
+        }
+
+        .detail-media img {
+            width: 100%;
+            max-height: 400px;
+            object-fit: contain;
+        }
+
+        .detail-info {
+            display: flex;
+            flex-direction: column;
+            padding: 30px 30px 26px;
+        }
+
+        .detail-cat {
+            align-self: flex-start;
+            margin-bottom: 10px;
+            padding: 3px 9px;
+            border-radius: 999px;
+            background: #eef2ff;
+            color: var(--brand);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+        }
+
+        .detail-info h2 {
+            margin-bottom: 6px;
+            color: var(--ink);
+            font-size: 22px;
+            line-height: 1.35;
+        }
+
+        .detail-brand {
+            margin-bottom: 12px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .detail-desc {
+            margin-bottom: 16px;
+            color: #475569;
+            font-size: 13px;
+            line-height: 1.8;
+        }
+
+        .detail-price {
+            display: flex;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 9px;
+            margin-bottom: 16px;
+        }
+
+        .detail-price strong {
+            color: var(--ink);
+            font-size: 26px;
+            letter-spacing: -0.5px;
+        }
+
+        .detail-price s {
+            color: #a0aec2;
+            font-size: 13px;
+        }
+
+        .save-tag {
+            padding: 3px 7px;
+            border-radius: 6px;
+            background: #ecfdf5;
+            color: #059669;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .detail-list {
+            display: grid;
+            margin-bottom: 16px;
+            border-top: 1px solid #eef1f7;
+            list-style: none;
+        }
+
+        .detail-list li {
+            display: flex;
+            justify-content: space-between;
+            gap: 14px;
+            padding: 9px 0;
+            border-bottom: 1px solid #eef1f7;
+            font-size: 12.5px;
+        }
+
+        .detail-list span {
+            flex: none;
+            color: var(--muted);
+        }
+
+        .detail-list b {
+            color: var(--ink);
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .detail-note {
+            color: #94a3b8;
+            font-size: 11px;
+            line-height: 1.7;
+        }
+
+        /* ============ 响应式 ============ */
+        @media (max-width: 1024px) {
+            .grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 860px) {
+            .grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .detail-wrap {
+                grid-template-columns: 1fr;
+            }
+
+            .detail-media {
+                min-height: 200px;
+                padding: 20px;
+            }
+
+            .detail-media img {
+                max-height: 260px;
+            }
+
+            .detail-info {
+                padding: 24px;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .stats {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 560px) {
+            .wrap {
+                padding: 0 14px 48px;
+            }
+
+            .topbar {
+                flex-wrap: wrap;
+                padding-top: 22px;
+            }
+
+            .brand p {
+                display: none;
+            }
+
+            .top-actions {
+                margin-left: auto;
+            }
+
+            .lesson-chip {
+                display: none;
+            }
+
+            .lead {
+                font-size: 12.5px;
+            }
+
+            .api-bar {
+                flex-wrap: wrap;
+                gap: 8px 9px;
+                padding: 12px;
+            }
+
+            .endpoint {
+                order: 3;
+                flex: 1 0 100%;
+                overflow: visible;
+                font-size: 11.5px;
+                line-height: 1.5;
+                white-space: normal;
+                word-break: break-all;
+            }
+
+            .copy-btn {
+                margin-left: auto;
+            }
+
+            .toolbar {
+                flex-wrap: wrap;
+            }
+
+            .search-box {
+                flex-basis: 100%;
+            }
+
+            .reload-btn {
+                width: 100%;
+            }
+
+            .grid {
+                gap: 12px;
+            }
+
+            .body h3 {
+                font-size: 13.5px;
+            }
+
+            .detail-link {
+                display: none;
+            }
+
+            .list-head {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 2px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (hover: none) {
+            .detail-link {
+                opacity: 1;
+                transform: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <header class="topbar">
+            <div class="brand">
+                <span class="brand-mark" aria-hidden="true"><b>17</b><small>API</small></span>
+                <div>
+                    <h1>商品数据接口</h1>
+                    <p>使用 Fetch API 获取并渲染真实数据</p>
+                </div>
+            </div>
+            <div class="top-actions">
+                <span class="lesson-chip">第 17 课 · 接口请求</span>
+                <a class="back-link" href="index.html">返回目录</a>
+            </div>
+        </header>
+
+        <p class="lead">
+            通过一个真实的商品接口，练习 <code>fetch()</code> 请求、Promise 异步处理、加载与异常状态，
+            并把返回的 JSON 数据渲染成商品卡片；点击卡片可以查看完整详情。
+        </p>
+
+        <section class="api-bar" aria-label="接口地址">
+            <span class="method">GET</span>
+            <code class="endpoint" id="endpoint">https://dummyjson.com/products?limit=8</code>
+            <button class="copy-btn" id="copyEndpoint" type="button">复制</button>
+        </section>
+        <p class="api-meta">
+            <span>数据源 DummyJSON</span>
+            <span>响应格式 JSON</span>
+            <span>允许跨域访问</span>
+        </p>
+
+        <div class="toolbar">
+            <label class="search-box" for="searchInput">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" aria-hidden="true">
+                    <circle cx="11" cy="11" r="7"></circle>
+                    <path d="m20 20-3.5-3.5"></path>
+                </svg>
+                <input id="searchInput" type="search" placeholder="搜索商品名称、品牌或分类"
+                       autocomplete="off" aria-label="搜索商品">
+            </label>
+            <button class="reload-btn" id="reloadBtn" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M21 12a9 9 0 1 1-2.64-6.36"></path>
+                    <path d="M21 3v6h-6"></path>
+                </svg>
+                <span>重新请求</span>
+            </button>
+        </div>
+
+        <p class="status" id="status" data-state="loading" aria-live="polite">正在请求接口…</p>
+
+        <section class="stats" aria-label="数据统计">
+            <div class="stat-tile"><strong id="statCount">—</strong><span>商品数量</span></div>
+            <div class="stat-tile"><strong id="statPrice">—</strong><span>平均价格</span></div>
+            <div class="stat-tile"><strong id="statRating">—</strong><span>平均评分</span></div>
+            <div class="stat-tile"><strong id="statCategory">—</strong><span>商品分类</span></div>
+        </section>
+
+        <div class="list-head">
+            <h2>商品列表</h2>
+            <span class="result-meta" id="resultMeta">等待数据…</span>
+        </div>
+
+        <main class="grid" id="grid" aria-live="polite" aria-busy="true"></main>
+
+        <details class="raw">
+            <summary>查看接口原始 JSON<span class="raw-size" id="rawSize"></span></summary>
+            <pre id="rawJson">请求成功后，这里会显示接口返回的完整 JSON。</pre>
+        </details>
+
+        <section class="foot-card" aria-label="核心代码">
+            <div class="foot-head">核心代码 · fetch 请求流程</div>
+            <pre><code>fetch("https://dummyjson.com/products?limit=8")
+  .then(res =&gt; {
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    return res.json();               // 把响应体解析为 JSON 对象
+  })
+  .then(data =&gt; render(data.products)) // 拿到商品数组并渲染
+  .catch(err =&gt; showError(err));       // 统一处理异常</code></pre>
+        </section>
+
+        <p class="foot-note">
+            若浏览器提示跨域或网络错误，请通过本地服务器打开本页（例如 VS Code 的 Live Server），
+            并确认网络可以访问 dummyjson.com。本页的全部数据均来自该公开接口，仅用于课堂练习。
+        </p>
+    </div>
+
+    <!-- 商品详情弹窗 -->
+    <dialog class="detail-dialog" id="detailDialog" aria-labelledby="detailTitle">
+        <button class="detail-close" id="detailClose" type="button" aria-label="关闭详情">×</button>
+        <div class="detail-wrap">
+            <div class="detail-media">
+                <img id="detailImg" src="" alt="">
+            </div>
+            <div class="detail-info" id="detailInfo"></div>
+        </div>
+    </dialog>
+
+    <script>
+        /* ==================== 配置与状态 ==================== */
+        var API_URL = "https://dummyjson.com/products?limit=8";
+
+        var products = [];
+        var lastPayload = null;
+        var currentController = null;
+
+        var grid = document.getElementById("grid");
+        var statusEl = document.getElementById("status");
+        var resultMeta = document.getElementById("resultMeta");
+        var searchInput = document.getElementById("searchInput");
+        var reloadBtn = document.getElementById("reloadBtn");
+        var rawJson = document.getElementById("rawJson");
+        var rawSize = document.getElementById("rawSize");
+        var endpoint = document.getElementById("endpoint");
+        var copyEndpoint = document.getElementById("copyEndpoint");
+        var dialog = document.getElementById("detailDialog");
+        var detailImg = document.getElementById("detailImg");
+        var detailInfo = document.getElementById("detailInfo");
+
+        /* ==================== 工具函数 ==================== */
+        function esc(value) {
+            return String(value == null ? "" : value).replace(/[&<>"']/g, function (char) {
+                return {
+                    "&": "&amp;",
+                    "<": "&lt;",
+                    ">": "&gt;",
+                    '"': "&quot;",
+                    "'": "&#39;"
+                }[char];
+            });
+        }
+
+        function money(value) {
+            var number = Number(value);
+            return isFinite(number) ? "$" + number.toFixed(2) : "—";
+        }
+
+        function setStatus(text, state) {
+            statusEl.textContent = text;
+            statusEl.setAttribute("data-state", state);
+        }
+
+        function timeText() {
+            return new Date().toLocaleTimeString("zh-CN", { hour12: false });
+        }
+
+        function copyText(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                return navigator.clipboard.writeText(text).then(function () {
+                    return true;
+                }).catch(function () {
+                    return fallbackCopy(text);
+                });
+            }
+            return Promise.resolve(fallbackCopy(text));
+        }
+
+        function fallbackCopy(text) {
+            var area = document.createElement("textarea");
+            area.value = text;
+            area.style.position = "fixed";
+            area.style.opacity = "0";
+            document.body.appendChild(area);
+            area.select();
+            var ok = false;
+            try {
+                ok = document.execCommand("copy");
+            } catch (err) {
+                ok = false;
+            }
+            document.body.removeChild(area);
+            return ok;
+        }
+
+        /* ==================== 骨架屏 ==================== */
+        function renderSkeletons() {
+            var html = "";
+            for (var i = 0; i < 8; i++) {
+                html += '<article class="product skeleton" aria-hidden="true">' +
+                    '<div class="sk sk-img"></div>' +
+                    '<div class="sk-body">' +
+                        '<div class="sk sk-line w80"></div>' +
+                        '<div class="sk sk-line w60"></div>' +
+                        '<div class="sk sk-line w40"></div>' +
+                        '<div class="sk sk-price"></div>' +
+                    "</div>" +
+                "</article>";
+            }
+            grid.innerHTML = html;
+            grid.setAttribute("aria-busy", "true");
+        }
+
+        /* ==================== 商品卡片 ==================== */
+        function createProductCard(product, index) {
+            var discount = Number(product.discountPercentage) || 0;
+            var oldPrice = discount > 0 ? product.price / (1 - discount / 100) : null;
+
+            var card = document.createElement("article");
+            card.className = "product";
+            card.tabIndex = 0;
+            card.setAttribute("role", "button");
+            card.setAttribute("aria-label", product.title + "，" + money(product.price) + "，查看详情");
+            card.style.setProperty("--i", index);
+
+            var thumb = document.createElement("div");
+            thumb.className = "thumb";
+
+            var img = document.createElement("img");
+            img.src = product.thumbnail || "";
+            img.alt = product.title || "商品图片";
+            img.loading = "lazy";
+            img.decoding = "async";
+            img.addEventListener("error", function () {
+                img.remove();
+                thumb.classList.add("img-failed");
+            });
+            thumb.appendChild(img);
+
+            if (product.category) {
+                var cat = document.createElement("span");
+                cat.className = "cat-badge";
+                cat.textContent = product.category;
+                thumb.appendChild(cat);
+            }
+
+            if (discount > 0) {
+                var off = document.createElement("span");
+                off.className = "discount";
+                off.textContent = "-" + Math.round(discount) + "%";
+                thumb.appendChild(off);
+            }
+
+            var body = document.createElement("div");
+            body.className = "body";
+
+            var title = document.createElement("h3");
+            title.textContent = product.title || "未命名商品";
+            body.appendChild(title);
+
+            var desc = document.createElement("p");
+            desc.className = "desc";
+            desc.textContent = product.description || "暂无商品描述";
+            body.appendChild(desc);
+
+            var meta = document.createElement("div");
+            meta.className = "meta";
+
+            var rating = document.createElement("span");
+            rating.className = "rating";
+            rating.innerHTML =
+                '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+                '<path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path>' +
+                "</svg>" + Number(product.rating || 0).toFixed(1);
+            meta.appendChild(rating);
+
+            var stock = document.createElement("span");
+            stock.className = "stock";
+            stock.textContent = "库存 " + (product.stock == null ? "—" : product.stock);
+            meta.appendChild(stock);
+
+            body.appendChild(meta);
+
+            var priceRow = document.createElement("div");
+            priceRow.className = "price-row";
+
+            var price = document.createElement("span");
+            price.className = "price";
+            price.textContent = money(product.price);
+            priceRow.appendChild(price);
+
+            if (oldPrice) {
+                var old = document.createElement("span");
+                old.className = "old-price";
+                old.textContent = money(oldPrice);
+                priceRow.appendChild(old);
+            }
+
+            var link = document.createElement("span");
+            link.className = "detail-link";
+            link.textContent = "查看详情 →";
+            priceRow.appendChild(link);
+
+            body.appendChild(priceRow);
+
+            card.appendChild(thumb);
+            card.appendChild(body);
+
+            card.addEventListener("click", function () {
+                openDetail(product);
+            });
+
+            card.addEventListener("keydown", function (event) {
+                if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    openDetail(product);
+                }
+            });
+
+            return card;
+        }
+
+        /* ==================== 列表渲染 ==================== */
+        function applyFilter() {
+            var keyword = searchInput.value.trim().toLowerCase();
+            var list = products.filter(function (product) {
+                if (!keyword) return true;
+                return [product.title, product.category, product.brand]
+                    .join(" ")
+                    .toLowerCase()
+                    .indexOf(keyword) !== -1;
+            });
+
+            grid.innerHTML = "";
+
+            if (!list.length) {
+                grid.appendChild(createEmptyState(keyword));
+                resultMeta.textContent = "没有匹配的商品";
+                return;
+            }
+
+            list.forEach(function (product, index) {
+                grid.appendChild(createProductCard(product, index));
+            });
+
+            grid.setAttribute("aria-busy", "false");
+            resultMeta.textContent = keyword
+                ? "筛选出 " + list.length + " / " + products.length + " 件商品"
+                : "共 " + list.length + " 件商品";
+        }
+
+        function createEmptyState(keyword) {
+            var box = document.createElement("div");
+            box.className = "empty-state";
+            box.innerHTML =
+                '<span class="state-icon" aria-hidden="true">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" ' +
+                    'stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle>' +
+                    '<path d="m20 20-3.5-3.5"></path><path d="M8 11h6"></path></svg>' +
+                "</span>" +
+                "<h3>没有找到相关商品</h3>" +
+                "<p>没有与“" + esc(keyword) + "”匹配的结果，换一个关键词试试吧。</p>";
+
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "state-btn";
+            btn.textContent = "清空搜索";
+            btn.addEventListener("click", function () {
+                searchInput.value = "";
+                applyFilter();
+                searchInput.focus();
+            });
+            box.appendChild(btn);
+            return box;
+        }
+
+        function createErrorState(message) {
+            var box = document.createElement("div");
+            box.className = "error-state";
+            box.innerHTML =
+                '<span class="state-icon" aria-hidden="true">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" ' +
+                    'stroke-linecap="round"><path d="M12 8v5"></path><circle cx="12" cy="16.5" r=".6" fill="currentColor"></circle>' +
+                    '<path d="M10.3 3.9 2.6 17.2A2 2 0 0 0 4.3 20h15.4a2 2 0 0 0 1.7-2.8L13.7 3.9a2 2 0 0 0-3.4 0Z"></path></svg>' +
+                "</span>" +
+                "<h3>接口请求失败</h3>" +
+                "<p>" + esc(message) + "</p>" +
+                '<p class="state-hint">请检查网络连接；如果浏览器提示跨域，请使用本地服务器打开页面。</p>';
+
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "state-btn";
+            btn.textContent = "重新请求";
+            btn.addEventListener("click", loadProducts);
+            box.appendChild(btn);
+            return box;
+        }
+
+        /* ==================== 统计 ==================== */
+        function renderStats(list) {
+            var count = list.length;
+            var sumPrice = 0;
+            var sumRating = 0;
+            var categories = {};
+
+            list.forEach(function (product) {
+                sumPrice += Number(product.price) || 0;
+                sumRating += Number(product.rating) || 0;
+                if (product.category) categories[product.category] = true;
+            });
+
+            document.getElementById("statCount").textContent = count + " 件";
+            document.getElementById("statPrice").textContent = count ? money(sumPrice / count) : "—";
+            document.getElementById("statRating").textContent = count
+                ? (sumRating / count).toFixed(2) + " / 5"
+                : "—";
+            document.getElementById("statCategory").textContent = Object.keys(categories).length + " 类";
+        }
+
+        /* ==================== 详情弹窗 ==================== */
+        function openDetail(product) {
+            var discount = Number(product.discountPercentage) || 0;
+            var oldPrice = discount > 0 ? product.price / (1 - discount / 100) : null;
+            var image = (product.images && product.images[0]) || product.thumbnail || "";
+
+            detailImg.src = image;
+            detailImg.alt = product.title || "商品图片";
+
+            var saveTag = oldPrice
+                ? '<span class="save-tag">立省 ' + money(oldPrice - product.price) + "</span>"
+                : "";
+
+            var rows = [
+                ["评分", "★ " + Number(product.rating || 0).toFixed(2) + " / 5"],
+                ["库存", (product.stock == null ? "—" : product.stock) + " 件"],
+                ["SKU", product.sku || "—"],
+                ["品牌", product.brand || "—"],
+                ["保修", product.warrantyInformation || "—"],
+                ["运费", product.shippingInformation || "—"],
+                ["退货政策", product.returnPolicy || "—"]
+            ];
+
+            detailInfo.innerHTML =
+                '<span class="detail-cat">' + esc(product.category || "product") + "</span>" +
+                '<h2 id="detailTitle">' + esc(product.title || "未命名商品") + "</h2>" +
+                '<p class="detail-brand">商品编号 #' + esc(product.id) +
+                    " · 数据来自 DummyJSON 接口</p>" +
+                '<p class="detail-desc">' + esc(product.description || "暂无商品描述") + "</p>" +
+                '<div class="detail-price"><strong>' + money(product.price) + "</strong>" +
+                    (oldPrice ? "<s>" + money(oldPrice) + "</s>" : "") + saveTag + "</div>" +
+                '<ul class="detail-list">' +
+                    rows.map(function (row) {
+                        return "<li><span>" + esc(row[0]) + "</span><b>" + esc(row[1]) + "</b></li>";
+                    }).join("") +
+                "</ul>" +
+                '<p class="detail-note">本详情直接使用列表接口返回的字段渲染，未发起第二次请求。</p>';
+
+            if (typeof dialog.showModal === "function") {
+                if (dialog.open) dialog.close();
+                dialog.showModal();
+            }
+        }
+
+        /* ==================== 请求数据 ==================== */
+        function loadProducts() {
+            if (currentController) currentController.abort();
+            currentController = new AbortController();
+
+            renderSkeletons();
+            setStatus("正在请求接口…", "loading");
+            resultMeta.textContent = "等待数据…";
+            reloadBtn.disabled = true;
+
+            fetch(API_URL, {
+                method: "GET",
+                headers: { "Accept": "application/json" },
+                signal: currentController.signal
+            })
+                .then(function (response) {
+                    if (!response.ok) {
+                        throw new Error("HTTP " + response.status + " " + response.statusText);
+                    }
+                    return response.json();
+                })
+                .then(function (data) {
+                    if (!data || !Array.isArray(data.products) || !data.products.length) {
+                        throw new Error("接口返回的数据为空或格式不正确");
+                    }
+
+                    lastPayload = data;
+                    products = data.products;
+
+                    var pretty = JSON.stringify(data, null, 2);
+                    rawJson.textContent = pretty;
+                    rawSize.textContent = pretty.length + " 个字符";
+
+                    renderStats(products);
+                    applyFilter();
+                    setStatus(
+                        "请求成功 · HTTP 200 · 已加载 " + products.length +
+                        " 件商品 · " + timeText(),
+                        "ok"
+                    );
+                })
+                .catch(function (error) {
+                    if (error.name === "AbortError") return;
+
+                    products = [];
+                    grid.innerHTML = "";
+                    grid.appendChild(createErrorState(error.message || "未知错误"));
+                    grid.setAttribute("aria-busy", "false");
+                    resultMeta.textContent = "加载失败";
+                    setStatus("请求失败：" + (error.message || "未知错误"), "error");
+                })
+                .finally(function () {
+                    reloadBtn.disabled = false;
+                    currentController = null;
+                });
+        }
+
+        /* ==================== 事件绑定 ==================== */
+        reloadBtn.addEventListener("click", loadProducts);
+
+        searchInput.addEventListener("input", function () {
+            if (!products.length) return;
+            applyFilter();
+        });
+
+        searchInput.addEventListener("keydown", function (event) {
+            if (event.key === "Escape") {
+                searchInput.value = "";
+                applyFilter();
+            }
+        });
+
+        copyEndpoint.addEventListener("click", function () {
+            copyText(API_URL).then(function (ok) {
+                copyEndpoint.textContent = ok ? "已复制 ✓" : "复制失败";
+                setTimeout(function () {
+                    copyEndpoint.textContent = "复制";
+                }, 1400);
+            });
+        });
+
+        document.getElementById("detailClose").addEventListener("click", function () {
+            dialog.close();
+        });
+
+        dialog.addEventListener("click", function (event) {
+            if (event.target === dialog) dialog.close();
+        });
+
+        /* ==================== 初始化 ==================== */
+        endpoint.textContent = API_URL;
+        loadProducts();
+    </script>
+</body>
+</html>

@@ -1,0 +1,1458 @@
+<!DOCTYPE html>
+<!--
+    作者：魏士博
+    建立时间：2026-11-02
+    使用的大模型功能名称：Claude Code（DeepSeek-Chat）
+    页面说明：第 17 课 JavaScript 定时器——演示 setTimeout 的一次性延迟与 setInterval 的重复执行
+-->
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript 定时器 · setTimeout 与 setInterval</title>
+    <style>
+        :root {
+            --ink: #0b1220;
+            --text: #334155;
+            --muted: #71809a;
+            --line: #e6eaf2;
+            --brand: #4f46e5;
+            --brand-2: #7c3aed;
+            --amber: #d97706;
+            --teal: #0f766e;
+            --red: #dc2626;
+            --mono: "Cascadia Code", Consolas, "JetBrains Mono", "Courier New", monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        [hidden] {
+            display: none !important;
+        }
+
+        body {
+            min-height: 100vh;
+            color: var(--text);
+            background: #f5f6fa;
+            background-image:
+                radial-gradient(900px 440px at 8% -8%, rgba(79, 70, 229, 0.10), transparent 60%),
+                radial-gradient(720px 380px at 98% 0%, rgba(20, 184, 166, 0.07), transparent 60%);
+            background-repeat: no-repeat;
+            font-family: "Microsoft YaHei", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+            font-size: 15px;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        button,
+        input {
+            font-family: inherit;
+        }
+
+        ::selection {
+            background: rgba(79, 70, 229, 0.18);
+        }
+
+        .wrap {
+            max-width: 1140px;
+            margin: 0 auto;
+            padding: 0 24px 64px;
+        }
+
+        /* ============ 顶部 ============ */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 30px 0 18px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            min-width: 0;
+        }
+
+        .brand-mark {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: none;
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            box-shadow: 0 10px 22px rgba(79, 70, 229, 0.28);
+            color: #fff;
+            line-height: 1;
+        }
+
+        .brand-mark b {
+            font-family: var(--mono);
+            font-size: 17px;
+            letter-spacing: -0.5px;
+        }
+
+        .brand-mark small {
+            margin-top: 4px;
+            font-family: var(--mono);
+            font-size: 7px;
+            letter-spacing: 1px;
+            opacity: 0.78;
+        }
+
+        .brand h1 {
+            color: var(--ink);
+            font-size: 21px;
+            line-height: 1.3;
+            letter-spacing: -0.4px;
+        }
+
+        .brand p {
+            margin-top: 2px;
+            color: var(--muted);
+            font-size: 12.5px;
+        }
+
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: none;
+        }
+
+        .lesson-chip {
+            padding: 6px 11px;
+            border-radius: 999px;
+            background: #eef2ff;
+            color: var(--brand);
+            font-size: 11.5px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+
+        .back-link {
+            padding: 7px 13px;
+            border: 1px solid var(--line);
+            border-radius: 9px;
+            background: #fff;
+            color: #475569;
+            font-size: 12.5px;
+            text-decoration: none;
+            transition: 0.18s ease;
+        }
+
+        .back-link:hover {
+            border-color: #b9c5e8;
+            color: var(--brand);
+        }
+
+        .lead {
+            max-width: 840px;
+            margin: 4px 0 20px;
+            color: var(--muted);
+            font-size: 13.5px;
+            line-height: 1.85;
+        }
+
+        .lead code {
+            padding: 1px 6px;
+            border-radius: 5px;
+            background: #eef2ff;
+            color: var(--brand);
+            font-family: var(--mono);
+            font-size: 12px;
+        }
+
+        /* ============ 卡片布局 ============ */
+        .timer-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 20px;
+            align-items: stretch;
+        }
+
+        .timer-card {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            padding: 22px;
+            border: 1px solid var(--line);
+            border-radius: 20px;
+            background: #fff;
+            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.055);
+        }
+
+        .timeout-card {
+            box-shadow: inset 0 3px 0 #f59e0b, 0 16px 40px rgba(15, 23, 42, 0.055);
+        }
+
+        .interval-card {
+            box-shadow: inset 0 3px 0 #14b8a6, 0 16px 40px rgba(15, 23, 42, 0.055);
+        }
+
+        .card-head {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 9px;
+        }
+
+        .card-head h2 {
+            color: var(--ink);
+            font-family: var(--mono);
+            font-size: 18px;
+            letter-spacing: -0.4px;
+        }
+
+        .card-badge {
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+        }
+
+        .badge-amber {
+            border: 1px solid #fde68a;
+            background: #fffbeb;
+            color: #b45309;
+        }
+
+        .badge-teal {
+            border: 1px solid #99f6e4;
+            background: #f0fdfa;
+            color: #0f766e;
+        }
+
+        .card-sub {
+            margin-left: auto;
+            color: #94a3b8;
+            font-size: 11px;
+        }
+
+        .card-desc {
+            margin: 9px 0 16px;
+            color: var(--muted);
+            font-size: 12.5px;
+            line-height: 1.8;
+        }
+
+        .card-desc code {
+            color: #475569;
+            font-family: var(--mono);
+            font-size: 11.5px;
+        }
+
+        /* ============ 延迟选项 ============ */
+        .delay-row {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .field-label {
+            color: #64748b;
+            font-size: 11.5px;
+            font-weight: 700;
+        }
+
+        .chips {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .chip {
+            padding: 4px 11px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            background: #fff;
+            color: #64748b;
+            font-size: 11.5px;
+            cursor: pointer;
+            transition: 0.16s ease;
+        }
+
+        .chip:hover:not(:disabled) {
+            border-color: #fcd34d;
+            color: #b45309;
+        }
+
+        .chip.is-active {
+            border-color: #fde68a;
+            background: #fffbeb;
+            color: #b45309;
+            font-weight: 700;
+        }
+
+        .chip:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        /* ============ setTimeout 演示 ============ */
+        .timeout-stage {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            margin-bottom: 16px;
+        }
+
+        .ring {
+            --p: 1;
+            position: relative;
+            display: grid;
+            place-items: center;
+            flex: none;
+            width: 136px;
+            height: 136px;
+            border-radius: 50%;
+            background: conic-gradient(#f59e0b calc(var(--p) * 1turn), #eef1f7 0);
+            transition: filter 0.2s ease;
+        }
+
+        .ring::before {
+            content: "";
+            position: absolute;
+            inset: 9px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: inset 0 0 0 1px #f1f4fa;
+        }
+
+        .ring.is-running {
+            filter: drop-shadow(0 6px 14px rgba(245, 158, 11, 0.24));
+        }
+
+        .ring.is-fired {
+            background: conic-gradient(#10b981 1turn, #eef1f7 0);
+        }
+
+        .ring-inner {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+        }
+
+        .ring-inner strong {
+            display: block;
+            color: var(--ink);
+            font-family: var(--mono);
+            font-size: 34px;
+            font-variant-numeric: tabular-nums;
+            line-height: 1.12;
+            letter-spacing: -1px;
+        }
+
+        .ring-inner span {
+            color: #94a3b8;
+            font-size: 10.5px;
+        }
+
+        .notify {
+            display: flex;
+            align-items: flex-start;
+            gap: 11px;
+            flex: 1;
+            min-width: 0;
+            min-height: 96px;
+            padding: 14px;
+            border: 1px dashed #e2e8f0;
+            border-radius: 12px;
+            background: #fbfcfe;
+            transition: 0.22s ease;
+        }
+
+        .notify.is-on {
+            border-style: solid;
+            border-color: #a7f3d0;
+            background: #f0fdf4;
+            animation: pop 0.34s ease;
+        }
+
+        .notify.is-cancelled {
+            border-style: solid;
+            border-color: #e2e8f0;
+            background: #f8fafc;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(0.97); opacity: 0.6; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .notify-icon {
+            flex: none;
+            font-size: 20px;
+            line-height: 1.2;
+        }
+
+        .notify strong {
+            display: block;
+            color: var(--ink);
+            font-size: 12.5px;
+        }
+
+        .notify p {
+            margin-top: 3px;
+            color: var(--muted);
+            font-size: 11.5px;
+            line-height: 1.75;
+            word-break: break-word;
+        }
+
+        /* ============ 按钮 ============ */
+        .btn-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 9px 16px;
+            border: 1px solid transparent;
+            border-radius: 9px;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.18s ease;
+        }
+
+        .btn.primary {
+            background: linear-gradient(135deg, #4f46e5, #6d28d9);
+            box-shadow: 0 8px 18px rgba(79, 70, 229, 0.22);
+            color: #fff;
+        }
+
+        .btn.teal {
+            background: linear-gradient(135deg, #0d9488, #0f766e);
+            box-shadow: 0 8px 18px rgba(13, 148, 136, 0.2);
+            color: #fff;
+        }
+
+        .btn.ghost {
+            border-color: var(--line);
+            background: #fff;
+            color: #64748b;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+        }
+
+        .btn.primary:hover:not(:disabled) {
+            box-shadow: 0 12px 22px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn.teal:hover:not(:disabled) {
+            box-shadow: 0 12px 22px rgba(13, 148, 136, 0.27);
+        }
+
+        .btn.ghost:hover:not(:disabled) {
+            border-color: #b9c5e8;
+            color: var(--brand);
+        }
+
+        .btn:disabled {
+            opacity: 0.52;
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .timer-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 11px;
+            color: #94a3b8;
+            font-size: 11px;
+        }
+
+        .timer-meta b {
+            color: #475569;
+            font-family: var(--mono);
+            font-weight: 600;
+        }
+
+        .timer-meta .state {
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        /* ============ setInterval 演示 ============ */
+        .stopwatch-panel {
+            margin-bottom: 14px;
+            padding: 15px 16px 13px;
+            border-radius: 16px;
+            background:
+                radial-gradient(360px 160px at 100% 0%, rgba(20, 184, 166, 0.13), transparent 65%),
+                #0b1324;
+            color: #cbd5e1;
+        }
+
+        .stopwatch-top {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            color: #94a3b8;
+            font-size: 10.5px;
+        }
+
+        .stopwatch-top .live-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #475569;
+        }
+
+        .stopwatch-top .live-dot.is-running {
+            background: #2dd4bf;
+            box-shadow: 0 0 0 4px rgba(45, 212, 191, 0.14);
+            animation: pulse 1s ease infinite;
+        }
+
+        @keyframes pulse {
+            50% { opacity: 0.45; }
+        }
+
+        .stopwatch-id {
+            margin-left: auto;
+            font-family: var(--mono);
+            font-size: 9.5px;
+            color: #64748b;
+        }
+
+        .stopwatch-id b {
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
+        .stopwatch {
+            margin: 9px 0 8px;
+            color: #f8fafc;
+            font-family: var(--mono);
+            font-size: 46px;
+            font-variant-numeric: tabular-nums;
+            font-weight: 600;
+            letter-spacing: -2px;
+            line-height: 1.15;
+        }
+
+        .stopwatch-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            color: #64748b;
+            font-size: 10.5px;
+        }
+
+        .stopwatch-meta b {
+            color: #94a3b8;
+            font-family: var(--mono);
+            font-weight: 500;
+        }
+
+        .stopwatch-panel + .btn-row {
+            margin-bottom: 0;
+        }
+
+        /* ============ 日志 ============ */
+        .log-box {
+            margin-top: 14px;
+            overflow: hidden;
+            border: 1px solid #edf0f6;
+            border-radius: 10px;
+            background: #fbfcfe;
+        }
+
+        .log-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 7px 11px;
+            border-bottom: 1px solid #eef1f7;
+            background: #f8faff;
+            color: #94a3b8;
+            font-size: 10.5px;
+        }
+
+        .log-hint {
+            font-family: var(--mono);
+            font-size: 9px;
+            letter-spacing: 0.3px;
+        }
+
+        .log-list {
+            height: 108px;
+            margin: 0;
+            padding: 5px 10px;
+            overflow-y: auto;
+            list-style: none;
+        }
+
+        .log-list li {
+            display: flex;
+            gap: 8px;
+            padding: 4px 0;
+            border-bottom: 1px dashed #edf0f6;
+            color: #64748b;
+            font-size: 10.5px;
+            line-height: 1.65;
+        }
+
+        .log-list li:last-child {
+            border-bottom: 0;
+        }
+
+        .log-list time {
+            flex: none;
+            padding-top: 1px;
+            color: #94a3b8;
+            font-family: var(--mono);
+            font-size: 9px;
+        }
+
+        .log-list li.ok span {
+            color: #047857;
+        }
+
+        .log-list li.warn span {
+            color: #b45309;
+        }
+
+        .log-list li.err span {
+            color: #b91c1c;
+        }
+
+        /* ============ 代码 ============ */
+        .code-wrap {
+            margin-top: 14px;
+            overflow: hidden;
+            border-radius: 12px;
+            background: #0b1324;
+        }
+
+        .code-label {
+            padding: 7px 12px;
+            background: #111c33;
+            color: #94a3b8;
+            font-family: var(--mono);
+            font-size: 9.5px;
+            letter-spacing: 0.5px;
+        }
+
+        .code-wrap pre {
+            margin: 0;
+            padding: 12px 14px;
+            overflow-x: auto;
+            color: #cbd5e1;
+            font-family: var(--mono);
+            font-size: 11px;
+            line-height: 1.8;
+        }
+
+        .tok-k { color: #f472b6; }
+        .tok-f { color: #7dd3fc; }
+        .tok-s { color: #86efac; }
+        .tok-n { color: #fbbf24; }
+        .tok-c { color: #64748b; }
+
+        /* ============ 对比 ============ */
+        .compare {
+            margin-top: 24px;
+            padding: 22px;
+            border: 1px solid var(--line);
+            border-radius: 20px;
+            background: #fff;
+            box-shadow: 0 12px 32px rgba(15, 23, 42, 0.045);
+        }
+
+        .compare-head {
+            margin-bottom: 14px;
+        }
+
+        .compare-head h2 {
+            color: var(--ink);
+            font-size: 16px;
+            letter-spacing: -0.2px;
+        }
+
+        .compare-head p {
+            margin-top: 4px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            border: 1px solid #eef1f7;
+            border-radius: 12px;
+        }
+
+        .compare table {
+            width: 100%;
+            min-width: 620px;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .compare th {
+            padding: 10px 14px;
+            background: #f8faff;
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 700;
+            text-align: left;
+        }
+
+        .compare td {
+            padding: 10px 14px;
+            border-top: 1px solid #eef1f7;
+            color: #475569;
+            line-height: 1.7;
+        }
+
+        .compare td:first-child {
+            width: 19%;
+            color: var(--ink);
+            font-weight: 600;
+            background: #fbfcfe;
+        }
+
+        .compare code {
+            color: #4f46e5;
+            font-family: var(--mono);
+            font-size: 11px;
+        }
+
+        .notes {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .note {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px 14px;
+            border: 1px solid #edf0f6;
+            border-radius: 11px;
+            background: #fbfcfe;
+        }
+
+        .note-icon {
+            display: grid;
+            place-items: center;
+            flex: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 7px;
+            background: #eef2ff;
+            color: var(--brand);
+            font-family: var(--mono);
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .note p {
+            color: var(--muted);
+            font-size: 11.5px;
+            line-height: 1.8;
+        }
+
+        .note code {
+            color: #475569;
+            font-family: var(--mono);
+            font-size: 10.5px;
+        }
+
+        .foot-note {
+            max-width: 900px;
+            margin-top: 16px;
+            color: #94a3b8;
+            font-size: 11.5px;
+            line-height: 1.85;
+        }
+
+        /* ============ 响应式 ============ */
+        @media (max-width: 980px) {
+            .timer-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .wrap {
+                padding: 0 14px 48px;
+            }
+
+            .topbar {
+                flex-wrap: wrap;
+                padding-top: 22px;
+            }
+
+            .brand p {
+                display: none;
+            }
+
+            .top-actions {
+                margin-left: auto;
+            }
+
+            .lesson-chip {
+                display: none;
+            }
+
+            .lead {
+                font-size: 12.5px;
+            }
+
+            .timer-card {
+                padding: 17px;
+                border-radius: 16px;
+            }
+
+            .card-head h2 {
+                font-size: 17px;
+            }
+
+            .card-sub {
+                display: none;
+            }
+
+            .timeout-stage {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .ring {
+                align-self: center;
+            }
+
+            .notify {
+                min-height: auto;
+            }
+
+            .stopwatch {
+                font-size: 38px;
+            }
+
+            .compare {
+                padding: 16px;
+                border-radius: 16px;
+            }
+
+            .compare .table-wrap {
+                border: 0;
+            }
+
+            .compare table {
+                display: block;
+                min-width: 0;
+            }
+
+            .compare thead {
+                display: none;
+            }
+
+            .compare tbody {
+                display: block;
+            }
+
+            .compare tr {
+                display: block;
+                padding: 9px 0;
+                border-top: 1px solid #eef1f7;
+            }
+
+            .compare tr:first-child {
+                padding-top: 0;
+                border-top: 0;
+            }
+
+            .compare td {
+                display: block;
+                width: 100%;
+                padding: 2px 0;
+                border: 0;
+                background: transparent;
+                font-size: 11.5px;
+            }
+
+            .compare td:first-child {
+                width: auto;
+                padding-bottom: 3px;
+                color: #64748b;
+                font-size: 10.5px;
+                font-weight: 700;
+            }
+
+            .compare td:nth-child(2)::before,
+            .compare td:nth-child(3)::before {
+                content: "setTimeout · ";
+                color: #94a3b8;
+                font-family: var(--mono);
+                font-size: 9.5px;
+            }
+
+            .compare td:nth-child(3)::before {
+                content: "setInterval · ";
+            }
+
+            .compare td code {
+                word-break: break-word;
+            }
+
+            .notes {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .stopwatch {
+                font-size: 33px;
+            }
+
+            .btn {
+                flex: 1;
+            }
+
+            .log-list {
+                height: 96px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <header class="topbar">
+            <div class="brand">
+                <span class="brand-mark" aria-hidden="true"><b>17</b><small>TMR</small></span>
+                <div>
+                    <h1>JavaScript 定时器</h1>
+                    <p>setTimeout 延迟一次 · setInterval 重复执行</p>
+                </div>
+            </div>
+            <div class="top-actions">
+                <span class="lesson-chip">第 17 课 · 定时器</span>
+                <a class="back-link" href="index.html">返回目录</a>
+            </div>
+        </header>
+
+        <p class="lead">
+            定时器让代码不必立刻执行。<code>setTimeout</code> 在指定时间后执行一次，
+            <code>setInterval</code> 每隔指定时间重复执行。两者都会返回一个数字 ID，
+            分别用 <code>clearTimeout()</code> 和 <code>clearInterval()</code> 取消。
+        </p>
+
+        <main class="timer-grid">
+            <!-- setTimeout -->
+            <section class="timer-card timeout-card" aria-labelledby="timeoutTitle">
+                <div class="card-head">
+                    <span class="card-badge badge-amber">只执行一次</span>
+                    <h2 id="timeoutTitle">setTimeout</h2>
+                    <span class="card-sub">延迟执行</span>
+                </div>
+                <p class="card-desc">
+                    等待设定的时间后执行回调。倒计时结束前调用
+                    <code>clearTimeout(id)</code>，回调就不会执行。
+                </p>
+
+                <div class="delay-row">
+                    <span class="field-label">延迟时间</span>
+                    <div class="chips" id="delayChips" role="group" aria-label="选择延迟时间">
+                        <button class="chip" type="button" data-ms="1000">1 秒</button>
+                        <button class="chip is-active" type="button" data-ms="3000">3 秒</button>
+                        <button class="chip" type="button" data-ms="5000">5 秒</button>
+                    </div>
+                </div>
+
+                <div class="timeout-stage">
+                    <div class="ring" id="countdownRing" style="--p: 1">
+                        <div class="ring-inner">
+                            <strong id="countdownText">3.0</strong>
+                            <span id="countdownCaption">秒后执行</span>
+                        </div>
+                    </div>
+                    <div class="notify" id="notifyBox">
+                        <span class="notify-icon" id="notifyIcon" aria-hidden="true">⏰</span>
+                        <div>
+                            <strong id="notifyTitle">等待定时器</strong>
+                            <p id="notifyText">选择延迟时间，然后点击“开始计时”。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="btn-row">
+                    <button class="btn primary" id="timeoutStart" type="button">开始计时</button>
+                    <button class="btn ghost" id="timeoutCancel" type="button" disabled>取消计时</button>
+                </div>
+
+                <div class="timer-meta">
+                    <span>定时器 ID：<b id="timeoutId">—</b></span>
+                    <span class="state" id="timeoutState">未开始</span>
+                </div>
+
+                <div class="log-box">
+                    <div class="log-head"><span>执行记录</span><span class="log-hint">最新在下</span></div>
+                    <ul class="log-list" id="timeoutLog" aria-live="polite"></ul>
+                </div>
+
+                <div class="code-wrap">
+                    <div class="code-label">setTimeout 示例</div>
+                    <pre><span class="tok-k">const</span> id = <span class="tok-f">setTimeout</span>(() =&gt; {
+  console.log(<span class="tok-s">"3 秒后执行"</span>);
+}, <span class="tok-n">3000</span>);
+
+<span class="tok-c">// 在触发之前取消</span>
+<span class="tok-f">clearTimeout</span>(id);</pre>
+                </div>
+            </section>
+
+            <!-- setInterval -->
+            <section class="timer-card interval-card" aria-labelledby="intervalTitle">
+                <div class="card-head">
+                    <span class="card-badge badge-teal">重复执行</span>
+                    <h2 id="intervalTitle">setInterval</h2>
+                    <span class="card-sub">按间隔循环</span>
+                </div>
+                <p class="card-desc">
+                    每隔固定的毫秒数执行一次回调，直到调用
+                    <code>clearInterval(id)</code>。下面是一个每 100ms 更新一次的秒表。
+                </p>
+
+                <div class="stopwatch-panel">
+                    <div class="stopwatch-top">
+                        <span class="live-dot" id="intervalDot" aria-hidden="true"></span>
+                        <span id="intervalState">未开始</span>
+                        <span class="stopwatch-id">interval ID：<b id="intervalId">—</b></span>
+                    </div>
+                    <div class="stopwatch" id="stopwatch" aria-live="off">00:00.0</div>
+                    <div class="stopwatch-meta">
+                        <span>间隔 <b>100 ms</b></span>
+                        <span>已跳动 <b id="tickCount">0</b> 次</span>
+                    </div>
+                </div>
+
+                <div class="btn-row">
+                    <button class="btn teal" id="intervalToggle" type="button">开始</button>
+                    <button class="btn ghost" id="intervalReset" type="button" disabled>重置</button>
+                </div>
+
+                <div class="timer-meta">
+                    <span>暂停使用 <b>clearInterval</b></span>
+                    <span class="state" id="intervalHint">等待开始</span>
+                </div>
+
+                <div class="log-box">
+                    <div class="log-head"><span>执行记录</span><span class="log-hint">最新在下</span></div>
+                    <ul class="log-list" id="intervalLog" aria-live="polite"></ul>
+                </div>
+
+                <div class="code-wrap">
+                    <div class="code-label">setInterval 示例</div>
+                    <pre><span class="tok-k">let</span> ms = <span class="tok-n">0</span>;
+
+<span class="tok-k">const</span> id = <span class="tok-f">setInterval</span>(() =&gt; {
+  ms += <span class="tok-n">100</span>;
+  console.log(ms);
+}, <span class="tok-n">100</span>);
+
+<span class="tok-c">// 停止重复执行</span>
+<span class="tok-f">clearInterval</span>(id);</pre>
+                </div>
+            </section>
+        </main>
+
+        <!-- 对比 -->
+        <section class="compare" aria-labelledby="compareTitle">
+            <div class="compare-head">
+                <h2 id="compareTitle">setTimeout 与 setInterval 有什么区别？</h2>
+                <p>一个只执行一次，一个按固定间隔反复执行；取消时也要使用对应的 clear 方法。</p>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>对比项</th>
+                            <th>setTimeout</th>
+                            <th>setInterval</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>执行次数</td>
+                            <td>延迟后只执行一次</td>
+                            <td>每隔一段时间重复执行</td>
+                        </tr>
+                        <tr>
+                            <td>基本语法</td>
+                            <td><code>setTimeout(callback, ms)</code></td>
+                            <td><code>setInterval(callback, ms)</code></td>
+                        </tr>
+                        <tr>
+                            <td>取消方式</td>
+                            <td><code>clearTimeout(id)</code></td>
+                            <td><code>clearInterval(id)</code></td>
+                        </tr>
+                        <tr>
+                            <td>返回值</td>
+                            <td>一个数字定时器 ID</td>
+                            <td>一个数字定时器 ID</td>
+                        </tr>
+                        <tr>
+                            <td>常见用途</td>
+                            <td>延迟提示、倒计时结束、防抖</td>
+                            <td>秒表、时钟、轮播、轮询状态</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="notes">
+                <div class="note">
+                    <span class="note-icon">!</span>
+                    <p>定时器的毫秒数只是“至少等待”，不是精确时间。主线程被耗时任务占用时，回调会排队延后。</p>
+                </div>
+                <div class="note">
+                    <span class="note-icon">↻</span>
+                    <p>在页面里反复创建定时器时，要记得取消不再需要的定时器，避免重复执行和内存占用。</p>
+                </div>
+            </div>
+        </section>
+
+        <p class="foot-note">
+            提示：定时器回调属于异步任务，会先进入任务队列，等当前同步代码执行完之后才可能运行。
+            这也是 setTimeout(fn, 0) 并不是“立刻执行”的原因。
+        </p>
+    </div>
+
+    <script>
+        /* ==================== 工具函数 ==================== */
+        function pad(number) {
+            return String(number).padStart(2, "0");
+        }
+
+        function clockText() {
+            var now = new Date();
+            return pad(now.getHours()) + ":" + pad(now.getMinutes()) + ":" + pad(now.getSeconds());
+        }
+
+        function addLog(list, message, type) {
+            var item = document.createElement("li");
+            if (type) item.className = type;
+
+            var time = document.createElement("time");
+            time.textContent = clockText();
+
+            var text = document.createElement("span");
+            text.textContent = message;
+
+            item.appendChild(time);
+            item.appendChild(text);
+            list.appendChild(item);
+
+            while (list.children.length > 8) {
+                list.removeChild(list.firstChild);
+            }
+            list.scrollTop = list.scrollHeight;
+        }
+
+        /* ==================== setTimeout ==================== */
+        var delayChips = document.getElementById("delayChips");
+        var countdownRing = document.getElementById("countdownRing");
+        var countdownText = document.getElementById("countdownText");
+        var countdownCaption = document.getElementById("countdownCaption");
+        var notifyBox = document.getElementById("notifyBox");
+        var notifyIcon = document.getElementById("notifyIcon");
+        var notifyTitle = document.getElementById("notifyTitle");
+        var notifyText = document.getElementById("notifyText");
+        var timeoutStart = document.getElementById("timeoutStart");
+        var timeoutCancel = document.getElementById("timeoutCancel");
+        var timeoutIdText = document.getElementById("timeoutId");
+        var timeoutState = document.getElementById("timeoutState");
+        var timeoutLog = document.getElementById("timeoutLog");
+
+        var selectedDelay = 3000;
+        var timeoutId = null;
+        var lastTimeoutId = null;
+        var countdownRaf = null;
+        var countdownRunning = false;
+        var countdownEnd = 0;
+        var countdownStarted = 0;
+
+        function setDelayButtonsDisabled(disabled) {
+            delayChips.querySelectorAll(".chip").forEach(function (chip) {
+                chip.disabled = disabled;
+            });
+        }
+
+        function renderCountdown(remaining) {
+            countdownText.textContent = (Math.max(0, remaining) / 1000).toFixed(1);
+            countdownRing.style.setProperty("--p", Math.max(0, remaining / selectedDelay));
+        }
+
+        function resetNotify() {
+            notifyBox.classList.remove("is-on", "is-cancelled");
+            notifyIcon.textContent = "⏰";
+            notifyTitle.textContent = "等待定时器";
+            notifyText.textContent = "选择延迟时间，然后点击“开始计时”。";
+        }
+
+        function cancelCountdownFrame() {
+            if (countdownRaf !== null) {
+                cancelAnimationFrame(countdownRaf);
+                countdownRaf = null;
+            }
+        }
+
+        function tickCountdown(now) {
+            if (!countdownRunning) return;
+
+            var remaining = Math.max(0, countdownEnd - now);
+            renderCountdown(remaining);
+
+            if (remaining > 0) {
+                countdownRaf = requestAnimationFrame(tickCountdown);
+            }
+        }
+
+        function finishTimeout(success) {
+            countdownRunning = false;
+            cancelCountdownFrame();
+
+            timeoutStart.disabled = false;
+            timeoutCancel.disabled = true;
+            setDelayButtonsDisabled(false);
+            timeoutStart.textContent = "再次计时";
+
+            if (success) {
+                renderCountdown(0);
+                countdownRing.classList.remove("is-running");
+                countdownRing.classList.add("is-fired");
+                notifyBox.classList.remove("is-cancelled");
+                notifyBox.classList.add("is-on");
+                notifyIcon.textContent = "🔔";
+                notifyTitle.textContent = "定时器已触发";
+                notifyText.textContent = "setTimeout 的回调已经执行。点击“再次计时”可以重新演示。";
+                timeoutState.textContent = "已执行";
+                countdownCaption.textContent = "已执行";
+                timeoutId = null;
+            }
+        }
+
+        function fireTimeout() {
+            if (!countdownRunning) return;
+
+            var actual = ((performance.now() - countdownStarted) / 1000).toFixed(1);
+            finishTimeout(true);
+            addLog(timeoutLog, "回调执行，实际等待约 " + actual + " 秒", "ok");
+        }
+
+        function cancelTimeout() {
+            if (countdownIdEmpty()) return;
+
+            clearTimeout(timeoutId);
+            timeoutId = null;
+            countdownRunning = false;
+            cancelCountdownFrame();
+
+            timeoutStart.disabled = false;
+            timeoutCancel.disabled = true;
+            setDelayButtonsDisabled(false);
+            timeoutStart.textContent = "重新计时";
+            timeoutState.textContent = "已取消";
+
+            countdownRing.classList.remove("is-running", "is-fired");
+            renderCountdown(selectedDelay);
+            countdownCaption.textContent = "已取消";
+
+            notifyBox.classList.remove("is-on");
+            notifyBox.classList.add("is-cancelled");
+            notifyIcon.textContent = "🚫";
+            notifyTitle.textContent = "已取消";
+            notifyText.textContent = "clearTimeout(id) 阻止了这次回调执行。";
+
+            addLog(timeoutLog, "调用 clearTimeout 取消定时器（ID = " + lastTimeoutId + "）", "warn");
+        }
+
+        function countdownIdEmpty() {
+            return timeoutId === null;
+        }
+
+        function startTimeout() {
+            if (countdownRunning) return;
+
+            timeoutId = null;
+            lastTimeoutId = null;
+            countdownRunning = true;
+            countdownStarted = performance.now();
+            countdownEnd = countdownStarted + selectedDelay;
+
+            countdownRing.classList.remove("is-fired");
+            countdownRing.classList.add("is-running");
+            countdownCaption.textContent = "秒后执行";
+            renderCountdown(selectedDelay);
+
+            notifyBox.classList.remove("is-on", "is-cancelled");
+            notifyIcon.textContent = "⏳";
+            notifyTitle.textContent = "定时器运行中";
+            notifyText.textContent = "等待 " + (selectedDelay / 1000).toFixed(0) + " 秒后执行回调…";
+
+            timeoutStart.disabled = true;
+            timeoutCancel.disabled = false;
+            setDelayButtonsDisabled(true);
+            timeoutState.textContent = "计时中";
+
+            timeoutId = setTimeout(fireTimeout, selectedDelay);
+            lastTimeoutId = timeoutId;
+            timeoutIdText.textContent = timeoutId;
+
+            addLog(timeoutLog, "创建 setTimeout（ID = " + timeoutId + "），延迟 " + selectedDelay + "ms");
+            countdownRaf = requestAnimationFrame(tickCountdown);
+        }
+
+        delayChips.addEventListener("click", function (event) {
+            var chip = event.target.closest(".chip");
+            if (!chip || countdownRunning) return;
+
+            selectedDelay = Number(chip.getAttribute("data-ms"));
+            delayChips.querySelectorAll(".chip").forEach(function (item) {
+                item.classList.toggle("is-active", item === chip);
+            });
+
+            countdownRing.classList.remove("is-fired", "is-running");
+            countdownCaption.textContent = "秒后执行";
+            renderCountdown(selectedDelay);
+            resetNotify();
+            timeoutIdText.textContent = "—";
+            timeoutState.textContent = "已选择 " + (selectedDelay / 1000).toFixed(0) + " 秒";
+            timeoutStart.textContent = "开始计时";
+            timeoutCancel.disabled = true;
+
+            addLog(timeoutLog, "已选择延迟时间 " + selectedDelay + "ms");
+        });
+
+        timeoutStart.addEventListener("click", startTimeout);
+        timeoutCancel.addEventListener("click", cancelTimeout);
+
+        /* ==================== setInterval ==================== */
+        var stopwatch = document.getElementById("stopwatch");
+        var intervalToggle = document.getElementById("intervalToggle");
+        var intervalReset = document.getElementById("intervalReset");
+        var intervalIdText = document.getElementById("intervalId");
+        var intervalState = document.getElementById("intervalState");
+        var intervalHint = document.getElementById("intervalHint");
+        var intervalDot = document.getElementById("intervalDot");
+        var tickCountText = document.getElementById("tickCount");
+        var intervalLog = document.getElementById("intervalLog");
+
+        var intervalId = null;
+        var intervalRunning = false;
+        var elapsedMs = 0;
+        var tickCount = 0;
+        var lastTickAt = 0;
+
+        function renderStopwatch() {
+            var minutes = Math.floor(elapsedMs / 60000);
+            var seconds = Math.floor((elapsedMs % 60000) / 1000);
+            var tenths = Math.floor((elapsedMs % 1000) / 100);
+
+            stopwatch.textContent = pad(minutes) + ":" + pad(seconds) + "." + tenths;
+            tickCountText.textContent = tickCount;
+            intervalReset.disabled = elapsedMs === 0 && !intervalRunning;
+        }
+
+        function setIntervalUI(running) {
+            intervalRunning = running;
+            intervalDot.classList.toggle("is-running", running);
+            intervalToggle.textContent = running ? "暂停" : (elapsedMs > 0 ? "继续" : "开始");
+            intervalToggle.classList.toggle("teal", true);
+            intervalState.textContent = running ? "运行中" : (elapsedMs > 0 ? "已暂停" : "未开始");
+            intervalHint.textContent = running ? "每 100ms 触发一次" : (elapsedMs > 0 ? "已停止，可继续" : "等待开始");
+            intervalIdText.textContent = running ? intervalId : "—";
+            renderStopwatch();
+        }
+
+        function startInterval() {
+            if (intervalRunning) return;
+
+            intervalRunning = true;
+            lastTickAt = performance.now();
+
+            intervalId = setInterval(function () {
+                var now = performance.now();
+                elapsedMs += now - lastTickAt;
+                lastTickAt = now;
+                tickCount += 1;
+                renderStopwatch();
+            }, 100);
+
+            setIntervalUI(true);
+            addLog(intervalLog, "启动 setInterval（ID = " + intervalId + "，间隔 100ms）");
+        }
+
+        function pauseInterval() {
+            if (!intervalRunning) return;
+
+            clearInterval(intervalId);
+            intervalId = null;
+            setIntervalUI(false);
+            addLog(intervalLog, "调用 clearInterval 暂停，累计 " + (elapsedMs / 1000).toFixed(1) + " 秒", "warn");
+        }
+
+        function resetInterval() {
+            if (intervalId !== null) {
+                clearInterval(intervalId);
+                intervalId = null;
+            }
+
+            elapsedMs = 0;
+            tickCount = 0;
+            lastTickAt = 0;
+            intervalRunning = false;
+            intervalDot.classList.remove("is-running");
+            intervalIdText.textContent = "—";
+            intervalState.textContent = "已重置";
+            intervalHint.textContent = "等待开始";
+            intervalToggle.textContent = "开始";
+            intervalReset.disabled = true;
+            renderStopwatch();
+            addLog(intervalLog, "调用 clearInterval 并重置秒表", "warn");
+        }
+
+        intervalToggle.addEventListener("click", function () {
+            if (intervalRunning) {
+                pauseInterval();
+            } else {
+                startInterval();
+            }
+        });
+
+        intervalReset.addEventListener("click", resetInterval);
+
+        /* ==================== 初始化 ==================== */
+        addLog(timeoutLog, "等待开始");
+        addLog(intervalLog, "等待开始");
+        renderStopwatch();
+    </script>
+</body>
+</html>
