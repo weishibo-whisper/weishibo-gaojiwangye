@@ -1,0 +1,1392 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#05080f">
+    <title>18-4 数据洞察实验室 · 魏士博</title>
+    <!--
+        作者：魏士博
+        建立时间：2026-11-05
+        使用的大模型功能名称：Trae DeepSeek-V4.1-Flash
+        页面说明：18-4 数据洞察实验室，使用本地 ECharts 5.6 绘制用户转化桑基图与赛事知识关系图
+    -->
+    <style>
+        :root {
+            --wsb-bg: #05080f;
+            --wsb-ink: #eaf3ff;
+            --wsb-muted: #8b9cb6;
+            --wsb-line: rgba(148, 180, 220, 0.16);
+            --wsb-cyan: #5eead4;
+            --wsb-blue: #38bdf8;
+            --wsb-violet: #a78bfa;
+            --wsb-green: #34d399;
+            --wsb-gold: #fbbf24;
+            --wsb-serif: "Songti SC", "STSong", "SimSun", "Noto Serif SC", Georgia, serif;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            min-height: 100vh;
+            background:
+                radial-gradient(1000px 620px at 8% -6%, rgba(94, 234, 212, 0.09), transparent 62%),
+                radial-gradient(900px 560px at 92% 0%, rgba(167, 139, 250, 0.11), transparent 60%),
+                linear-gradient(180deg, #05080f, #060a13 55%, #04070d);
+            color: var(--wsb-ink);
+            font-family: "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .wsb-page {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: clamp(24px, 4vw, 46px) clamp(16px, 3vw, 32px) 46px;
+        }
+        .wsb-head {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+        .wsb-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: #9fb6c9;
+            font-size: 9.5px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+        .wsb-kicker::before {
+            content: "";
+            width: 18px;
+            height: 1px;
+            background: var(--wsb-cyan);
+        }
+        .wsb-title {
+            margin-top: 18px;
+            font-family: var(--wsb-serif);
+            font-size: clamp(30px, 4.4vw, 50px);
+            line-height: 1.18;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+        }
+        .wsb-title em {
+            font-style: normal;
+            color: var(--wsb-cyan);
+            padding-bottom: 3px;
+            border-bottom: 1px solid rgba(94, 234, 212, 0.45);
+        }
+        .wsb-sub {
+            margin-top: 14px;
+            color: var(--wsb-muted);
+            font-size: 13px;
+            line-height: 1.95;
+            max-width: 660px;
+            letter-spacing: 0.3px;
+        }
+        .wsb-tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+        .wsb-tool {
+            border: 1px solid rgba(160, 200, 230, 0.24);
+            border-radius: 2px;
+            padding: 10px 16px;
+            background: transparent;
+            color: #d6e2ef;
+            font-family: inherit;
+            font-size: 11.5px;
+            letter-spacing: 0.8px;
+            cursor: pointer;
+            transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+        }
+        .wsb-tool:hover {
+            border-color: rgba(94, 234, 212, 0.6);
+            background: rgba(94, 234, 212, 0.06);
+            color: #f2fbff;
+        }
+        .wsb-tool:focus-visible,
+        .wsb-icon-btn:focus-visible,
+        .wsb-seg button:focus-visible,
+        .wsb-link-btn:focus-visible {
+            outline: 1px solid var(--wsb-cyan);
+            outline-offset: 2px;
+        }
+        .wsb-seg {
+            display: inline-flex;
+            border: 1px solid rgba(160, 200, 230, 0.24);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .wsb-seg button {
+            border: 0;
+            padding: 10px 14px;
+            background: transparent;
+            color: #9fb0c6;
+            font-family: inherit;
+            font-size: 11.5px;
+            letter-spacing: 0.6px;
+            cursor: pointer;
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+        .wsb-seg button + button { border-left: 1px solid rgba(160, 200, 230, 0.18); }
+        .wsb-seg button:hover { color: #eaf3ff; }
+        .wsb-seg button.is-on {
+            background: rgba(94, 234, 212, 0.14);
+            color: #d8fff9;
+        }
+        .wsb-tool-primary {
+            border-color: var(--wsb-cyan);
+            background: var(--wsb-cyan);
+            color: #06231f;
+            font-weight: 600;
+        }
+        .wsb-tool-primary:hover {
+            border-color: #8ff5e5;
+            background: #8ff5e5;
+            color: #06231f;
+        }
+        .wsb-meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+        .wsb-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 6px 11px;
+            border: 1px solid rgba(148, 180, 220, 0.20);
+            border-radius: 2px;
+            color: #93a4ba;
+            font-size: 10.5px;
+            letter-spacing: 0.6px;
+        }
+        .wsb-chip b { color: #eaf3ff; font-weight: 600; }
+
+        /* ---------- KPI ---------- */
+        .wsb-kpi-head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-top: 34px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(148, 180, 220, 0.16);
+        }
+        .wsb-kpi-head span {
+            color: rgba(148, 180, 220, 0.62);
+            font-size: 9px;
+            letter-spacing: 2.6px;
+            text-transform: uppercase;
+        }
+        .wsb-kpi-head p { color: #7f91a7; font-size: 10.5px; letter-spacing: 0.5px; }
+        .wsb-kpi-head b { color: var(--wsb-cyan); font-weight: 600; }
+        .wsb-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-top: 14px;
+        }
+        .wsb-kpi {
+            position: relative;
+            padding: 19px 18px 16px;
+            border: 1px solid rgba(148, 180, 220, 0.13);
+            border-radius: 2px;
+            background: linear-gradient(180deg, rgba(14, 24, 38, 0.62), rgba(8, 13, 22, 0.5));
+            overflow: hidden;
+        }
+        .wsb-kpi::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent, var(--wsb-cyan)), transparent 88%);
+        }
+        .wsb-kpi-label {
+            display: block;
+            color: #8b9cb6;
+            font-size: 10.5px;
+            letter-spacing: 1.2px;
+        }
+        .wsb-kpi-num {
+            display: block;
+            margin-top: 9px;
+            color: #f2f8ff;
+            font-family: var(--wsb-serif);
+            font-size: clamp(24px, 3vw, 32px);
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: 0.5px;
+            font-variant-numeric: tabular-nums;
+        }
+        .wsb-kpi-sub {
+            display: block;
+            margin-top: 9px;
+            color: #66788f;
+            font-size: 10px;
+            letter-spacing: 0.4px;
+        }
+
+        /* ---------- Chart cards ---------- */
+        .wsb-card {
+            margin-top: 22px;
+            border: 1px solid rgba(148, 180, 220, 0.20);
+            border-radius: 3px;
+            background: linear-gradient(180deg, rgba(11, 18, 30, 0.88), rgba(6, 10, 18, 0.94));
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+        .wsb-card-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 20px 24px 18px;
+            border-bottom: 1px solid rgba(148, 180, 220, 0.13);
+        }
+        .wsb-card-index {
+            display: inline-block;
+            color: rgba(94, 234, 212, 0.68);
+            font-family: Georgia, serif;
+            font-size: 9px;
+            letter-spacing: 2.4px;
+        }
+        .wsb-card-head h2 {
+            margin-top: 7px;
+            font-family: var(--wsb-serif);
+            font-size: 21px;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            color: #f1f7fd;
+        }
+        .wsb-card-head p {
+            margin-top: 7px;
+            color: #8597ae;
+            font-size: 11.5px;
+            line-height: 1.8;
+            max-width: 660px;
+        }
+        .wsb-card-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .wsb-icon-btn {
+            border: 1px solid rgba(160, 200, 230, 0.24);
+            border-radius: 2px;
+            padding: 8px 12px;
+            background: transparent;
+            color: #a9bacd;
+            font-family: inherit;
+            font-size: 10.5px;
+            letter-spacing: 0.6px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+        }
+        .wsb-icon-btn:hover {
+            border-color: rgba(94, 234, 212, 0.55);
+            background: rgba(94, 234, 212, 0.06);
+            color: #e6fffb;
+        }
+        .wsb-chart {
+            width: 100%;
+            height: 560px;
+        }
+        .wsb-chart-scroll { overflow-x: auto; overflow-y: hidden; }
+        .wsb-chart-scroll .wsb-chart { min-width: 880px; }
+        .wsb-card-foot {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+            padding: 12px 24px 14px;
+            border-top: 1px solid rgba(148, 180, 220, 0.10);
+            color: #6c7f96;
+            font-size: 10px;
+            letter-spacing: 0.4px;
+        }
+        .wsb-card-foot span { display: inline-flex; align-items: center; gap: 7px; }
+        .wsb-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--wsb-cyan);
+            box-shadow: 0 0 8px rgba(94, 234, 212, 0.7);
+        }
+        .wsb-swipe {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            color: #84a0bf;
+            font-size: 11px;
+        }
+        .wsb-swipe i { font-style: normal; color: var(--wsb-cyan); letter-spacing: 2px; }
+
+        /* ---------- Graph layout ---------- */
+        .wsb-graph-body {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 286px;
+        }
+        .wsb-graph-body .wsb-chart { height: 566px; }
+        .wsb-inspector {
+            padding: 22px 20px;
+            border-left: 1px solid rgba(148, 180, 220, 0.13);
+            background: linear-gradient(180deg, rgba(94, 234, 212, 0.025), transparent 70%);
+        }
+        .wsb-inspector-kicker {
+            color: rgba(148, 180, 220, 0.62);
+            font-size: 8.5px;
+            letter-spacing: 2.6px;
+            text-transform: uppercase;
+        }
+        .wsb-inspector-name {
+            margin-top: 10px;
+            font-family: var(--wsb-serif);
+            font-size: 20px;
+            font-weight: 700;
+            color: #f2f8ff;
+            letter-spacing: 0.5px;
+            line-height: 1.4;
+        }
+        .wsb-inspector-cat {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            margin-top: 9px;
+            padding: 5px 9px;
+            border: 1px solid rgba(148, 180, 220, 0.18);
+            border-radius: 2px;
+            color: #93a9c2;
+            font-size: 10px;
+            letter-spacing: 0.5px;
+        }
+        .wsb-inspector-cat i {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--wsb-cyan);
+        }
+        .wsb-inspector-desc {
+            margin-top: 14px;
+            color: #8496ac;
+            font-size: 11.5px;
+            line-height: 1.9;
+        }
+        .wsb-inspector-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 14px;
+        }
+        .wsb-inspector-tags span {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 8px;
+            border: 1px solid rgba(148, 180, 220, 0.14);
+            border-radius: 2px;
+            color: #a8b8cb;
+            font-size: 10px;
+            letter-spacing: 0.2px;
+        }
+        .wsb-inspector-tags span i {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--tag, var(--wsb-cyan));
+        }
+        .wsb-inspector-bar {
+            height: 3px;
+            margin-top: 16px;
+            background: rgba(148, 180, 220, 0.10);
+            overflow: hidden;
+        }
+        .wsb-inspector-bar b {
+            display: block;
+            width: 0;
+            height: 100%;
+            background: linear-gradient(90deg, var(--wsb-cyan), var(--wsb-violet));
+            transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .wsb-link-btn {
+            margin-top: 16px;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            color: rgba(94, 234, 212, 0.8);
+            font-family: inherit;
+            font-size: 10.5px;
+            letter-spacing: 0.6px;
+            cursor: pointer;
+        }
+        .wsb-link-btn:hover { color: #b7fff4; }
+        .wsb-link-btn[hidden] { display: none; }
+
+        /* ---------- Reading notes ---------- */
+        .wsb-read { margin-top: 32px; }
+        .wsb-read-head {
+            display: flex;
+            align-items: baseline;
+            gap: 14px;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(148, 180, 220, 0.16);
+        }
+        .wsb-read-head h2 {
+            font-family: var(--wsb-serif);
+            font-size: 19px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        .wsb-read-head span {
+            color: rgba(94, 234, 212, 0.55);
+            font-size: 9px;
+            letter-spacing: 2.4px;
+            text-transform: uppercase;
+        }
+        .wsb-read-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+        }
+        .wsb-read-card {
+            position: relative;
+            padding: 20px 17px 16px;
+            border: 1px solid rgba(148, 180, 220, 0.12);
+            border-radius: 2px;
+            background: rgba(234, 243, 255, 0.014);
+        }
+        .wsb-read-card::before {
+            content: "";
+            position: absolute;
+            top: -1px;
+            left: -1px;
+            right: -1px;
+            height: 2px;
+            background: linear-gradient(90deg, rgba(94, 234, 212, 0.72), rgba(94, 234, 212, 0.04));
+        }
+        .wsb-read-card i {
+            display: inline-block;
+            margin-bottom: 11px;
+            color: rgba(94, 234, 212, 0.85);
+            font-style: normal;
+            font-size: 9px;
+            letter-spacing: 1.8px;
+        }
+        .wsb-read-card b {
+            display: block;
+            color: #eaf3ff;
+            font-family: var(--wsb-serif);
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+        }
+        .wsb-read-card p {
+            margin-top: 9px;
+            color: #8496ac;
+            font-size: 11.5px;
+            line-height: 1.85;
+        }
+        .wsb-note {
+            margin-top: 18px;
+            color: #5f7187;
+            font-size: 10.5px;
+            line-height: 1.8;
+            letter-spacing: 0.3px;
+        }
+        .wsb-error {
+            display: none;
+            padding: 26px;
+            color: #ffb4b4;
+            font-size: 12px;
+            line-height: 1.9;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation: none !important; transition: none !important; }
+        }
+        @media (max-width: 1040px) {
+            .wsb-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+            .wsb-graph-body { grid-template-columns: 1fr; }
+            .wsb-inspector { border-left: 0; border-top: 1px solid rgba(148, 180, 220, 0.13); }
+            .wsb-graph-body .wsb-chart { height: 520px; }
+        }
+        @media (max-width: 900px) {
+            .wsb-read-grid { grid-template-columns: 1fr; }
+            .wsb-swipe { display: flex; }
+        }
+        @media (max-width: 760px) {
+            .wsb-head { align-items: flex-start; }
+            .wsb-tools { width: 100%; }
+            .wsb-seg { flex: 1; }
+            .wsb-seg button { flex: 1; }
+            .wsb-tool { flex: 1; text-align: center; }
+            .wsb-card-head { flex-direction: column; gap: 12px; padding: 18px 18px 16px; }
+            .wsb-card-actions { width: 100%; }
+            .wsb-icon-btn { flex: 1; text-align: center; }
+            .wsb-chart { height: 480px; }
+            .wsb-card-foot { padding: 12px 18px 14px; }
+            .wsb-inspector { padding: 18px 18px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <main class="wsb-page">
+        <header class="wsb-head">
+            <div>
+                <div class="wsb-kicker">ECharts Data Atlas / 18-4</div>
+                <h1 class="wsb-title">数据洞察<em>实验室</em></h1>
+                <p class="wsb-sub">两张复杂图表读懂赛氪的用户转化与赛事知识网络：桑基图追踪从渠道到完赛的每一股流量，关系图把赛事、能力、资源与组织连成一张可拖拽、可缩放的知识图谱。</p>
+                <div class="wsb-meta">
+                    <span class="wsb-chip"><b>2</b> 张复杂图表</span>
+                    <span class="wsb-chip"><b>桑基 × 关系</b> 图型组合</span>
+                    <span class="wsb-chip"><b>ECharts 5.6</b> 本地 CDN</span>
+                    <span class="wsb-chip">可拖拽 · 可缩放 · 可导出</span>
+                </div>
+            </div>
+            <div class="wsb-tools">
+                <div class="wsb-seg" role="group" aria-label="选择统计周期">
+                    <button class="wsb-period is-on" type="button" data-period="d30" aria-pressed="true">近 30 天</button>
+                    <button class="wsb-period" type="button" data-period="d90" aria-pressed="false">近 90 天</button>
+                </div>
+                <button class="wsb-tool wsb-relayout" type="button">重排图谱</button>
+            </div>
+        </header>
+
+        <div class="wsb-kpi-head">
+            <span>Key Metrics</span>
+            <p>数据周期：<b class="wsb-period-label">近 30 天</b> · 模拟数据</p>
+        </div>
+        <div class="wsb-kpi-grid">
+            <div class="wsb-kpi" style="--accent: #38bdf8">
+                <span class="wsb-kpi-label">触达用户</span>
+                <strong class="wsb-kpi-num" data-kpi="reach">0</strong>
+                <span class="wsb-kpi-sub">渠道去重 UV</span>
+            </div>
+            <div class="wsb-kpi" style="--accent: #5eead4">
+                <span class="wsb-kpi-label">报名转化率</span>
+                <strong class="wsb-kpi-num" data-kpi="applyRate">0%</strong>
+                <span class="wsb-kpi-sub">注册报名 / 触达用户</span>
+            </div>
+            <div class="wsb-kpi" style="--accent: #a78bfa">
+                <span class="wsb-kpi-label">完赛率</span>
+                <strong class="wsb-kpi-num" data-kpi="completeRate">0%</strong>
+                <span class="wsb-kpi-sub">完赛人数 / 参赛人数</span>
+            </div>
+            <div class="wsb-kpi" style="--accent: #fbbf24">
+                <span class="wsb-kpi-label">图谱关系</span>
+                <strong class="wsb-kpi-num" data-kpi="relations">0</strong>
+                <span class="wsb-kpi-sub">18 个节点 · 力导向布局</span>
+            </div>
+        </div>
+
+        <!-- ================= 桑基图 ================= -->
+        <article class="wsb-card">
+            <div class="wsb-card-head">
+                <div>
+                    <span class="wsb-card-index">FIG. 01 / FLOW</span>
+                    <h2>用户转化桑基图</h2>
+                    <p>渠道 → 首访行为 → 转化动作 → 最终结果，四层流量逐级分解。连线越宽代表用户规模越大，悬停任意节点可聚焦相邻链路。</p>
+                </div>
+                <div class="wsb-card-actions">
+                    <button class="wsb-icon-btn wsb-export" type="button" data-export="sankey">导出 PNG</button>
+                </div>
+            </div>
+            <div class="wsb-chart-scroll">
+                <div class="wsb-chart" id="sankeyChart" role="img" aria-label="赛氪用户从渠道到完赛结果的四层桑基转化图"></div>
+            </div>
+            <p class="wsb-swipe"><i>←</i> 左右滑动查看完整桑基图 <i>→</i></p>
+            <div class="wsb-card-foot">
+                <span><i class="wsb-dot"></i> 线宽 = 用户规模</span>
+                <span>悬停节点：聚焦相邻流量</span>
+                <span>切换「近 90 天」：观察长周期结构变化</span>
+            </div>
+        </article>
+
+        <!-- ================= 关系图 ================= -->
+        <article class="wsb-card">
+            <div class="wsb-card-head">
+                <div>
+                    <span class="wsb-card-index">FIG. 02 / RELATION</span>
+                    <h2>赛事知识图谱</h2>
+                    <p>18 个节点、37 条关系：赛事、能力、资源与组织四类实体在力导向布局中自动聚类。拖拽节点可观察网络重组，点击节点查看关联。</p>
+                </div>
+                <div class="wsb-card-actions">
+                    <button class="wsb-icon-btn wsb-export" type="button" data-export="graph">导出 PNG</button>
+                </div>
+            </div>
+            <div class="wsb-graph-body">
+                <div class="wsb-chart" id="graphChart" role="img" aria-label="赛事、能力、资源与组织四类实体组成的赛事知识关系图"></div>
+                <aside class="wsb-inspector" aria-live="polite">
+                    <div class="wsb-inspector-kicker">Node Inspector</div>
+                    <h3 class="wsb-inspector-name">点击任意节点</h3>
+                    <p class="wsb-inspector-cat"><i></i>GRAPH / 18 NODES</p>
+                    <p class="wsb-inspector-desc">节点大小代表关注热度，颜色代表实体类别。点击后高亮其相邻节点，并在下方列出直接关联的实体。</p>
+                    <div class="wsb-inspector-tags"></div>
+                    <div class="wsb-inspector-bar"><b></b></div>
+                    <button class="wsb-link-btn wsb-clear-focus" type="button" hidden>清除聚焦</button>
+                </aside>
+            </div>
+            <div class="wsb-card-foot">
+                <span><i class="wsb-dot"></i> 节点大小 = 关注热度</span>
+                <span>节点颜色 = 实体类别</span>
+                <span>滚轮缩放 · 拖拽平移</span>
+            </div>
+        </article>
+
+        <section class="wsb-read">
+            <div class="wsb-read-head">
+                <h2>读图指南</h2>
+                <span>Reading Notes</span>
+            </div>
+            <div class="wsb-read-grid">
+                <article class="wsb-read-card">
+                    <i>01 / SANKEY</i>
+                    <b>流量守恒的桑基图</b>
+                    <p>每个节点的高度由流入或流出总量决定，连线宽度与用户数成正比。四层结构把「渠道 → 首访 → 转化 → 结果」拆开，能快速定位流失发生在哪一层。</p>
+                </article>
+                <article class="wsb-read-card">
+                    <i>02 / GRAPH</i>
+                    <b>力导向关系网络</b>
+                    <p>节点之间的斥力与边的引力共同决定布局，关联越紧密的实体越容易聚在一起。节点大小映射关注热度，颜色区分赛事、能力、资源与组织。</p>
+                </article>
+                <article class="wsb-read-card">
+                    <i>03 / INTERACTION</i>
+                    <b>从静态图到探索工具</b>
+                    <p>桑基图支持周期切换与相邻链路聚焦，关系图支持缩放、平移、拖拽与节点检视。两张图都可以导出为高清 PNG，便于放进课程报告。</p>
+                </article>
+            </div>
+        </section>
+
+        <p class="wsb-note">说明：页面数据为教学演示用模拟数据；ECharts 5.6 已下载至本地 <code>cdn/echarts/echarts.min.js</code>，无需外部网络即可运行。桑基图在窄屏下可左右滑动查看完整内容。</p>
+        <p class="wsb-error">ECharts 未能加载，请检查 cdn/echarts/echarts.min.js 是否存在。</p>
+    </main>
+
+    <script src="cdn/echarts/echarts.min.js"></script>
+    <script>
+        (function () {
+            'use strict';
+
+            var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            var sankeyEl = document.getElementById('sankeyChart');
+            var graphEl = document.getElementById('graphChart');
+
+            if (!window.echarts) {
+                document.querySelectorAll('.wsb-chart').forEach(function (el) { el.style.display = 'none'; });
+                var err = document.querySelector('.wsb-error');
+                if (err) { err.style.display = 'block'; }
+                return;
+            }
+
+            var FONT = '"PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif';
+            var INK = '#eaf3ff';
+            var MUTED = '#8b9cb6';
+            var GRID_LINE = 'rgba(148, 180, 220, 0.12)';
+            var TOTAL_FLOW = 23500;
+
+            /* ==============================
+               桑基图数据
+               ============================== */
+            var CHANNELS = ['官网', 'App', '小程序', '搜索', '社群', '合作院校'];
+            var ENTRIES = ['浏览赛事', '检索赛项', '领取资料'];
+            var CONVERSIONS = ['注册报名', '组建战队', '收藏关注'];
+            var OUTCOMES = ['完赛获奖', '完赛未获奖', '退赛流失', '持续关注', '沉默流失'];
+            var LAYERS = {};
+            CHANNELS.forEach(function (n) { LAYERS[n] = '渠道'; });
+            ENTRIES.forEach(function (n) { LAYERS[n] = '首访行为'; });
+            CONVERSIONS.forEach(function (n) { LAYERS[n] = '转化动作'; });
+            OUTCOMES.forEach(function (n) { LAYERS[n] = '最终结果'; });
+
+            var SANKEY_NODES = [
+                { name: '官网', color: '#38bdf8' },
+                { name: 'App', color: '#60a5fa' },
+                { name: '小程序', color: '#818cf8' },
+                { name: '搜索', color: '#22d3ee' },
+                { name: '社群', color: '#0ea5e9' },
+                { name: '合作院校', color: '#7dd3fc' },
+                { name: '浏览赛事', color: '#5eead4' },
+                { name: '检索赛项', color: '#2dd4bf' },
+                { name: '领取资料', color: '#99f6e4' },
+                { name: '注册报名', color: '#fbbf24' },
+                { name: '组建战队', color: '#a78bfa' },
+                { name: '收藏关注', color: '#38bdf8' },
+                { name: '完赛获奖', color: '#34d399' },
+                { name: '完赛未获奖', color: '#5eead4' },
+                { name: '退赛流失', color: '#f87171' },
+                { name: '持续关注', color: '#94a3b8' },
+                { name: '沉默流失', color: '#64748b' }
+            ];
+
+            var BASE_LINKS = [
+                { source: '官网', target: '浏览赛事', value: 4200 },
+                { source: '官网', target: '检索赛项', value: 1800 },
+                { source: 'App', target: '浏览赛事', value: 3600 },
+                { source: 'App', target: '领取资料', value: 1500 },
+                { source: '小程序', target: '浏览赛事', value: 2400 },
+                { source: '小程序', target: '检索赛项', value: 1100 },
+                { source: '搜索', target: '检索赛项', value: 2800 },
+                { source: '搜索', target: '浏览赛事', value: 1200 },
+                { source: '社群', target: '领取资料', value: 1700 },
+                { source: '社群', target: '浏览赛事', value: 900 },
+                { source: '合作院校', target: '浏览赛事', value: 1500 },
+                { source: '合作院校', target: '领取资料', value: 800 },
+                { source: '浏览赛事', target: '注册报名', value: 4800 },
+                { source: '浏览赛事', target: '组建战队', value: 1600 },
+                { source: '浏览赛事', target: '收藏关注', value: 7400 },
+                { source: '检索赛项', target: '注册报名', value: 2600 },
+                { source: '检索赛项', target: '组建战队', value: 700 },
+                { source: '检索赛项', target: '收藏关注', value: 2400 },
+                { source: '领取资料', target: '注册报名', value: 2100 },
+                { source: '领取资料', target: '收藏关注', value: 1900 },
+                { source: '注册报名', target: '完赛获奖', value: 1800 },
+                { source: '注册报名', target: '完赛未获奖', value: 3900 },
+                { source: '注册报名', target: '退赛流失', value: 3800 },
+                { source: '组建战队', target: '完赛获奖', value: 900 },
+                { source: '组建战队', target: '完赛未获奖', value: 1100 },
+                { source: '组建战队', target: '退赛流失', value: 300 },
+                { source: '收藏关注', target: '持续关注', value: 7600 },
+                { source: '收藏关注', target: '沉默流失', value: 4100 }
+            ];
+
+            function buildPeriodLinks(period) {
+                if (period === 'd30') {
+                    return BASE_LINKS.map(function (l) {
+                        return { source: l.source, target: l.target, value: l.value };
+                    });
+                }
+                return BASE_LINKS.map(function (l, i) {
+                    var factor = 2.82 + ((i * 7) % 13) * 0.041;
+                    return { source: l.source, target: l.target, value: Math.round(l.value * factor) };
+                });
+            }
+
+            function sumLinks(links, predicate) {
+                return links.reduce(function (acc, l) {
+                    return predicate(l) ? acc + l.value : acc;
+                }, 0);
+            }
+
+            function computeStats(links) {
+                var channelSet = {};
+                CHANNELS.forEach(function (n) { channelSet[n] = true; });
+                var reach = sumLinks(links, function (l) { return channelSet[l.source]; });
+                var apply = sumLinks(links, function (l) { return l.target === '注册报名'; });
+                var team = sumLinks(links, function (l) { return l.target === '组建战队'; });
+                var complete = sumLinks(links, function (l) {
+                    return l.target === '完赛获奖' || l.target === '完赛未获奖';
+                });
+                return {
+                    reach: reach,
+                    applyRate: reach ? apply / reach * 100 : 0,
+                    completeRate: (apply + team) ? complete / (apply + team) * 100 : 0
+                };
+            }
+
+            function buildSankeyTotals(links) {
+                var out = {};
+                var inn = {};
+                links.forEach(function (l) {
+                    out[l.source] = (out[l.source] || 0) + l.value;
+                    inn[l.target] = (inn[l.target] || 0) + l.value;
+                });
+                var channelSet = {};
+                CHANNELS.forEach(function (n) { channelSet[n] = true; });
+                var reach = links.reduce(function (acc, l) {
+                    return channelSet[l.source] ? acc + l.value : acc;
+                }, 0);
+                return { out: out, in: inn, reach: reach };
+            }
+
+            function fmt(n) {
+                return Math.round(n).toLocaleString('en-US');
+            }
+
+            function richLabel(position) {
+                return {
+                    position: position,
+                    distance: 7,
+                    formatter: function (p) {
+                        return '{n|' + p.name + '}\n{v|' + fmt(p.value) + '}';
+                    },
+                    rich: {
+                        n: {
+                            color: '#dbe7f3',
+                            fontFamily: FONT,
+                            fontSize: 11,
+                            fontWeight: 500,
+                            lineHeight: 17
+                        },
+                        v: {
+                            color: '#74869c',
+                            fontFamily: 'Georgia, serif',
+                            fontSize: 9.5,
+                            lineHeight: 13
+                        }
+                    }
+                };
+            }
+
+            var sankeyChart = null;
+            var graphChart = null;
+            var currentPeriod = 'd30';
+            var currentLinks = buildPeriodLinks('d30');
+            var currentTotals = buildSankeyTotals(currentLinks);
+
+            function sankeyTooltip(params) {
+                var wrapStart = '<div style="padding:2px 2px 1px;font-family:' + FONT + '">';
+                var wrapEnd = '</div>';
+                if (params.dataType === 'edge') {
+                    var d = params.data;
+                    var out = currentTotals.out[d.source] || 1;
+                    var share = d.value / out * 100;
+                    return wrapStart +
+                        '<div style="color:#74869c;font-size:9px;letter-spacing:2px;text-transform:uppercase">Flow</div>' +
+                        '<div style="margin-top:7px;color:#eaf3ff;font-size:12.5px">' + d.source +
+                        '<span style="color:#5eead4;padding:0 6px">→</span>' + d.target + '</div>' +
+                        '<div style="margin-top:9px;color:#93a4ba;font-size:11px">用户规模 ' +
+                        '<b style="color:#fbbf24;font-size:14px;font-family:Georgia,serif">' + fmt(d.value) + '</b></div>' +
+                        '<div style="margin-top:3px;color:#66788f;font-size:10px">占该来源流出 ' + share.toFixed(1) + '%</div>' +
+                        wrapEnd;
+                }
+                var node = params.data;
+                var volume = Math.max(currentTotals.out[node.name] || 0, currentTotals.in[node.name] || 0, node.value || 0);
+                var shareAll = currentTotals.reach ? volume / currentTotals.reach * 100 : 0;
+                return wrapStart +
+                    '<div style="color:#74869c;font-size:9px;letter-spacing:2px;text-transform:uppercase">' +
+                    (LAYERS[node.name] || 'NODE') + '</div>' +
+                    '<div style="margin-top:7px;color:#eaf3ff;font-size:12.5px">' + node.name + '</div>' +
+                    '<div style="margin-top:9px;color:#93a4ba;font-size:11px">流量规模 ' +
+                    '<b style="color:#5eead4;font-size:14px;font-family:Georgia,serif">' + fmt(volume) + '</b></div>' +
+                    '<div style="margin-top:3px;color:#66788f;font-size:10px">占整体流量 ' + shareAll.toFixed(1) + '%</div>' +
+                    wrapEnd;
+            }
+
+            function buildSankeyOption(links) {
+                var totals = buildSankeyTotals(links);
+                var nodes = SANKEY_NODES.map(function (n) {
+                    var isLast = OUTCOMES.indexOf(n.name) > -1;
+                    return {
+                        name: n.name,
+                        itemStyle: {
+                            color: n.color,
+                            borderColor: 'rgba(234, 243, 255, 0.16)',
+                            borderWidth: 1
+                        },
+                        label: richLabel(isLast ? 'left' : 'right')
+                    };
+                });
+                return {
+                    backgroundColor: 'transparent',
+                    animation: !reduceMotion,
+                    animationDuration: 900,
+                    animationEasing: 'cubicOut',
+                    textStyle: { fontFamily: FONT, color: INK },
+                    tooltip: {
+                        trigger: 'item',
+                        confine: true,
+                        backgroundColor: 'rgba(7, 12, 21, 0.96)',
+                        borderColor: 'rgba(148, 180, 220, 0.28)',
+                        borderWidth: 1,
+                        padding: [11, 14],
+                        textStyle: { color: INK, fontFamily: FONT },
+                        extraCssText: 'box-shadow:0 16px 40px rgba(0,0,0,.5);border-radius:2px;',
+                        formatter: sankeyTooltip
+                    },
+                    series: [{
+                        type: 'sankey',
+                        left: 12,
+                        right: 12,
+                        top: 24,
+                        bottom: 20,
+                        nodeWidth: 14,
+                        nodeGap: 15,
+                        nodeAlign: 'justify',
+                        layoutIterations: 64,
+                        draggable: true,
+                        data: nodes,
+                        links: links,
+                        label: richLabel('right'),
+                        labelLine: { show: false },
+                        itemStyle: {
+                            borderColor: 'rgba(234, 243, 255, 0.18)',
+                            borderWidth: 1
+                        },
+                        lineStyle: {
+                            color: 'gradient',
+                            opacity: 0.30,
+                            curveness: 0.55
+                        },
+                        emphasis: {
+                            focus: 'adjacency',
+                            itemStyle: {
+                                borderColor: 'rgba(255, 255, 255, 0.65)',
+                                borderWidth: 1.4,
+                                shadowBlur: 12,
+                                shadowColor: 'rgba(94, 234, 212, 0.45)'
+                            },
+                            lineStyle: { opacity: 0.68 },
+                            label: { color: '#ffffff' }
+                        },
+                        blur: {
+                            itemStyle: { opacity: 0.3 },
+                            lineStyle: { opacity: 0.06 }
+                        },
+                        animation: !reduceMotion,
+                        animationDuration: 700,
+                        animationEasing: 'cubicOut'
+                    }]
+                };
+            }
+
+            /* ==============================
+               关系图数据
+               ============================== */
+            var CATEGORIES = [
+                { name: '赛事', color: '#fbbf24', desc: '赛事节点：连接所需能力、参与人群与组织资源，是知识网络的中心。' },
+                { name: '能力', color: '#5eead4', desc: '能力节点：赛事考查的核心能力，被多个赛事与学习资源共同指向。' },
+                { name: '资源', color: '#34d399', desc: '资源节点：题库、课程、导师与实训基地，支撑能力培养与备赛训练。' },
+                { name: '组织', color: '#a78bfa', desc: '组织节点：选手、教练、院校与企业，是赛事生态中的参与主体。' }
+            ];
+
+            var GRAPH_NODES = [
+                { name: '世界技能大赛', value: 96, category: 0, symbol: 'roundRect' },
+                { name: '全国职业技能大赛', value: 88, category: 0, symbol: 'roundRect' },
+                { name: '省级选拔赛', value: 64, category: 0, symbol: 'roundRect' },
+                { name: '行业专项赛', value: 58, category: 0, symbol: 'roundRect' },
+                { name: '校级热身赛', value: 44, category: 0, symbol: 'roundRect' },
+                { name: '编程实现', value: 92, category: 1, symbol: 'circle' },
+                { name: '算法设计', value: 66, category: 1, symbol: 'circle' },
+                { name: '工程实践', value: 76, category: 1, symbol: 'circle' },
+                { name: '团队协作', value: 58, category: 1, symbol: 'circle' },
+                { name: '创新方案', value: 48, category: 1, symbol: 'circle' },
+                { name: '题库', value: 54, category: 2, symbol: 'diamond' },
+                { name: '课程', value: 60, category: 2, symbol: 'diamond' },
+                { name: '导师', value: 46, category: 2, symbol: 'diamond' },
+                { name: '实训基地', value: 42, category: 2, symbol: 'diamond' },
+                { name: '选手', value: 98, category: 3, symbol: 'triangle' },
+                { name: '教练', value: 62, category: 3, symbol: 'triangle' },
+                { name: '院校', value: 56, category: 3, symbol: 'triangle' },
+                { name: '企业', value: 44, category: 3, symbol: 'triangle' }
+            ];
+
+            var GRAPH_LINKS = [
+                { source: '世界技能大赛', target: '编程实现' },
+                { source: '世界技能大赛', target: '工程实践' },
+                { source: '世界技能大赛', target: '团队协作' },
+                { source: '世界技能大赛', target: '创新方案' },
+                { source: '全国职业技能大赛', target: '编程实现' },
+                { source: '全国职业技能大赛', target: '算法设计' },
+                { source: '全国职业技能大赛', target: '工程实践' },
+                { source: '全国职业技能大赛', target: '团队协作' },
+                { source: '省级选拔赛', target: '编程实现' },
+                { source: '省级选拔赛', target: '算法设计' },
+                { source: '行业专项赛', target: '工程实践' },
+                { source: '行业专项赛', target: '创新方案' },
+                { source: '行业专项赛', target: '团队协作' },
+                { source: '校级热身赛', target: '编程实现' },
+                { source: '校级热身赛', target: '团队协作' },
+                { source: '题库', target: '编程实现' },
+                { source: '题库', target: '算法设计' },
+                { source: '课程', target: '编程实现' },
+                { source: '课程', target: '工程实践' },
+                { source: '课程', target: '创新方案' },
+                { source: '导师', target: '团队协作' },
+                { source: '导师', target: '创新方案' },
+                { source: '实训基地', target: '工程实践' },
+                { source: '实训基地', target: '编程实现' },
+                { source: '选手', target: '世界技能大赛' },
+                { source: '选手', target: '全国职业技能大赛' },
+                { source: '选手', target: '省级选拔赛' },
+                { source: '选手', target: '校级热身赛' },
+                { source: '教练', target: '选手' },
+                { source: '教练', target: '课程' },
+                { source: '院校', target: '校级热身赛' },
+                { source: '院校', target: '省级选拔赛' },
+                { source: '院校', target: '实训基地' },
+                { source: '院校', target: '课程' },
+                { source: '企业', target: '行业专项赛' },
+                { source: '企业', target: '实训基地' },
+                { source: '企业', target: '导师' }
+            ];
+
+            var NODE_INDEX = {};
+            var ADJ = {};
+            var NODE_CATEGORY = {};
+            GRAPH_NODES.forEach(function (n) {
+                NODE_INDEX[n.name] = n;
+                NODE_CATEGORY[n.name] = n.category;
+                ADJ[n.name] = [];
+            });
+            GRAPH_LINKS.forEach(function (l) {
+                if (ADJ[l.source] && ADJ[l.target]) {
+                    ADJ[l.source].push(l.target);
+                    ADJ[l.target].push(l.source);
+                }
+            });
+
+            function hexToRgba(hex, alpha) {
+                var h = hex.replace('#', '');
+                if (h.length === 3) {
+                    h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+                }
+                var r = parseInt(h.slice(0, 2), 16);
+                var g = parseInt(h.slice(2, 4), 16);
+                var b = parseInt(h.slice(4, 6), 16);
+                return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + alpha + ')';
+            }
+
+            function graphTooltip(params) {
+                var wrapStart = '<div style="padding:2px 2px 1px;font-family:' + FONT + '">';
+                var wrapEnd = '</div>';
+                if (params.dataType === 'edge') {
+                    return wrapStart +
+                        '<div style="color:#74869c;font-size:9px;letter-spacing:2px;text-transform:uppercase">Relation</div>' +
+                        '<div style="margin-top:7px;color:#eaf3ff;font-size:12.5px">' + params.data.source +
+                        '<span style="color:#5eead4;padding:0 6px">—</span>' + params.data.target + '</div>' +
+                        '<div style="margin-top:6px;color:#7f91a7;font-size:10.5px">知识网络中的一条直接关联</div>' +
+                        wrapEnd;
+                }
+                var n = params.data;
+                var cat = CATEGORIES[n.category] || CATEGORIES[0];
+                var degree = (ADJ[n.name] || []).length;
+                return wrapStart +
+                    '<div style="color:#74869c;font-size:9px;letter-spacing:2px;text-transform:uppercase">' + cat.name + '</div>' +
+                    '<div style="margin-top:7px;color:#eaf3ff;font-size:12.5px">' + n.name + '</div>' +
+                    '<div style="margin-top:9px;color:#93a4ba;font-size:11px">关注热度 ' +
+                    '<b style="color:' + cat.color + ';font-size:14px;font-family:Georgia,serif">' + n.value + '</b></div>' +
+                    '<div style="margin-top:3px;color:#66788f;font-size:10px">直接关联 ' + degree + ' 个节点</div>' +
+                    wrapEnd;
+            }
+
+            function buildGraphOption() {
+                var nodes = GRAPH_NODES.map(function (n) {
+                    var cat = CATEGORIES[n.category];
+                    return {
+                        name: n.name,
+                        value: n.value,
+                        category: n.category,
+                        symbol: n.symbol,
+                        symbolSize: 18 + n.value * 0.34,
+                        itemStyle: {
+                            color: cat.color,
+                            borderColor: 'rgba(234, 243, 255, 0.26)',
+                            borderWidth: 1,
+                            shadowBlur: 16,
+                            shadowColor: hexToRgba(cat.color, 0.42)
+                        },
+                        label: {
+                            show: true,
+                            position: 'right',
+                            distance: 6,
+                            formatter: '{b}',
+                            color: '#c9d6e5',
+                            fontFamily: FONT,
+                            fontSize: 10.5
+                        }
+                    };
+                });
+                var links = GRAPH_LINKS.map(function (l) {
+                    return {
+                        source: l.source,
+                        target: l.target,
+                        lineStyle: { width: 1.1 }
+                    };
+                });
+                return {
+                    backgroundColor: 'transparent',
+                    animation: !reduceMotion,
+                    animationDuration: 1000,
+                    animationEasingUpdate: 'cubicOut',
+                    textStyle: { fontFamily: FONT, color: INK },
+                    tooltip: {
+                        trigger: 'item',
+                        confine: true,
+                        backgroundColor: 'rgba(7, 12, 21, 0.96)',
+                        borderColor: 'rgba(148, 180, 220, 0.28)',
+                        borderWidth: 1,
+                        padding: [11, 14],
+                        textStyle: { color: INK, fontFamily: FONT },
+                        extraCssText: 'box-shadow:0 16px 40px rgba(0,0,0,.5);border-radius:2px;',
+                        formatter: graphTooltip
+                    },
+                    legend: [{
+                        bottom: 8,
+                        left: 'center',
+                        data: CATEGORIES.map(function (c) {
+                            return { name: c.name, icon: c.name === '赛事' ? 'roundRect' : (c.name === '资源' ? 'diamond' : (c.name === '组织' ? 'triangle' : 'circle')) };
+                        }),
+                        textStyle: { color: '#93a4ba', fontFamily: FONT, fontSize: 11 },
+                        itemWidth: 9,
+                        itemHeight: 9,
+                        itemGap: 22,
+                        inactiveColor: '#44546a'
+                    }],
+                    series: [{
+                        type: 'graph',
+                        layout: 'force',
+                        left: 24,
+                        right: 54,
+                        top: 26,
+                        bottom: 84,
+                        roam: true,
+                        draggable: true,
+                        data: nodes,
+                        links: links,
+                        categories: CATEGORIES.map(function (c) {
+                            return { name: c.name, itemStyle: { color: c.color } };
+                        }),
+                        force: {
+                            initLayout: 'circular',
+                            repulsion: 520,
+                            edgeLength: [86, 168],
+                            gravity: 0.12,
+                            friction: 0.15,
+                            layoutAnimation: !reduceMotion
+                        },
+                        label: {
+                            show: true,
+                            position: 'right',
+                            color: '#c9d6e5',
+                            fontFamily: FONT,
+                            fontSize: 10.5
+                        },
+                        labelLayout: {
+                            hideOverlap: true
+                        },
+                        lineStyle: {
+                            color: 'source',
+                            opacity: 0.34,
+                            width: 1.1,
+                            curveness: 0.18
+                        },
+                        emphasis: {
+                            focus: 'adjacency',
+                            scale: true,
+                            itemStyle: {
+                                borderColor: '#ffffff',
+                                borderWidth: 1.6,
+                                shadowBlur: 28,
+                                shadowColor: 'rgba(94, 234, 212, 0.55)'
+                            },
+                            lineStyle: { opacity: 0.9, width: 2.2 },
+                            label: { color: '#ffffff', fontWeight: 600 }
+                        },
+                        blur: {
+                            itemStyle: { opacity: 0.22 },
+                            lineStyle: { opacity: 0.06 },
+                            label: { opacity: 0.22 }
+                        },
+                        animation: !reduceMotion,
+                        animationDuration: 800,
+                        animationEasingUpdate: 'cubicOut'
+                    }]
+                };
+            }
+
+            /* ==============================
+               图表实例
+               ============================== */
+            function initSankey() {
+                sankeyChart = echarts.init(sankeyEl, null, { renderer: 'canvas' });
+                sankeyChart.setOption(buildSankeyOption(currentLinks));
+            }
+
+            function initGraph() {
+                if (graphChart) {
+                    graphChart.dispose();
+                    graphChart = null;
+                }
+                graphChart = echarts.init(graphEl, null, { renderer: 'canvas' });
+                graphChart.setOption(buildGraphOption());
+                bindGraphEvents();
+            }
+
+            function bindGraphEvents() {
+                graphChart.on('click', function (params) {
+                    if (params.dataType !== 'node') { return; }
+                    selectNode(params.data.name, params.dataIndex);
+                });
+                graphChart.getZr().on('click', function (event) {
+                    if (!event.target) { clearFocus(); }
+                });
+            }
+
+            var inspectorName = document.querySelector('.wsb-inspector-name');
+            var inspectorCat = document.querySelector('.wsb-inspector-cat');
+            var inspectorDesc = document.querySelector('.wsb-inspector-desc');
+            var inspectorTags = document.querySelector('.wsb-inspector-tags');
+            var inspectorBar = document.querySelector('.wsb-inspector-bar b');
+            var clearBtn = document.querySelector('.wsb-clear-focus');
+
+            function selectNode(name, dataIndex) {
+                var node = NODE_INDEX[name];
+                if (!node) { return; }
+                var cat = CATEGORIES[node.category];
+                var related = (ADJ[name] || []).slice();
+                inspectorName.textContent = name;
+                inspectorCat.innerHTML = '<i style="background:' + cat.color + ';box-shadow:0 0 8px ' + hexToRgba(cat.color, 0.65) + '"></i>' +
+                    cat.name + ' · 关联 ' + related.length + ' 个节点';
+                inspectorDesc.textContent = cat.desc;
+                inspectorTags.innerHTML = related.slice(0, 8).map(function (r) {
+                    var c = CATEGORIES[NODE_CATEGORY[r]];
+                    return '<span style="--tag:' + c.color + '"><i></i>' + r + '</span>';
+                }).join('') + (related.length > 8 ? '<span style="--tag:#64748b"><i></i>+' + (related.length - 8) + '</span>' : '');
+                inspectorBar.style.width = Math.min(100, related.length / 8 * 100) + '%';
+                clearBtn.hidden = false;
+                try {
+                    graphChart.dispatchAction({ type: 'focusNodeAdjacency', seriesIndex: 0, dataIndex: dataIndex });
+                } catch (e) { /* 旧版本回退 */ }
+            }
+
+            function clearFocus() {
+                inspectorName.textContent = '点击任意节点';
+                inspectorCat.innerHTML = '<i></i>GRAPH / 18 NODES';
+                inspectorDesc.textContent = '节点大小代表关注热度，颜色代表实体类别。点击后高亮其相邻节点，并在下方列出直接关联的实体。';
+                inspectorTags.innerHTML = '';
+                inspectorBar.style.width = '0';
+                clearBtn.hidden = true;
+                if (graphChart) {
+                    try {
+                        graphChart.dispatchAction({ type: 'unfocusNodeAdjacency', seriesIndex: 0 });
+                    } catch (e) { /* 忽略 */ }
+                }
+            }
+
+            clearBtn.addEventListener('click', clearFocus);
+
+            /* ==============================
+               KPI 数字滚动
+               ============================== */
+            var kpiState = { reach: 0, applyRate: 0, completeRate: 0, relations: 0 };
+            var kpiEls = {
+                reach: document.querySelector('[data-kpi="reach"]'),
+                applyRate: document.querySelector('[data-kpi="applyRate"]'),
+                completeRate: document.querySelector('[data-kpi="completeRate"]'),
+                relations: document.querySelector('[data-kpi="relations"]')
+            };
+
+            function paintKpi(key, value, decimals, suffix) {
+                var el = kpiEls[key];
+                if (!el) { return; }
+                el.textContent = (decimals ? value.toFixed(decimals) : fmt(value)) + suffix;
+            }
+
+            function animateKpi(key, to, decimals, suffix) {
+                var from = kpiState[key] || 0;
+                kpiState[key] = to;
+                if (reduceMotion || from === to) {
+                    paintKpi(key, to, decimals, suffix);
+                    return;
+                }
+                var start = performance.now();
+                var duration = 700;
+                function frame(now) {
+                    var t = Math.min(1, (now - start) / duration);
+                    var eased = 1 - Math.pow(1 - t, 3);
+                    paintKpi(key, from + (to - from) * eased, decimals, suffix);
+                    if (t < 1) { requestAnimationFrame(frame); }
+                }
+                requestAnimationFrame(frame);
+            }
+
+            function updateKpis(animate) {
+                var stats = computeStats(currentLinks);
+                var relationCount = GRAPH_LINKS.length;
+                if (!animate) {
+                    kpiState.reach = stats.reach;
+                    kpiState.applyRate = stats.applyRate;
+                    kpiState.completeRate = stats.completeRate;
+                    kpiState.relations = relationCount;
+                    paintKpi('reach', stats.reach, 0, '');
+                    paintKpi('applyRate', stats.applyRate, 1, '%');
+                    paintKpi('completeRate', stats.completeRate, 1, '%');
+                    paintKpi('relations', relationCount, 0, '');
+                    return;
+                }
+                animateKpi('reach', stats.reach, 0, '');
+                animateKpi('applyRate', stats.applyRate, 1, '%');
+                animateKpi('completeRate', stats.completeRate, 1, '%');
+                animateKpi('relations', relationCount, 0, '');
+            }
+
+            /* ==============================
+               交互
+               ============================== */
+            var periodBtns = Array.prototype.slice.call(document.querySelectorAll('.wsb-period'));
+            var periodLabel = document.querySelector('.wsb-period-label');
+
+            periodBtns.forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var period = btn.getAttribute('data-period');
+                    if (period === currentPeriod) { return; }
+                    currentPeriod = period;
+                    currentLinks = buildPeriodLinks(period);
+                    currentTotals = buildSankeyTotals(currentLinks);
+                    periodBtns.forEach(function (b) {
+                        var on = b === btn;
+                        b.classList.toggle('is-on', on);
+                        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+                    });
+                    if (periodLabel) {
+                        periodLabel.textContent = period === 'd30' ? '近 30 天' : '近 90 天';
+                    }
+                    if (sankeyChart) {
+                        sankeyChart.setOption(buildSankeyOption(currentLinks));
+                    }
+                    updateKpis(true);
+                });
+            });
+
+            var relayoutBtn = document.querySelector('.wsb-relayout');
+            relayoutBtn.addEventListener('click', function () {
+                clearFocus();
+                initGraph();
+            });
+
+            function downloadChart(chart, filename) {
+                if (!chart) { return; }
+                var url = chart.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: '#070b12' });
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            }
+
+            Array.prototype.forEach.call(document.querySelectorAll('.wsb-export'), function (btn) {
+                btn.addEventListener('click', function () {
+                    var type = btn.getAttribute('data-export');
+                    if (type === 'sankey') {
+                        downloadChart(sankeyChart, '18-4-sankey.png');
+                    } else {
+                        downloadChart(graphChart, '18-4-graph.png');
+                    }
+                });
+            });
+
+            /* ==============================
+               初始化与自适应
+               ============================== */
+            initSankey();
+            initGraph();
+            updateKpis(false);
+
+            var resizeTimer = null;
+            function resizeCharts() {
+                if (sankeyChart) { sankeyChart.resize(); }
+                if (graphChart) { graphChart.resize(); }
+            }
+            window.addEventListener('resize', function () {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(resizeCharts, 120);
+            });
+
+            if (window.ResizeObserver) {
+                var ro = new ResizeObserver(function () {
+                    resizeCharts();
+                });
+                ro.observe(sankeyEl);
+                ro.observe(graphEl);
+            }
+
+            if (document.fonts && document.fonts.ready) {
+                document.fonts.ready.then(resizeCharts);
+            }
+        })();
+    </script>
+</body>
+</html>

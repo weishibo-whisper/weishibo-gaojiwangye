@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f3efe6">
+    <title>18-3 知识库智能客服系统架构图 · 魏士博</title>
+    <!--
+        作者：魏士博
+        建立时间：2026-11-05
+        使用的大模型功能名称：Trae DeepSeek-V4.1-Flash
+        页面说明：18-3 基于知识库的智能客服系统架构图，采用 SVG 矢量绘制，标注 RAG 主链路与科研方向
+    -->
+    <style>
+        :root {
+            --wsb-paper: #f3efe6;
+            --wsb-plate: #faf7f0;
+            --wsb-card: #fffdf8;
+            --wsb-ink: #1c1b17;
+            --wsb-ink-2: #4a4740;
+            --wsb-muted: #8b857a;
+            --wsb-rule: rgba(28, 27, 23, 0.16);
+            --wsb-rule-soft: rgba(28, 27, 23, 0.09);
+            --wsb-seal: #a8432f;
+            --wsb-serif: "Songti SC", "STSong", "SimSun", "Source Han Serif SC", "Noto Serif CJK SC", Georgia, serif;
+            --wsb-sans: "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+            --wsb-mono: "Cascadia Mono", "SF Mono", Consolas, "Courier New", monospace;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            min-height: 100vh;
+            background:
+                radial-gradient(900px 520px at 4% -8%, rgba(168, 67, 47, 0.055), transparent 62%),
+                radial-gradient(820px 480px at 98% 2%, rgba(63, 92, 134, 0.05), transparent 60%),
+                repeating-linear-gradient(0deg, rgba(28, 27, 23, 0.012) 0 1px, transparent 1px 3px),
+                var(--wsb-paper);
+            color: var(--wsb-ink);
+            font-family: var(--wsb-sans);
+            -webkit-font-smoothing: antialiased;
+        }
+        .wsb-page {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: clamp(22px, 3.4vw, 40px) clamp(16px, 3vw, 32px) 50px;
+        }
+
+        /* ============ 顶部信息条 ============ */
+        .wsb-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--wsb-rule);
+            color: var(--wsb-muted);
+            font-family: var(--wsb-mono);
+            font-size: 9px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .wsb-head {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 24px;
+            flex-wrap: wrap;
+            margin-top: clamp(26px, 4vw, 40px);
+        }
+        .wsb-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 11px;
+            color: #7a7466;
+            font-size: 9.5px;
+            letter-spacing: 2.6px;
+            text-transform: uppercase;
+        }
+        .wsb-seal {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            margin-right: 2px;
+            background: var(--wsb-seal);
+            box-shadow: inset 0 0 0 2px rgba(251, 247, 239, 0.32), 0 2px 8px rgba(168, 67, 47, 0.22);
+            color: #fbf7ef;
+            font-family: var(--wsb-serif);
+            font-size: 12px;
+            line-height: 1.16;
+            letter-spacing: 0;
+            transform: rotate(-3deg);
+        }
+        .wsb-title {
+            margin-top: 16px;
+            font-family: var(--wsb-serif);
+            font-size: clamp(29px, 4.2vw, 50px);
+            line-height: 1.2;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--wsb-ink);
+        }
+        .wsb-title em {
+            font-style: normal;
+            color: var(--wsb-seal);
+            padding-bottom: 4px;
+            border-bottom: 1px solid rgba(168, 67, 47, 0.28);
+        }
+        .wsb-sub {
+            margin-top: 15px;
+            color: #6b665b;
+            font-size: 13px;
+            line-height: 2;
+            max-width: 600px;
+            letter-spacing: 0.3px;
+        }
+        .wsb-tools { display: flex; flex-wrap: wrap; gap: 9px; }
+        .wsb-tool {
+            border: 1px solid rgba(28, 27, 23, 0.24);
+            border-radius: 2px;
+            padding: 10px 15px;
+            background: var(--wsb-card);
+            color: var(--wsb-ink-2);
+            font-family: inherit;
+            font-size: 11.5px;
+            letter-spacing: 0.8px;
+            cursor: pointer;
+            transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+        }
+        .wsb-tool:hover {
+            border-color: rgba(168, 67, 47, 0.55);
+            color: var(--wsb-seal);
+            background: #fffefb;
+        }
+        .wsb-tool.is-on {
+            border-color: rgba(168, 67, 47, 0.7);
+            background: rgba(168, 67, 47, 0.07);
+            color: var(--wsb-seal);
+            font-weight: 600;
+        }
+        .wsb-tool-primary {
+            border-color: var(--wsb-ink);
+            background: var(--wsb-ink);
+            color: #f4f0e7;
+            font-weight: 600;
+        }
+        .wsb-tool-primary:hover {
+            border-color: #33312a;
+            background: #33312a;
+            color: #fbf8f1;
+        }
+        .wsb-meta { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 22px; }
+        .wsb-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 6px 11px;
+            border: 1px solid rgba(28, 27, 23, 0.14);
+            border-radius: 2px;
+            background: rgba(255, 253, 248, 0.7);
+            color: #757065;
+            font-size: 10.5px;
+            letter-spacing: 0.6px;
+        }
+        .wsb-chip b { color: var(--wsb-ink); font-weight: 600; }
+
+        /* ============ SVG 图版 ============ */
+        .wsb-scroll { margin-top: 26px; overflow-x: auto; padding-bottom: 6px; }
+        .wsb-svg-box {
+            position: relative;
+            min-width: 940px;
+            border: 1px solid rgba(28, 27, 23, 0.22);
+            border-radius: 2px;
+            background: var(--wsb-plate);
+            box-shadow: 0 28px 64px rgba(70, 58, 40, 0.13);
+            overflow: hidden;
+        }
+        .wsb-svg-box::before {
+            content: "";
+            position: absolute;
+            inset: 6px;
+            border: 1px solid rgba(28, 27, 23, 0.08);
+            pointer-events: none;
+            z-index: 2;
+        }
+        .wsb-fig {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 12px 22px 11px;
+            border-bottom: 1px solid var(--wsb-rule-soft);
+            background: var(--wsb-card);
+            color: #8a8478;
+            font-family: var(--wsb-serif);
+            font-size: 9.5px;
+            letter-spacing: 2.2px;
+            text-transform: uppercase;
+        }
+        .wsb-fig b { color: var(--wsb-seal); font-weight: 700; }
+        .wsb-fig-latin { color: rgba(28, 27, 23, 0.38); font-size: 8.5px; letter-spacing: 1.8px; }
+        .wsb-svg { display: block; width: 100%; height: auto; }
+        .wsb-swipe {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            color: #8b857a;
+            font-size: 11px;
+        }
+        .wsb-swipe i { font-style: normal; color: var(--wsb-seal); letter-spacing: 2px; }
+
+        /* ============ 节点详情 ============ */
+        .wsb-detail {
+            display: grid;
+            grid-template-columns: minmax(120px, 0.32fr) 1fr;
+            gap: 24px;
+            margin-top: 24px;
+            padding: 22px 22px 24px 24px;
+            border-top: 1px solid var(--wsb-rule);
+            border-bottom: 1px solid var(--wsb-rule-soft);
+            border-left: 2px solid var(--wsb-seal);
+            background: linear-gradient(90deg, rgba(168, 67, 47, 0.035), transparent 55%);
+        }
+        .wsb-detail-kicker {
+            color: #a09a8c;
+            font-family: var(--wsb-mono);
+            font-size: 9px;
+            letter-spacing: 2.2px;
+            text-transform: uppercase;
+        }
+        .wsb-detail-title {
+            margin-top: 9px;
+            font-family: var(--wsb-serif);
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--wsb-ink);
+            letter-spacing: 0.8px;
+        }
+        .wsb-detail-look { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; margin-top: 9px; }
+        .wsb-detail-layer { color: var(--wsb-seal); font-size: 10.5px; letter-spacing: 0.9px; }
+        .wsb-detail-text { color: #57544b; font-size: 12.5px; line-height: 2; }
+        .wsb-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 22px;
+            margin-top: 16px;
+            color: #7c776c;
+            font-size: 10.5px;
+            letter-spacing: 0.4px;
+        }
+        .wsb-legend span { display: inline-flex; align-items: center; gap: 8px; }
+        .wsb-dash {
+            width: 30px;
+            height: 1px;
+            background: repeating-linear-gradient(90deg, rgba(28, 27, 23, 0.45) 0 5px, transparent 5px 9px);
+        }
+        .wsb-glow-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--wsb-seal);
+            box-shadow: 0 0 7px rgba(168, 67, 47, 0.55);
+        }
+
+        /* ============ 科研卡片 ============ */
+        .wsb-research { margin-top: 32px; }
+        .wsb-research-head {
+            display: flex;
+            align-items: baseline;
+            gap: 14px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--wsb-rule);
+        }
+        .wsb-research-head h2 {
+            font-family: var(--wsb-serif);
+            font-size: 19px;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+        }
+        .wsb-research-head span {
+            color: rgba(168, 67, 47, 0.7);
+            font-family: var(--wsb-mono);
+            font-size: 8.5px;
+            letter-spacing: 2.4px;
+            text-transform: uppercase;
+        }
+        .wsb-research-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+        }
+        .wsb-research-card {
+            position: relative;
+            padding: 20px 17px 17px;
+            border: 1px solid rgba(28, 27, 23, 0.12);
+            border-radius: 2px;
+            background: var(--wsb-card);
+            box-shadow: 0 10px 26px rgba(70, 58, 40, 0.05);
+            transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+        }
+        .wsb-research-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(28, 27, 23, 0.28);
+            box-shadow: 0 18px 34px rgba(70, 58, 40, 0.10);
+        }
+        .wsb-research-card::before {
+            content: "";
+            position: absolute;
+            top: -1px;
+            left: -1px;
+            right: -1px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--wsb-seal), rgba(168, 67, 47, 0.08));
+        }
+        .wsb-research-card b {
+            display: block;
+            color: var(--wsb-ink);
+            font-family: var(--wsb-serif);
+            font-size: 14.5px;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+        }
+        .wsb-research-card p {
+            margin-top: 9px;
+            color: #6f6a5f;
+            font-size: 11.5px;
+            line-height: 1.85;
+        }
+        .wsb-research-card i {
+            display: inline-block;
+            margin-bottom: 11px;
+            color: var(--wsb-seal);
+            font-style: normal;
+            font-family: var(--wsb-mono);
+            font-size: 8.5px;
+            letter-spacing: 1.6px;
+            opacity: 0.8;
+        }
+        .wsb-note {
+            margin-top: 18px;
+            color: #8a8478;
+            font-size: 10.5px;
+            line-height: 1.7;
+            letter-spacing: 0.3px;
+        }
+        @media (max-width: 960px) {
+            .wsb-swipe { display: flex; }
+        }
+        @media (max-width: 900px) {
+            .wsb-research-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 760px) {
+            .wsb-head { align-items: flex-start; }
+            .wsb-detail { grid-template-columns: 1fr; gap: 10px; }
+            .wsb-tools { width: 100%; }
+            .wsb-tool { flex: 1; text-align: center; }
+            .wsb-research-grid { grid-template-columns: 1fr; }
+            .wsb-scroll { margin-left: -8px; margin-right: -8px; padding-left: 8px; padding-right: 8px; }
+            .wsb-topbar span:nth-child(2) { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <main class="wsb-page">
+        <div class="wsb-topbar">
+            <span>魏士博 · 高级网页设计 I</span>
+            <span>SVG / Vector Architecture</span>
+            <span>2026</span>
+        </div>
+
+        <header class="wsb-head">
+            <div>
+                <div class="wsb-kicker">
+                    <span class="wsb-seal">士<br>博</span>
+                    SVG Architecture / 18-3
+                </div>
+                <h1 class="wsb-title">知识库智能客服<em>系统架构</em></h1>
+                <p class="wsb-sub">面向科研的检索增强客服系统：多渠道接入、多轮意图理解、知识库检索、可信生成与人工兜底，全链路可评测、可追溯。</p>
+                <div class="wsb-meta">
+                    <span class="wsb-chip"><b>5</b> 层架构</span>
+                    <span class="wsb-chip"><b>26</b> 个节点</span>
+                    <span class="wsb-chip"><b>SVG</b> 矢量绘制</span>
+                    <span class="wsb-chip">RAG 主链路</span>
+                </div>
+            </div>
+            <div class="wsb-tools">
+                <button class="wsb-tool wsb-path" type="button" aria-pressed="false">标注 RAG 主链路</button>
+                <button class="wsb-tool wsb-tool-primary wsb-export" type="button">导出 SVG</button>
+                <button class="wsb-tool wsb-reset" type="button">重置</button>
+            </div>
+        </header>
+
+        <div class="wsb-scroll">
+            <div class="wsb-svg-box">
+                <div class="wsb-fig">
+                    <span><b>Fig. 01</b> &nbsp;/&nbsp; 系统分层与检索增强主链路</span>
+                    <span class="wsb-fig-latin">KB Customer Service · System Architecture</span>
+                </div>
+                <svg class="wsb-svg" viewBox="0 0 1200 820" width="1200" height="820" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="基于知识库的智能客服系统架构图">
+                    <style>
+                        .wsb-node { cursor: pointer; --accent: #b5623c; transition: opacity 0.2s ease; }
+                        .wsb-node.is-access { --accent: #3f5c86; }
+                        .wsb-node.is-dialog { --accent: #a8432f; }
+                        .wsb-node.is-knowledge { --accent: #3e7661; }
+                        .wsb-node.is-data { --accent: #8a6d38; }
+                        .wsb-node-bg {
+                            fill: #fffdf8;
+                            stroke: rgba(28, 27, 23, 0.16);
+                            stroke-width: 1;
+                            transition: stroke 0.18s ease, filter 0.18s ease;
+                        }
+                        .wsb-node:hover .wsb-node-bg {
+                            stroke: var(--accent);
+                            stroke-width: 1.5;
+                            filter: drop-shadow(0 3px 7px rgba(60, 50, 35, 0.18));
+                        }
+                        .wsb-node.is-active .wsb-node-bg {
+                            stroke: var(--accent);
+                            stroke-width: 2;
+                            filter: drop-shadow(0 4px 10px rgba(60, 50, 35, 0.24));
+                        }
+                        .wsb-node-bar { fill: var(--accent); opacity: 0.78; }
+                        .wsb-node:hover .wsb-node-bar,
+                        .wsb-node.is-active .wsb-node-bar { opacity: 1; }
+                        .wsb-node-title {
+                            fill: #1f1d18;
+                            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+                            font-size: 13.5px;
+                            font-weight: 600;
+                            letter-spacing: 0.3px;
+                        }
+                        .wsb-node-sub {
+                            fill: #746f64;
+                            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+                            font-size: 9.8px;
+                            letter-spacing: 0.2px;
+                        }
+                        .wsb-band-name {
+                            font-family: "Songti SC", "STSong", "SimSun", serif;
+                            font-size: 16px;
+                            font-weight: 700;
+                            letter-spacing: 1.2px;
+                        }
+                        .wsb-band-no {
+                            fill: rgba(28, 27, 23, 0.4);
+                            font-family: "Georgia", serif;
+                            font-size: 8px;
+                            letter-spacing: 2px;
+                        }
+                        .wsb-band-en {
+                            fill: rgba(28, 27, 23, 0.42);
+                            font-family: "Georgia", serif;
+                            font-size: 7.4px;
+                            letter-spacing: 1.15px;
+                        }
+                        .wsb-band-count {
+                            fill: rgba(28, 27, 23, 0.32);
+                            font-family: "Georgia", serif;
+                            font-size: 8px;
+                            letter-spacing: 1.4px;
+                        }
+                        .wsb-step {
+                            fill: #fffdf8;
+                            stroke: rgba(168, 67, 47, 0.62);
+                            stroke-width: 1;
+                            transition: fill 0.18s ease, stroke 0.18s ease;
+                        }
+                        .wsb-step-text {
+                            fill: #a8432f;
+                            font-family: "Georgia", serif;
+                            font-size: 8.5px;
+                            font-weight: 700;
+                            transition: fill 0.18s ease;
+                        }
+                        .wsb-arrow {
+                            stroke-dasharray: 5 9;
+                            animation: wsbDash 6s linear infinite;
+                        }
+                        @keyframes wsbDash {
+                            to { stroke-dashoffset: -56; }
+                        }
+                        .wsb-svg.is-path .wsb-node:not(.is-core) { opacity: 0.28; }
+                        .wsb-svg.is-path .wsb-node.is-core .wsb-node-bg {
+                            stroke: var(--accent);
+                            stroke-width: 1.8;
+                            filter: drop-shadow(0 4px 11px rgba(60, 50, 35, 0.24));
+                        }
+                        .wsb-svg.is-path .wsb-step { fill: #a8432f; stroke: #a8432f; }
+                        .wsb-svg.is-path .wsb-step-text { fill: #fffdf8; }
+                        @media (prefers-reduced-motion: reduce) {
+                            .wsb-arrow { animation: none; }
+                        }
+                    </style>
+
+                    <defs>
+                        <linearGradient id="wsbBg" x1="0" y1="0" x2="1200" y2="820">
+                            <stop offset="0" stop-color="#fcfaf5"></stop>
+                            <stop offset="0.55" stop-color="#f8f4ea"></stop>
+                            <stop offset="1" stop-color="#f2ece0"></stop>
+                        </linearGradient>
+                        <radialGradient id="wsbGlow" cx="0.5" cy="0.42" r="0.68">
+                            <stop offset="0" stop-color="#a8432f" stop-opacity="0.05"></stop>
+                            <stop offset="0.55" stop-color="#a8432f" stop-opacity="0.015"></stop>
+                            <stop offset="1" stop-color="#a8432f" stop-opacity="0"></stop>
+                        </radialGradient>
+                        <pattern id="wsbGrid" width="40" height="40" patternUnits="userSpaceOnUse">
+                            <path d="M40 0 H0 V40" fill="none" stroke="rgba(28, 27, 23, 0.045)" stroke-width="1"></path>
+                        </pattern>
+                        <marker id="wsbArrowInk" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+                            <path d="M0,0 L6,3.5 L0,7 Z" fill="rgba(28, 27, 23, 0.42)"></path>
+                        </marker>
+                        <marker id="wsbArrowSeal" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+                            <path d="M0,0 L6,3.5 L0,7 Z" fill="#a8432f" fill-opacity="0.9"></path>
+                        </marker>
+                    </defs>
+
+                    <rect x="0" y="0" width="1200" height="820" fill="url(#wsbBg)"></rect>
+                    <rect x="0" y="0" width="1200" height="820" fill="url(#wsbGrid)"></rect>
+                    <ellipse cx="600" cy="330" rx="620" ry="400" fill="url(#wsbGlow)"></ellipse>
+
+                    <!-- ================= 用户与渠道层 ================= -->
+                    <g class="wsb-band">
+                        <rect x="160" y="20" width="1024" height="104" rx="6" fill="rgba(181, 98, 60, 0.045)" stroke="rgba(28, 27, 23, 0.10)"></rect>
+                        <rect x="160" y="30" width="3" height="84" fill="#b5623c" fill-opacity="0.85"></rect>
+                        <text class="wsb-band-no" x="36" y="56">I</text>
+                        <text class="wsb-band-name" x="34" y="76" fill="#b5623c">用户与渠道层</text>
+                        <text class="wsb-band-en" x="35" y="90">CHANNEL LAYER</text>
+                        <text class="wsb-band-count" x="1168" y="82" text-anchor="end">04 NODES</text>
+                    </g>
+
+                    <g class="wsb-node is-user" data-key="web" data-title="Web 客服窗口" data-layer="用户与渠道层" data-desc="官网、帮助中心与 H5 页面接入的悬浮客服窗口，是用户发起咨询的主要入口。">
+                        <rect class="wsb-node-bg" x="176" y="37" width="234" height="70" rx="4"></rect>
+                        <rect class="wsb-node-bar" x="176" y="49" width="3" height="46"></rect>
+                        <text class="wsb-node-title" x="192" y="68">Web 客服窗口</text>
+                        <text class="wsb-node-sub" x="192" y="88">网页 / H5 悬浮窗</text>
+                    </g>
+                    <g class="wsb-node is-user" data-key="app" data-title="App / 小程序" data-layer="用户与渠道层" data-desc="移动端 App 与微信小程序承载会话入口，支持报名咨询、订单查询与消息通知。">
+                        <rect class="wsb-node-bg" x="429" y="37" width="234" height="70" rx="4"></rect>
+                        <rect class="wsb-node-bar" x="429" y="49" width="3" height="46"></rect>
+                        <text class="wsb-node-title" x="445" y="68">App / 小程序</text>
+                        <text class="wsb-node-sub" x="445" y="88">移动端会话入口</text>
+                    </g>
+                    <g class="wsb-node is-user" data-key="wechat" data-title="企业微信 / 公众号" data-layer="用户与渠道层" data-desc="企业微信与公众号承接社交渠道的用户咨询，支持客服消息与自动回复。">
+                        <rect class="wsb-node-bg" x="682" y="37" width="234" height="70" rx="4"></rect>
+                        <rect class="wsb-node-bar" x="682" y="49" width="3" height="46"></rect>
+                        <text class="wsb-node-title" x="698" y="68">企业微信 / 公众号</text>
+                        <text class="wsb-node-sub" x="698" y="88">社交渠道消息</text>
+                    </g>
+                    <g class="wsb-node is-user" data-key="agent" data-title="人工坐席工作台" data-layer="用户与渠道层" data-desc="人工坐席处理转接会话、投诉与工单，与机器人共享同一份会话上下文。">
+                        <rect class="wsb-node-bg" x="935" y="37" width="234" height="70" rx="4"></rect>
+                        <rect class="wsb-node-bar" x="935" y="49" width="3" height="46"></rect>
+                        <text class="wsb-node-title" x="951" y="68">人工坐席工作台</text>
+                        <text class="wsb-node-sub" x="951" y="88">转人工 / 工单处理</text>
+                    </g>
+
+                    <!-- ================= 接入与安全层 ================= -->
+                    <g class="wsb-band">
+                        <rect x="160" y="155" width="1024" height="104" rx="6" fill="rgba(63, 92, 134, 0.05)" stroke="rgba(28, 27, 23, 0.10)"></rect>
+                        <rect x="160" y="165" width="3" height="84" fill="#3f5c86" fill-opacity="0.85"></rect>
+                        <text class="wsb-band-no" x="36" y="191">II</text>
+                        <text class="wsb-band-name" x="34" y="211" fill="#3f5c86">接入与安全层</text>
+                        <text class="wsb-band-en" x="35" y="225">ACCESS LAYER</text>
+                        <text class="wsb-band-count" x="1168" y="217" text-anchor="end">04 NODES</text>
+                    </g>
+
+                    <g class="wsb-node is-access" data-key="adapter" data-title="多渠道适配器" data-layer="接入与安全层" data-desc="把网页、App、微信等不同渠道的消息协议转换为统一会话格式，屏蔽渠道差异。">
+                        <rect class="wsb-node-bg" x="176" y="172" width="234" height="70" rx="4"></rect>
+                        <rect class="wsb-node-bar" x="176" y="184" width="3" height="46"></rect>
+                        <text class="wsb-node-title" x="192" y="203">多渠道适配器</text>
+                        <text class="wsb-node-sub" x="192" y="223">协议转换 / 消息归一</text>
+                    </g>
+                    <g class="wsb-node is-access" data-key="gateway" data-title="API 网关" data-layer="接入与安全层" data-desc="统一入口，负责路由转发、限流熔断、灰度分流与接口鉴权。">
+                        <rect class="wsb-node-bg" x="429" y="172" width="234" height="70" rx="4"></rect>
+                        <rect class="wsb-node-bar" x="429" y="184" width="3" height="46"></rect>
+                        <text class="wsb-node-title" x="445" y="203">API 网关</text>
+                        <text class="wsb-node-sub" x="445" y="223">路由 / 限流 / 鉴权</text>
+                    </g>
+                    <g class="wsb-node is-access" data-key="router" data-title="会话路由" data-layer="接入与安全层" data-desc="结合用户画像、历史会话与技能组状态，把请求分配给合适的机器人或人工坐席。">
+                        <rect class="wsb-node-bg" x="682" y="172" width="234" height="70" rx="4"></rect>
+                        <rect class="wsb-node-bar" x="682" y="184" width="3" height="46"></rect>
+                        <text class="wsb-node-title" x="698" y="203">会话路由</text>
+                        <text class="wsb-node-sub" x="698" y="223">用户画像 / 技能组分配</text>
+                    </g>
+                    <g class="wsb-node is-access" data-key="security" data-title="安全与合规" data-layer="接入与安全层" data-desc="敏感词过滤、个人信息脱敏、访问审计与风控，保证客服对话符合合规要求。">
+                        <rect class="wsb-node-bg" x="935" y="172" width="234" height="70" rx="4"></rect>
+                        <rect class="wsb-node-bar" x="935" y="184" width="3" height="46"></rect>
+                        <text class="wsb-node-title" x="951" y="203">安全与合规</text>
+                        <text class="wsb-node-sub" x="951" y="223">脱敏 / 审计 / 风控</text>
+                    </g>
+
+                    <!-- ================= 智能对话引擎 ================= -->
+                    <g class="wsb-band">
+                        <rect x="160" y="290" width="1024" height="104" rx="6" fill="rgba(168, 67, 47, 0.055)" stroke="rgba(28, 27, 23, 0.10)"></rect>
+                        <rect x="160" y="300" width="3" height="84" fill="#a8432f" fill-opacity="0.9"></rect>
+                        <text class="wsb-band-no" x="36" y="326">III</text>
+                        <text class="wsb-band-name" x="34" y="346" fill="#a8432f">智能对话引擎</text>
+                        <text class="wsb-band-en" x="35" y="360">DIALOG ENGINE</text>
+                        <text class="wsb-band-count" x="1168" y="352" text-anchor="end">06 NODES</text>
+                    </g>
+
+                    <g class="wsb-node is-dialog is-core" data-key="nlu" data-title="意图识别 NLU" data-layer="智能对话引擎" data-desc="识别用户意图、实体与槽位，为查询改写与知识检索提供结构化输入。">
+                        <rect class="wsb-node-bg" x="176" y="307" width="153" height="70" rx="4"></rect>
+                        <rect class="wsb-node-bar" x="176" y="319" width="3" height="46"></rect>
+                        <text class="wsb-node-title" x="192" y="334">意图识别 NLU</text>
+                        <text class="wsb-node-sub" x="192" y="354">意图 / 实体 / 槽位</text>
+                        <circle class="wsb-step" cx="309" cy="324" r="8"></circle>
+                        <text class="wsb-step-text" x="309" y="327" text-anchor="middle">1</text>
+                    </g>
+                    <g class="wsb-node is-dialog is-core" data-key="rewrite" data-title="查询改写" data-layer="智能对话引擎" data-desc="结合多轮上下文完成指代消解与查询扩展，把口语化问题改写成可检索的查询。">
+                        <rect class="wsb-node-bg" x="344" y="307" width="153" height="70" rx="4"></rect>
+                        <rect class="wsb-node-bar" x="344" y="319" width="3" height="46"></rect>
+                        <text class="wsb-node-title" x="360" y="334">查询改写</text>
+                        <text class="wsb-node-sub" x="360" y="354">指代消解 / 查询扩展</text>
+                        <circle class="wsb-step" cx="477" cy="324" r="8"></circle>
+                        <text class="wsb-step-text" x="477" y="327" text-anchor="middle">2</text>
+                    </g>
+                    <g class="wsb-node is-dialog" data-key="dm" data-title="多轮对话管理" data-layer="智能对话引擎" data-desc="维护对话状态与槽位，决定追问、澄清、确认或结束，是保证多轮任务型对话连贯性的核心。">
+                        <rect class="wsb-node-bg" x="512" y="307" width="153" height="70" rx="4"></rect>
+                        <rect class="wsb-node-bar" x="512" y="319" width="3" height="46"></rect>
+                        <text class="wsb-node-title" x="528" y="334">多轮对话管理</text>
+                        <text class="wsb-node-sub" x="528" y="354">状态跟踪 / 对话策略</text>
+                    </g>
+                    <g class="wsb-node is-dialog is-core" data-key="rag" data-title="RAG 检索" data-layer="智能对话引擎" data-desc="对知识库做混合召回与重排，把最相关的知识片段送入大模型，降低幻觉并支持引用溯源。">
+                        <rect class="wsb-node-bg" x="680" y="307" width="153" height="70" rx="4"></rect>
+                        <rect class="wsb-node-bar" x="680" y="319" width="3" height="46"></rect>
+                        <text class="wsb-node-title" x="696" y="334">RAG 检索</text>
+                        <text class="wsb-node-sub" x="696" y="354">混合召回 / 重排</text>
+                        <circle class="wsb-step" cx="813" cy="324" r="8"></circle>
+                        <text class="wsb-step-text" x="813" y="327" text-anchor="middle">3</text>
+                    </g>
+                    <g class="wsb-node is-dialog is-core" data-key="llm" data-title="大模型生成" data-layer="智能对话引擎" data-desc="基于检索到的知识组织答案，输出引用与置信度；不确定时触发兜底而不是编造。">
+                        <rect class="wsb-node-bg" x="848" y="307" width="153" height="70" rx="4"></rect>
+                        <rect class="wsb-node-bar" x="848" y="319" width="3" height="46"></rect>
+                        <text class="wsb-node-title" x="864" y="334">大模型生成</text>
+                        <text class="wsb-node-sub" x="864" y="354">答案 / 引用 / 置信度</text>
+                        <circle class="wsb-step" cx="981" cy="324" r="8"></circle>
+                        <text class="wsb-step-text" x="981" y="327" text-anchor="middle">4</text>
+                    </g>
+                    <g class="wsb-node is-dialog is-core" data-key="fallback" data-title="人工兜底" data-layer="智能对话引擎" data-desc="低置信、投诉、敏感问题自动转人工，保留完整会话上下文并生成工单。">
+                        <rect class="wsb-node-bg" x="1016" y="307" width="153" height="70" rx="4"></rect>
+                        <rect class="wsb-node-bar" x="1016" y="319" width="3" height="46"></rect>
+                        <text class="wsb-node-title" x="1032" y="334">人工兜底</text>
+                        <text class="wsb-node-sub" x="1032" y="354">低置信 / 投诉转接</text>
+                        <circle class="wsb-step" cx="1149" cy="324" r="8"></circle>
+                        <text class="wsb-step-text" x="1149" y="327" text-anchor="middle">5</text>
+                    </g>
+
+                    <!-- ================= 知识库与检索层 ================= -->
+                    <g class="wsb-band">
+                        <rect x="160" y="425" width="1024" height="104" rx="6" fill="rgba(62, 118, 97, 0.05)" stroke="rgba(28, 27, 23, 0.10)"></rect>
+                        <rect x="160" y="435" width="3" height="84" fill="#3e7661" fill-opacity="0.85"></rect>
+                        <text class="wsb-band-no" x="36" y="461">IV</text>
+                        <text class="wsb-band-name" x="34" y="481" fill="#3e7661">知识库与检索层</text>
+                        <text class="wsb-band-en" x="35" y="495">KNOWLEDGE &amp; RETRIEVAL</text>
+                        <text class="wsb-band-count" x="1168" y="487" text-anchor="end">06 NODES</text>
+                    </g>
+
+                    <g class="wsb-node is-knowledge" data-key="ingest" data-title="文档接入" data-layer="知识库与检索层" data-desc="接入 FAQ、产品手册、赛事规则与历史工单，形成统一的知识来源清单。">
+                        <rect class="wsb-node-bg" x="176" y="442" width="153" height="70" rx="4"></rect>
+                        <rect class="wsb-node-bar" x="176" y="454" width="3" height="46"></rect>
+                        <text class="wsb-node-title" x="192" y="469">文档接入</text>
+                        <text class="wsb-node-sub" x="192" y="489">FAQ / 手册 / 工单</text>
+                    </g>
+                    <g class="wsb-node is-knowledge" data-key="parse" data-title="解析与切分" data-layer="知识库与检索层" data-desc="对 PDF、网页与表格做 OCR、清洗与分块，切分粒度直接影响检索召回与答案完整性。">
+                        <rect class="wsb-node-bg" x="344" y="442" width="153" height="70" rx="4"></rect>
+                        <rect class="wsb-node-bar" x="344" y="454" width="3" height="46"></rect>
+                        <text class="wsb-node-title" x="360" y="469">解析与切分</text>
+                        <text class="wsb-node-sub" x="360" y="489">OCR / 清洗 / 分块</text>
+                    </g>
+                    <g class="wsb-node is-knowledge" data-key="embed" data-title="Embedding 向量化" data-layer="知识库与检索层" data-desc="用领域语料微调的向量模型编码知识片段，把语义相似度变成可计算的检索问题。">
+                        <rect class="wsb-node-bg" x="512" y="442" width="153" height="70" rx="4"></rect>
+                        <rect class="wsb-node-bar" x="512" y="454" width="3" height="46"></rect>
+                        <text class="wsb-node-title" x="528" y="469">Embedding</text>
+                        <text class="wsb-node-sub" x="528" y="489">领域向量化 / 微调</text>
+                    </g>
+                    <g class="wsb-node is-knowledge" data-key="vdb" data-title="向量数据库" data-layer="知识库与检索层" data-desc="存储知识向量并支持近似最近邻检索，结合元数据过滤提升召回精度与响应速度。">
+                        <rect class="wsb-node-bg" x="680" y="442" width="153" height="70" rx="4"></rect>
+                        <rect class="wsb-node-bar" x="680" y="454" width="3" height="46"></rect>
+                        <text class="wsb-node-title" x="696" y="469">向量数据库</text>
+                        <text class="wsb-node-sub" x="696" y="489">ANN / 元数据过滤</text>
+                    </g>
+                    <g class="wsb-node is-knowledge" data-key="kg" data-title="知识图谱" data-layer="知识库与检索层" data-desc="沉淀赛事、用户、政策之间的实体与关系，为规则类问题提供结构化推理能力。">
+                        <rect class="wsb-node-bg" x="848" y="442" width="153" height="70" rx="4"></rect>
+                        <rect class="wsb-node-bar" x="848" y="454" width="3" height="46"></rect>
+                        <text class="wsb-node-title" x="864" y="469">知识图谱</text>
+                        <text class="wsb-node-sub" x="864" y="489">实体 / 关系 / 规则</text>
+                    </g>
+                    <g class="wsb-node is-knowledge" data-key="rerank" data-title="重排 Reranker" data-layer="知识库与检索层" data-desc="对初筛结果做交叉编码重排，兼顾相关性与多样性，把最可信的知识送进生成模型。">
+                        <rect class="wsb-node-bg" x="1016" y="442" width="153" height="70" rx="4"></rect>
+                        <rect class="wsb-node-bar" x="1016" y="454" width="3" height="46"></rect>
+                        <text class="wsb-node-title" x="1032" y="469">重排 Reranker</text>
+                        <text class="wsb-node-sub" x="1032" y="489">相关性 / 多样性</text>
+                    </g>
+
+                    <!-- ================= 数据与评测层 ================= -->
+                    <g class="wsb-band">
+                        <rect x="160" y="560" width="1024" height="104" rx="6" fill="rgba(138, 109, 56, 0.05)" stroke="rgba(28, 27, 23, 0.10)"></rect>
+                        <rect x="160" y="570" width="3" height="84" fill="#8a6d38" fill-opacity="0.85"></rect>
+                        <text class="wsb-band-no" x="36" y="596">V</text>
+                        <text class="wsb-band-name" x="34" y="616" fill="#8a6d38">数据与评测层</text>
+                        <text class="wsb-band-en" x="35" y="630">DATA &amp; EVALUATION</text>
+                        <text class="wsb-band-count" x="1168" y="622" text-anchor="end">06 NODES</text>
+                    </g>
+
+                    <g class="wsb-node is-data" data-key="logs" data-title="会话日志" data-layer="数据与评测层" data-desc="记录用户问题、召回片段、生成答案与人工转接结果，为分析与评测提供全链路样本。">
+                        <rect class="wsb-node-bg" x="176" y="577" width="153" height="70" rx="4"></rect>
+                        <rect class="wsb-node-bar" x="176" y="589" width="3" height="46"></rect>
+                        <text class="wsb-node-title" x="192" y="604">会话日志</text>
+                        <text class="wsb-node-sub" x="192" y="624">全链路留痕</text>
+                    </g>
+                    <g class="wsb-node is-data" data-key="label" data-title="标注平台" data-layer="数据与评测层" data-desc="支持意图、槽位、答案与转人工原因的标注，持续积累领域监督数据用于微调与评测。">
+                        <rect class="wsb-node-bg" x="344" y="577" width="153" height="70" rx="4"></rect>
+                        <rect class="wsb-node-bar" x="344" y="589" width="3" height="46"></rect>
+                        <text class="wsb-node-title" x="360" y="604">标注平台</text>
+                        <text class="wsb-node-sub" x="360" y="624">意图 / 答案标注</text>
+                    </g>
+                    <g class="wsb-node is-data" data-key="bench" data-title="评测基准" data-layer="数据与评测层" data-desc="构建领域评测集，统计召回率、答案忠实度、任务完成率与转人工率，形成可对比的实验基线。">
+                        <rect class="wsb-node-bg" x="512" y="577" width="153" height="70" rx="4"></rect>
+                        <rect class="wsb-node-bar" x="512" y="589" width="3" height="46"></rect>
+                        <text class="wsb-node-title" x="528" y="604">评测基准</text>
+                        <text class="wsb-node-sub" x="528" y="624">召回 / 忠实度</text>
+                    </g>
+                    <g class="wsb-node is-data" data-key="serving" data-title="模型服务" data-layer="数据与评测层" data-desc="承载向量模型、重排模型与生成模型的推理服务，支持灰度发布与多版本对比。">
+                        <rect class="wsb-node-bg" x="680" y="577" width="153" height="70" rx="4"></rect>
+                        <rect class="wsb-node-bar" x="680" y="589" width="3" height="46"></rect>
+                        <text class="wsb-node-title" x="696" y="604">模型服务</text>
+                        <text class="wsb-node-sub" x="696" y="624">推理 / 灰度</text>
+                    </g>
+                    <g class="wsb-node is-data" data-key="monitor" data-title="监控告警" data-layer="数据与评测层" data-desc="监控响应延迟、检索失败率、生成超时与转人工比例，异常时触发告警与降级策略。">
+                        <rect class="wsb-node-bg" x="848" y="577" width="153" height="70" rx="4"></rect>
+                        <rect class="wsb-node-bar" x="848" y="589" width="3" height="46"></rect>
+                        <text class="wsb-node-title" x="864" y="604">监控告警</text>
+                        <text class="wsb-node-sub" x="864" y="624">延迟 / 失败率</text>
+                    </g>
+                    <g class="wsb-node is-data" data-key="experiment" data-title="实验管理" data-layer="数据与评测层" data-desc="管理检索策略、切分粒度与提示词版本的 A/B 实验，记录指标变化支撑科研结论。">
+                        <rect class="wsb-node-bg" x="1016" y="577" width="153" height="70" rx="4"></rect>
+                        <rect class="wsb-node-bar" x="1016" y="589" width="3" height="46"></rect>
+                        <text class="wsb-node-title" x="1032" y="604">实验管理</text>
+                        <text class="wsb-node-sub" x="1032" y="624">A/B / 版本对比</text>
+                    </g>
+
+                    <!-- ================= 层间数据流 ================= -->
+                    <line class="wsb-arrow" x1="420" y1="130" x2="420" y2="147" stroke="rgba(28,27,23,0.30)" stroke-width="1.2" marker-end="url(#wsbArrowInk)"></line>
+                    <line class="wsb-arrow" x1="600" y1="130" x2="600" y2="147" stroke="rgba(28,27,23,0.30)" stroke-width="1.2" marker-end="url(#wsbArrowInk)"></line>
+                    <line class="wsb-arrow" x1="780" y1="130" x2="780" y2="147" stroke="rgba(28,27,23,0.30)" stroke-width="1.2" marker-end="url(#wsbArrowInk)"></line>
+
+                    <line class="wsb-arrow" x1="420" y1="265" x2="420" y2="282" stroke="rgba(28,27,23,0.30)" stroke-width="1.2" marker-end="url(#wsbArrowInk)"></line>
+                    <line class="wsb-arrow" x1="600" y1="265" x2="600" y2="282" stroke="rgba(28,27,23,0.30)" stroke-width="1.2" marker-end="url(#wsbArrowInk)"></line>
+                    <line class="wsb-arrow" x1="780" y1="265" x2="780" y2="282" stroke="rgba(28,27,23,0.30)" stroke-width="1.2" marker-end="url(#wsbArrowInk)"></line>
+
+                    <line class="wsb-arrow" x1="420" y1="400" x2="420" y2="417" stroke="rgba(28,27,23,0.30)" stroke-width="1.2" marker-end="url(#wsbArrowInk)"></line>
+                    <line class="wsb-arrow" x1="600" y1="400" x2="600" y2="417" stroke="rgba(28,27,23,0.30)" stroke-width="1.2" marker-end="url(#wsbArrowInk)"></line>
+                    <line class="wsb-arrow wsb-arrow-strong" x1="756" y1="400" x2="756" y2="417" stroke="rgba(168,67,47,0.75)" stroke-width="1.8" marker-end="url(#wsbArrowSeal)"></line>
+
+                    <line class="wsb-arrow" x1="420" y1="535" x2="420" y2="552" stroke="rgba(28,27,23,0.30)" stroke-width="1.2" marker-end="url(#wsbArrowInk)"></line>
+                    <line class="wsb-arrow" x1="600" y1="535" x2="600" y2="552" stroke="rgba(28,27,23,0.30)" stroke-width="1.2" marker-end="url(#wsbArrowInk)"></line>
+                    <line class="wsb-arrow" x1="780" y1="535" x2="780" y2="552" stroke="rgba(28,27,23,0.30)" stroke-width="1.2" marker-end="url(#wsbArrowInk)"></line>
+
+                    <!-- ================= 科研方向 ================= -->
+                    <rect x="160" y="690" width="1024" height="56" rx="4" fill="rgba(28,27,23,0.02)" stroke="rgba(28,27,23,0.22)" stroke-dasharray="6 6"></rect>
+                    <rect x="176" y="704" width="3" height="16" fill="#a8432f"></rect>
+                    <text x="188" y="716" fill="#1f1d18" font-family="Songti SC, STSong, SimSun, serif" font-size="12" letter-spacing="1">科研方向</text>
+                    <text x="188" y="730" fill="rgba(28,27,23,0.40)" font-family="Georgia, serif" font-size="7.2" letter-spacing="1.2">RESEARCH</text>
+
+                    <rect x="310" y="703" width="134" height="28" rx="2" fill="#fffdf8" stroke="rgba(28,27,23,0.18)"></rect>
+                    <text x="377" y="721" fill="#4a4740" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="10" text-anchor="middle">领域知识注入</text>
+                    <rect x="452" y="703" width="134" height="28" rx="2" fill="#fffdf8" stroke="rgba(28,27,23,0.18)"></rect>
+                    <text x="519" y="721" fill="#4a4740" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="10" text-anchor="middle">RAG 检索增强</text>
+                    <rect x="594" y="703" width="134" height="28" rx="2" fill="#fffdf8" stroke="rgba(28,27,23,0.18)"></rect>
+                    <text x="661" y="721" fill="#4a4740" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="10" text-anchor="middle">幻觉抑制与溯源</text>
+                    <rect x="736" y="703" width="134" height="28" rx="2" fill="#fffdf8" stroke="rgba(28,27,23,0.18)"></rect>
+                    <text x="803" y="721" fill="#4a4740" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="10" text-anchor="middle">对话评测基准</text>
+                    <rect x="878" y="703" width="134" height="28" rx="2" fill="#fffdf8" stroke="rgba(28,27,23,0.18)"></rect>
+                    <text x="945" y="721" fill="#4a4740" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="10" text-anchor="middle">可解释性</text>
+                    <rect x="1020" y="703" width="134" height="28" rx="2" fill="#fffdf8" stroke="rgba(28,27,23,0.18)"></rect>
+                    <text x="1087" y="721" fill="#4a4740" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="10" text-anchor="middle">隐私与合规</text>
+                </svg>
+            </div>
+        </div>
+
+        <p class="wsb-swipe"><i>←</i> 左右滑动查看完整架构图 <i>→</i></p>
+
+        <section class="wsb-detail">
+            <div>
+                <div class="wsb-detail-kicker">Node Inspector</div>
+                <h2 class="wsb-detail-title">点击任意节点</h2>
+                <div class="wsb-detail-look"><span class="wsb-detail-layer">架构说明</span></div>
+            </div>
+            <p class="wsb-detail-text">整张架构图由 SVG 矢量绘制，可无损缩放与导出。点击节点查看职责；打开「标注 RAG 主链路」会高亮意图识别 → 查询改写 → RAG 检索 → 大模型生成 → 人工兜底五步流程。</p>
+        </section>
+
+        <div class="wsb-legend">
+            <span><i class="wsb-dash"></i>层间箭头：请求与数据流向</span>
+            <span><i class="wsb-glow-dot"></i>红色高亮：RAG 主链路</span>
+            <span>点击节点：查看职责</span>
+        </div>
+
+        <section class="wsb-research">
+            <div class="wsb-research-head">
+                <h2>科研关注点</h2>
+                <span>Research Directions</span>
+            </div>
+            <div class="wsb-research-grid">
+                <article class="wsb-research-card">
+                    <i>01 / KNOWLEDGE</i>
+                    <b>领域知识注入</b>
+                    <p>研究文档切分粒度、领域 Embedding 微调与知识图谱融合，把赛事规则、报名政策等长尾知识稳定注入客服系统。</p>
+                </article>
+                <article class="wsb-research-card">
+                    <i>02 / RAG</i>
+                    <b>检索增强生成</b>
+                    <p>围绕查询改写、混合召回、重排与引用溯源展开实验，在召回率与答案忠实度之间寻找更优平衡。</p>
+                </article>
+                <article class="wsb-research-card">
+                    <i>03 / TRUST</i>
+                    <b>可信生成与兜底</b>
+                    <p>研究幻觉检测、置信度估计与敏感信息过滤，让低置信问题自动转人工，形成可审计的对话闭环。</p>
+                </article>
+                <article class="wsb-research-card">
+                    <i>04 / EVALUATION</i>
+                    <b>评测与可解释性</b>
+                    <p>构建领域评测集，统计召回率、忠实度、任务完成率与转人工率，并输出检索证据支撑可解释性分析。</p>
+                </article>
+            </div>
+        </section>
+
+        <p class="wsb-note">说明：图中分层、节点与 RAG 流程为面向科研的系统设计示意，实际落地会按业务规模拆分服务、缓存与向量索引。移动端可左右滑动查看完整架构图。</p>
+    </main>
+
+    <script>
+        (function () {
+            'use strict';
+
+            var svg = document.querySelector('.wsb-svg');
+            var nodes = svg.querySelectorAll('.wsb-node');
+            var detailTitle = document.querySelector('.wsb-detail-title');
+            var detailLayer = document.querySelector('.wsb-detail-layer');
+            var detailText = document.querySelector('.wsb-detail-text');
+            var pathBtn = document.querySelector('.wsb-path');
+            var exportBtn = document.querySelector('.wsb-export');
+            var resetBtn = document.querySelector('.wsb-reset');
+            var pathMode = false;
+
+            var defaultTitle = '点击任意节点';
+            var defaultLayer = '架构说明';
+            var defaultText = '整张架构图由 SVG 矢量绘制，可无损缩放与导出。点击节点查看职责；打开「标注 RAG 主链路」会高亮意图识别 → 查询改写 → RAG 检索 → 大模型生成 → 人工兜底五步流程。';
+
+            function resetDetail() {
+                detailTitle.textContent = defaultTitle;
+                detailLayer.textContent = defaultLayer;
+                detailText.textContent = defaultText;
+            }
+
+            Array.prototype.forEach.call(nodes, function (node) {
+                node.addEventListener('click', function () {
+                    Array.prototype.forEach.call(nodes, function (item) {
+                        item.classList.remove('is-active');
+                    });
+                    node.classList.add('is-active');
+                    detailTitle.textContent = node.getAttribute('data-title');
+                    detailLayer.textContent = node.getAttribute('data-layer');
+                    detailText.textContent = node.getAttribute('data-desc');
+                });
+            });
+
+            function setPath(on) {
+                pathMode = on;
+                svg.classList.toggle('is-path', on);
+                pathBtn.classList.toggle('is-on', on);
+                pathBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+                pathBtn.textContent = on ? '退出主链路' : '标注 RAG 主链路';
+                if (on) {
+                    detailTitle.textContent = 'RAG 主链路';
+                    detailLayer.textContent = '智能对话引擎';
+                    detailText.textContent = '用户问题进入意图识别与查询改写后，RAG 检索从知识库召回相关片段，大模型基于证据生成带引用的答案；当置信度不足或涉及投诉时转人工兜底。编号 1–5 对应五个关键步骤。';
+                } else {
+                    resetDetail();
+                }
+            }
+
+            pathBtn.addEventListener('click', function () {
+                setPath(!pathMode);
+            });
+
+            resetBtn.addEventListener('click', function () {
+                setPath(false);
+                Array.prototype.forEach.call(nodes, function (node) {
+                    node.classList.remove('is-active');
+                });
+                resetDetail();
+            });
+
+            exportBtn.addEventListener('click', function () {
+                var clone = svg.cloneNode(true);
+                clone.setAttribute('width', '1200');
+                clone.setAttribute('height', '820');
+                var source = new XMLSerializer().serializeToString(clone);
+                var blob = new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n' + source], { type: 'image/svg+xml;charset=utf-8' });
+                var url = URL.createObjectURL(blob);
+                var link = document.createElement('a');
+                link.href = url;
+                link.download = '知识库智能客服系统架构图.svg';
+                link.click();
+                setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+            });
+        })();
+    </script>
+</body>
+</html>

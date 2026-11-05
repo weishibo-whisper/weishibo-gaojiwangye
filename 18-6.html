@@ -1,0 +1,1563 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#05080f">
+    <title>18-6 智能客服系统图谱 · 魏士博</title>
+    <!--
+        作者：魏士博
+        建立时间：2026-11-05
+        使用的大模型功能名称：Trae DeepSeek-V4.1-Flash
+        页面说明：18-6 基于 Mermaid 的智能客服系统图谱，包含分层请求流程图与会话数据 ER 图
+    -->
+    <style>
+        :root {
+            --wsb-bg: #05080f;
+            --wsb-ink: #eaf3ff;
+            --wsb-muted: #8b9cb6;
+            --wsb-line: rgba(148, 180, 220, 0.16);
+            --wsb-cyan: #5eead4;
+            --wsb-blue: #38bdf8;
+            --wsb-violet: #a78bfa;
+            --wsb-green: #34d399;
+            --wsb-gold: #fbbf24;
+            --wsb-rose: #fb7185;
+            --wsb-serif: "Songti SC", "STSong", "SimSun", "Noto Serif SC", Georgia, serif;
+            --wsb-code: "Cascadia Code", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            min-height: 100vh;
+            background:
+                radial-gradient(1000px 620px at 8% -6%, rgba(94, 234, 212, 0.09), transparent 62%),
+                radial-gradient(900px 560px at 92% 0%, rgba(167, 139, 250, 0.11), transparent 60%),
+                linear-gradient(180deg, #05080f, #060a13 55%, #04070d);
+            color: var(--wsb-ink);
+            font-family: "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .wsb-page {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: clamp(24px, 4vw, 46px) clamp(16px, 3vw, 32px) 46px;
+        }
+        .wsb-head {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+        .wsb-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: #9fb6c9;
+            font-size: 9.5px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+        .wsb-kicker::before {
+            content: "";
+            width: 18px;
+            height: 1px;
+            background: var(--wsb-cyan);
+        }
+        .wsb-title {
+            margin-top: 18px;
+            font-family: var(--wsb-serif);
+            font-size: clamp(30px, 4.4vw, 50px);
+            line-height: 1.18;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+        }
+        .wsb-title em {
+            font-style: normal;
+            color: var(--wsb-cyan);
+            padding-bottom: 3px;
+            border-bottom: 1px solid rgba(94, 234, 212, 0.45);
+        }
+        .wsb-sub {
+            margin-top: 14px;
+            color: var(--wsb-muted);
+            font-size: 13px;
+            line-height: 1.95;
+            max-width: 680px;
+            letter-spacing: 0.3px;
+        }
+        .wsb-tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+        .wsb-tool {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(160, 200, 230, 0.24);
+            border-radius: 2px;
+            padding: 10px 16px;
+            background: transparent;
+            color: #d6e2ef;
+            font-family: inherit;
+            font-size: 11.5px;
+            letter-spacing: 0.8px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+        }
+        .wsb-tool:hover {
+            border-color: rgba(94, 234, 212, 0.6);
+            background: rgba(94, 234, 212, 0.06);
+            color: #f2fbff;
+        }
+        .wsb-tool:focus-visible,
+        .wsb-icon-btn:focus-visible,
+        .wsb-copy:focus-visible,
+        .wsb-tag:focus-visible,
+        .wsb-link-btn:focus-visible,
+        .wsb-source summary:focus-visible {
+            outline: 1px solid var(--wsb-cyan);
+            outline-offset: 2px;
+        }
+        .wsb-meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+        .wsb-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 6px 11px;
+            border: 1px solid rgba(148, 180, 220, 0.20);
+            border-radius: 2px;
+            color: #93a4ba;
+            font-size: 10.5px;
+            letter-spacing: 0.6px;
+        }
+        .wsb-chip b { color: #eaf3ff; font-weight: 600; }
+
+        /* ---------- Overview ---------- */
+        .wsb-overview {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            margin-top: 34px;
+            border-top: 1px solid rgba(148, 180, 220, 0.16);
+            border-bottom: 1px solid rgba(148, 180, 220, 0.12);
+        }
+        .wsb-overview > div {
+            position: relative;
+            padding: 18px 18px 16px;
+        }
+        .wsb-overview > div + div { border-left: 1px solid rgba(148, 180, 220, 0.10); }
+        .wsb-overview > div::before {
+            content: "";
+            position: absolute;
+            top: -1px;
+            left: 18px;
+            width: 34px;
+            height: 2px;
+            background: var(--accent, var(--wsb-cyan));
+        }
+        .wsb-overview b {
+            display: block;
+            font-family: var(--wsb-serif);
+            font-size: 27px;
+            line-height: 1;
+            color: #f2f8ff;
+            letter-spacing: 0.5px;
+            font-variant-numeric: tabular-nums;
+        }
+        .wsb-overview span {
+            display: block;
+            margin-top: 8px;
+            color: #93a4ba;
+            font-size: 11px;
+            letter-spacing: 0.8px;
+        }
+        .wsb-overview small {
+            display: block;
+            margin-top: 4px;
+            color: #56687e;
+            font-size: 8.5px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        /* ---------- Cards ---------- */
+        .wsb-card {
+            margin-top: 24px;
+            border: 1px solid rgba(148, 180, 220, 0.20);
+            border-radius: 3px;
+            background: linear-gradient(180deg, rgba(11, 18, 30, 0.88), rgba(6, 10, 18, 0.94));
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            overflow: clip;
+        }
+        .wsb-card-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 20px 24px 18px;
+            border-bottom: 1px solid rgba(148, 180, 220, 0.13);
+        }
+        .wsb-card-index {
+            display: inline-block;
+            color: rgba(94, 234, 212, 0.68);
+            font-family: Georgia, serif;
+            font-size: 9px;
+            letter-spacing: 2.4px;
+        }
+        .wsb-card-head h2 {
+            margin-top: 7px;
+            font-family: var(--wsb-serif);
+            font-size: 21px;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            color: #f1f7fd;
+        }
+        .wsb-card-head p {
+            margin-top: 7px;
+            color: #8597ae;
+            font-size: 11.5px;
+            line-height: 1.8;
+            max-width: 660px;
+        }
+        .wsb-card-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .wsb-icon-btn {
+            border: 1px solid rgba(160, 200, 230, 0.24);
+            border-radius: 2px;
+            padding: 8px 12px;
+            background: transparent;
+            color: #a9bacd;
+            font-family: inherit;
+            font-size: 10.5px;
+            letter-spacing: 0.6px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+        }
+        .wsb-icon-btn:hover {
+            border-color: rgba(94, 234, 212, 0.55);
+            background: rgba(94, 234, 212, 0.06);
+            color: #e6fffb;
+        }
+        .wsb-zoom {
+            display: inline-flex;
+            align-items: center;
+            border: 1px solid rgba(160, 200, 230, 0.24);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .wsb-zoom .wsb-icon-btn {
+            border: 0;
+            border-radius: 0;
+            padding: 8px 10px;
+            background: transparent;
+            font-size: 13px;
+            line-height: 1;
+        }
+        .wsb-zoom .wsb-icon-btn + .wsb-icon-btn,
+        .wsb-zoom .wsb-zoom-level + .wsb-icon-btn {
+            border-left: 1px solid rgba(160, 200, 230, 0.16);
+        }
+        .wsb-zoom-level {
+            min-width: 46px;
+            text-align: center;
+            color: #8fa5bb;
+            font-family: Georgia, serif;
+            font-size: 10px;
+            letter-spacing: 0.4px;
+            font-variant-numeric: tabular-nums;
+        }
+        .wsb-zoom .wsb-zoom-reset {
+            border-left: 1px solid rgba(160, 200, 230, 0.16);
+            font-size: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        /* ---------- Diagram stage ---------- */
+        .wsb-flow-body {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 286px;
+        }
+        .wsb-diagram-panel { min-width: 0; }
+        .wsb-diagram-stage {
+            position: relative;
+            overflow: auto;
+            padding: 20px 16px 22px;
+            background:
+                linear-gradient(rgba(148, 180, 220, 0.042) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(148, 180, 220, 0.042) 1px, transparent 1px),
+                radial-gradient(700px 420px at 50% 0%, rgba(94, 234, 212, 0.045), transparent 72%),
+                #070c14;
+            background-size: 28px 28px, 28px 28px, auto, auto;
+            scrollbar-color: rgba(94, 234, 212, 0.35) transparent;
+        }
+        .wsb-diagram-stage.is-zoomed {
+            height: min(72vh, 740px);
+            border-bottom: 1px solid rgba(148, 180, 220, 0.10);
+        }
+        .wsb-diagram-canvas {
+            width: 100%;
+            min-height: 120px;
+        }
+        .wsb-diagram-canvas svg {
+            display: block;
+            width: 100%;
+            height: auto;
+            max-width: none;
+            margin: 0 auto;
+        }
+        .wsb-scroll-hint {
+            padding: 9px 24px 10px;
+            color: #5f7187;
+            font-size: 10px;
+            letter-spacing: 0.4px;
+            border-top: 1px solid rgba(148, 180, 220, 0.08);
+        }
+        .wsb-scroll-hint b { color: #8fa5bb; font-weight: 500; }
+        .wsb-render-error {
+            padding: 40px 20px;
+            color: #ffb4b4;
+            font-size: 12px;
+            line-height: 1.9;
+            text-align: center;
+        }
+
+        /* ---------- Inspector ---------- */
+        .wsb-inspector-col {
+            border-left: 1px solid rgba(148, 180, 220, 0.13);
+            background: linear-gradient(180deg, rgba(94, 234, 212, 0.025), transparent 70%);
+        }
+        .wsb-inspector {
+            position: sticky;
+            top: 16px;
+            padding: 22px 20px;
+        }
+        .wsb-inspector-kicker {
+            color: rgba(148, 180, 220, 0.62);
+            font-size: 8.5px;
+            letter-spacing: 2.6px;
+            text-transform: uppercase;
+        }
+        .wsb-inspector-name {
+            margin-top: 10px;
+            font-family: var(--wsb-serif);
+            font-size: 20px;
+            font-weight: 700;
+            color: #f2f8ff;
+            letter-spacing: 0.5px;
+            line-height: 1.4;
+        }
+        .wsb-inspector-layer {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            margin-top: 9px;
+            padding: 5px 9px;
+            border: 1px solid rgba(148, 180, 220, 0.18);
+            border-radius: 2px;
+            color: #93a9c2;
+            font-size: 10px;
+            letter-spacing: 0.5px;
+        }
+        .wsb-inspector-layer i {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--wsb-cyan);
+        }
+        .wsb-inspector-desc {
+            margin-top: 14px;
+            color: #8496ac;
+            font-size: 11.5px;
+            line-height: 1.9;
+        }
+        .wsb-inspector-hint {
+            margin-top: 15px;
+            color: rgba(148, 180, 220, 0.55);
+            font-size: 9px;
+            letter-spacing: 1.8px;
+            text-transform: uppercase;
+        }
+        .wsb-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 9px;
+        }
+        .wsb-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 8px;
+            border: 1px solid rgba(148, 180, 220, 0.16);
+            border-radius: 2px;
+            background: transparent;
+            color: #a8b8cb;
+            font-family: inherit;
+            font-size: 10px;
+            letter-spacing: 0.2px;
+            cursor: pointer;
+            transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+        }
+        .wsb-tag:hover {
+            border-color: rgba(94, 234, 212, 0.45);
+            background: rgba(94, 234, 212, 0.06);
+            color: #eafffb;
+        }
+        .wsb-tag i {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--tag, var(--wsb-cyan));
+        }
+        .wsb-tag-empty {
+            color: #5f7187;
+            font-size: 10px;
+        }
+        .wsb-inspector-bar {
+            height: 3px;
+            margin-top: 16px;
+            background: rgba(148, 180, 220, 0.10);
+            overflow: hidden;
+        }
+        .wsb-inspector-bar b {
+            display: block;
+            width: 0;
+            height: 100%;
+            background: linear-gradient(90deg, var(--wsb-cyan), var(--wsb-violet));
+            transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .wsb-link-btn {
+            margin-top: 16px;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            color: rgba(94, 234, 212, 0.8);
+            font-family: inherit;
+            font-size: 10.5px;
+            letter-spacing: 0.6px;
+            cursor: pointer;
+        }
+        .wsb-link-btn:hover { color: #b7fff4; }
+        .wsb-link-btn[hidden] { display: none; }
+
+        /* ---------- SVG interaction ---------- */
+        .wsb-diagram-canvas svg g.node {
+            cursor: pointer;
+            transition: filter 0.18s ease;
+        }
+        .wsb-diagram-canvas svg g.node:hover {
+            filter: drop-shadow(0 0 5px rgba(94, 234, 212, 0.40));
+        }
+        .wsb-diagram-canvas svg g.node.is-selected {
+            filter: drop-shadow(0 0 8px rgba(94, 234, 212, 0.85));
+        }
+        .wsb-diagram-canvas svg g.node.is-selected .nodeLabel,
+        .wsb-diagram-canvas svg g.node.is-selected .label {
+            fill: #ffffff !important;
+            color: #ffffff !important;
+            font-weight: 700 !important;
+        }
+        .wsb-diagram-canvas svg g.node:focus-visible {
+            outline: none;
+            filter: drop-shadow(0 0 7px rgba(94, 234, 212, 0.9));
+        }
+        .wsb-diagram-canvas svg .cluster-label text,
+        .wsb-diagram-canvas svg .cluster-label span {
+            font-weight: 600 !important;
+            letter-spacing: 1px !important;
+        }
+
+        /* ---------- Entity legend ---------- */
+        .wsb-entity-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 0 24px 16px;
+        }
+        .wsb-entity-legend span {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 6px 9px;
+            border: 1px solid rgba(148, 180, 220, 0.13);
+            border-radius: 2px;
+            color: #93a4ba;
+            font-size: 10px;
+            letter-spacing: 0.3px;
+        }
+        .wsb-entity-legend b {
+            color: #dbe7f3;
+            font-family: var(--wsb-code);
+            font-size: 9.5px;
+            font-weight: 600;
+        }
+        .wsb-entity-legend i {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--tag, var(--wsb-blue));
+        }
+
+        /* ---------- Card foot / source ---------- */
+        .wsb-card-foot {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+            padding: 12px 24px 14px;
+            border-top: 1px solid rgba(148, 180, 220, 0.10);
+            color: #6c7f96;
+            font-size: 10px;
+            letter-spacing: 0.4px;
+        }
+        .wsb-card-foot span { display: inline-flex; align-items: center; gap: 7px; }
+        .wsb-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--wsb-cyan);
+            box-shadow: 0 0 8px rgba(94, 234, 212, 0.7);
+        }
+        .wsb-source { border-top: 1px solid rgba(148, 180, 220, 0.13); }
+        .wsb-source summary {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 13px 24px;
+            color: #8fa5bb;
+            font-size: 10.5px;
+            letter-spacing: 0.6px;
+            cursor: pointer;
+            list-style: none;
+        }
+        .wsb-source summary::-webkit-details-marker { display: none; }
+        .wsb-source summary::before {
+            content: "+";
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            border: 1px solid rgba(148, 180, 220, 0.25);
+            border-radius: 50%;
+            color: var(--wsb-cyan);
+            font-size: 12px;
+            line-height: 1;
+        }
+        .wsb-source[open] summary::before { content: "−"; }
+        .wsb-source summary span {
+            color: #56687e;
+            font-family: var(--wsb-code);
+            font-size: 9px;
+            letter-spacing: 1px;
+        }
+        .wsb-source summary:hover { color: #e6fffb; }
+        .wsb-code-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px 8px;
+            color: #56687e;
+            font-family: var(--wsb-code);
+            font-size: 9px;
+            letter-spacing: 1px;
+        }
+        .wsb-copy {
+            border: 1px solid rgba(160, 200, 230, 0.22);
+            border-radius: 2px;
+            padding: 5px 9px;
+            background: transparent;
+            color: #93a4ba;
+            font-family: inherit;
+            font-size: 9.5px;
+            letter-spacing: 0.4px;
+            cursor: pointer;
+        }
+        .wsb-copy:hover {
+            border-color: rgba(94, 234, 212, 0.5);
+            color: #e6fffb;
+        }
+        .wsb-source pre {
+            margin: 0 24px 20px;
+            padding: 16px 18px;
+            max-height: 330px;
+            overflow: auto;
+            border: 1px solid rgba(148, 180, 220, 0.12);
+            background: #04070c;
+            color: #9fc4e0;
+            font-family: var(--wsb-code);
+            font-size: 11px;
+            line-height: 1.75;
+            white-space: pre;
+            tab-size: 2;
+            scrollbar-color: rgba(94, 234, 212, 0.35) transparent;
+        }
+
+        /* ---------- Reading notes ---------- */
+        .wsb-read { margin-top: 32px; }
+        .wsb-read-head {
+            display: flex;
+            align-items: baseline;
+            gap: 14px;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(148, 180, 220, 0.16);
+        }
+        .wsb-read-head h2 {
+            font-family: var(--wsb-serif);
+            font-size: 19px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        .wsb-read-head span {
+            color: rgba(94, 234, 212, 0.55);
+            font-size: 9px;
+            letter-spacing: 2.4px;
+            text-transform: uppercase;
+        }
+        .wsb-read-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+        }
+        .wsb-read-card {
+            position: relative;
+            padding: 20px 17px 16px;
+            border: 1px solid rgba(148, 180, 220, 0.12);
+            border-radius: 2px;
+            background: rgba(234, 243, 255, 0.014);
+        }
+        .wsb-read-card::before {
+            content: "";
+            position: absolute;
+            top: -1px;
+            left: -1px;
+            right: -1px;
+            height: 2px;
+            background: linear-gradient(90deg, rgba(94, 234, 212, 0.72), rgba(94, 234, 212, 0.04));
+        }
+        .wsb-read-card i {
+            display: inline-block;
+            margin-bottom: 11px;
+            color: rgba(94, 234, 212, 0.85);
+            font-style: normal;
+            font-size: 9px;
+            letter-spacing: 1.8px;
+        }
+        .wsb-read-card b {
+            display: block;
+            color: #eaf3ff;
+            font-family: var(--wsb-serif);
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+        }
+        .wsb-read-card p {
+            margin-top: 9px;
+            color: #8496ac;
+            font-size: 11.5px;
+            line-height: 1.85;
+        }
+        .wsb-note {
+            margin-top: 18px;
+            color: #5f7187;
+            font-size: 10.5px;
+            line-height: 1.8;
+            letter-spacing: 0.3px;
+        }
+        .wsb-note code {
+            color: #9fc4e0;
+            font-family: var(--wsb-code);
+            font-size: 10px;
+        }
+        .wsb-error {
+            display: none;
+            margin-top: 16px;
+            padding: 18px 20px;
+            border: 1px solid rgba(251, 113, 133, 0.35);
+            background: rgba(251, 113, 133, 0.06);
+            color: #ffb4b4;
+            font-size: 12px;
+            line-height: 1.9;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            *, *::before, *::after { animation: none !important; transition: none !important; }
+        }
+        @media (max-width: 1040px) {
+            .wsb-flow-body { grid-template-columns: 1fr; }
+            .wsb-inspector-col { border-left: 0; border-top: 1px solid rgba(148, 180, 220, 0.13); }
+            .wsb-inspector { position: static; }
+            .wsb-overview { grid-template-columns: repeat(2, 1fr); }
+            .wsb-overview > div:nth-child(3) { border-left: 0; }
+            .wsb-overview > div:nth-child(n + 3) { border-top: 1px solid rgba(148, 180, 220, 0.10); }
+        }
+        @media (max-width: 900px) {
+            .wsb-read-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 760px) {
+            .wsb-head { align-items: flex-start; }
+            .wsb-tools { width: 100%; }
+            .wsb-tool { flex: 1; }
+            .wsb-card-head { flex-direction: column; gap: 12px; padding: 18px 18px 16px; }
+            .wsb-card-actions { width: 100%; }
+            .wsb-zoom { flex: 1; }
+            .wsb-zoom .wsb-icon-btn { flex: 1; }
+            .wsb-card-actions .wsb-export { flex: 1; }
+            .wsb-diagram-stage { padding: 14px 10px 16px; }
+            .wsb-diagram-stage.is-zoomed { height: min(64vh, 560px); }
+            .wsb-diagram-canvas { min-width: 820px; }
+            .wsb-inspector { padding: 18px 18px 20px; }
+            .wsb-scroll-hint { padding: 9px 18px 10px; }
+            .wsb-card-foot { padding: 12px 18px 14px; }
+            .wsb-entity-legend { padding: 0 18px 14px; }
+            .wsb-source summary { padding: 12px 18px; }
+            .wsb-code-head { padding: 0 18px 8px; }
+            .wsb-source pre { margin: 0 18px 18px; padding: 14px; font-size: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <main class="wsb-page">
+        <header class="wsb-head">
+            <div>
+                <div class="wsb-kicker">Mermaid Diagram Lab / 18-6</div>
+                <h1 class="wsb-title">智能客服<em>系统图谱</em></h1>
+                <p class="wsb-sub">用 Mermaid 把系统写进文本：一张六层流程图讲清「渠道接入 → 意图理解 → 知识检索 → 生成兜底」的完整请求链路，一张 ER 图说明会话、消息、知识与工单之间的数据关系。</p>
+                <div class="wsb-meta">
+                    <span class="wsb-chip"><b>2</b> 张 Mermaid 图</span>
+                    <span class="wsb-chip"><b>流程图 + ER 图</b> 图型组合</span>
+                    <span class="wsb-chip"><b>Mermaid 11.4</b> 本地 CDN</span>
+                    <span class="wsb-chip">可缩放 · 可导出 · 可查看源码</span>
+                </div>
+            </div>
+            <div class="wsb-tools">
+                <a class="wsb-tool" href="#flowCard">请求流程图</a>
+                <a class="wsb-tool" href="#erCard">数据 ER 图</a>
+            </div>
+        </header>
+
+        <div class="wsb-overview">
+            <div style="--accent: #38bdf8">
+                <b>06</b>
+                <span>分层架构</span>
+                <small>Channel → Data</small>
+            </div>
+            <div style="--accent: #a78bfa">
+                <b data-stat="nodes">28</b>
+                <span>流程节点</span>
+                <small>Nodes &amp; Edges</small>
+            </div>
+            <div style="--accent: #34d399">
+                <b>08</b>
+                <span>数据实体</span>
+                <small>ER Entities</small>
+            </div>
+            <div style="--accent: #fbbf24">
+                <b>09</b>
+                <span>实体关系</span>
+                <small>Relationships</small>
+            </div>
+        </div>
+
+        <!-- ================= 流程图 ================= -->
+        <article class="wsb-card" id="flowCard">
+            <div class="wsb-card-head">
+                <div>
+                    <span class="wsb-card-index">FIG. 01 / FLOWCHART</span>
+                    <h2>智能客服请求流程图</h2>
+                    <p>实线表示主链路，虚线表示知识检索与数据反馈。点击任意节点查看职责，使用右上角按钮缩放或导出 SVG。</p>
+                </div>
+                <div class="wsb-card-actions">
+                    <div class="wsb-zoom" data-zoom="flow" role="group" aria-label="流程图缩放">
+                        <button class="wsb-icon-btn wsb-zoom-out" type="button" aria-label="缩小流程图">−</button>
+                        <span class="wsb-zoom-level">100%</span>
+                        <button class="wsb-icon-btn wsb-zoom-in" type="button" aria-label="放大流程图">+</button>
+                        <button class="wsb-icon-btn wsb-zoom-reset" type="button" aria-label="恢复适应宽度">适应</button>
+                    </div>
+                    <button class="wsb-icon-btn wsb-export" type="button" data-export="flow">导出 SVG</button>
+                </div>
+            </div>
+            <div class="wsb-flow-body">
+                <div class="wsb-diagram-panel">
+                    <div class="wsb-diagram-stage" id="flowStage">
+                        <div class="wsb-diagram-canvas" id="flowCanvas" role="group" aria-label="智能客服请求流程图"></div>
+                    </div>
+                    <p class="wsb-scroll-hint">提示：<b>点击节点</b>查看职责；放大后可在图内滚动，窄屏可左右滑动。</p>
+                </div>
+                <div class="wsb-inspector-col">
+                    <aside class="wsb-inspector" aria-live="polite">
+                        <div class="wsb-inspector-kicker">Node Inspector</div>
+                        <h3 class="wsb-inspector-name" id="flowInspectorName">点击流程图节点</h3>
+                        <p class="wsb-inspector-layer" id="flowInspectorLayer"><i></i>FLOWCHART / 28 NODES</p>
+                        <p class="wsb-inspector-desc" id="flowInspectorDesc">流程图按六层组织：渠道、接入、对话引擎、知识检索、人工工单与数据评测。点击节点可查看该模块的职责与直接关联节点。</p>
+                        <p class="wsb-inspector-hint" id="flowTagsLabel">快速定位</p>
+                        <div class="wsb-tags" id="flowTags"></div>
+                        <div class="wsb-inspector-bar"><b id="flowBar"></b></div>
+                        <button class="wsb-link-btn" id="flowReset" type="button" hidden>清除选中</button>
+                    </aside>
+                </div>
+            </div>
+            <div class="wsb-card-foot">
+                <span><i class="wsb-dot"></i> 实线：请求主链路</span>
+                <span>虚线：检索、反馈与告警</span>
+                <span>点击节点：查看模块职责</span>
+            </div>
+            <details class="wsb-source">
+                <summary>查看 Mermaid 源码 <span>flowchart.mmd</span></summary>
+                <div class="wsb-code-head">
+                    <span>flowchart.mmd</span>
+                    <button class="wsb-copy" type="button" data-copy="flow">复制源码</button>
+                </div>
+                <pre><code id="flowCode"></code></pre>
+            </details>
+        </article>
+
+        <!-- ================= ER 图 ================= -->
+        <article class="wsb-card" id="erCard">
+            <div class="wsb-card-head">
+                <div>
+                    <span class="wsb-card-index">FIG. 02 / ER DIAGRAM</span>
+                    <h2>智能客服数据 ER 图</h2>
+                    <p>用户、渠道、会话、消息、意图、知识、坐席与工单八个实体，用主外键和基数关系串起客服系统的数据模型。</p>
+                </div>
+                <div class="wsb-card-actions">
+                    <div class="wsb-zoom" data-zoom="er" role="group" aria-label="ER 图缩放">
+                        <button class="wsb-icon-btn wsb-zoom-out" type="button" aria-label="缩小 ER 图">−</button>
+                        <span class="wsb-zoom-level">100%</span>
+                        <button class="wsb-icon-btn wsb-zoom-in" type="button" aria-label="放大 ER 图">+</button>
+                        <button class="wsb-icon-btn wsb-zoom-reset" type="button" aria-label="恢复适应宽度">适应</button>
+                    </div>
+                    <button class="wsb-icon-btn wsb-export" type="button" data-export="er">导出 SVG</button>
+                </div>
+            </div>
+            <div class="wsb-diagram-stage" id="erStage">
+                <div class="wsb-diagram-canvas" id="erCanvas" role="img" aria-label="智能客服数据实体关系图"></div>
+            </div>
+            <div class="wsb-entity-legend">
+                <span style="--tag:#38bdf8"><i></i><b>USER</b> 用户</span>
+                <span style="--tag:#38bdf8"><i></i><b>CHANNEL</b> 渠道</span>
+                <span style="--tag:#38bdf8"><i></i><b>SESSION</b> 会话</span>
+                <span style="--tag:#38bdf8"><i></i><b>MESSAGE</b> 消息</span>
+                <span style="--tag:#34d399"><i></i><b>INTENT</b> 意图</span>
+                <span style="--tag:#34d399"><i></i><b>KNOWLEDGE</b> 知识</span>
+                <span style="--tag:#a78bfa"><i></i><b>AGENT</b> 坐席</span>
+                <span style="--tag:#a78bfa"><i></i><b>TICKET</b> 工单</span>
+            </div>
+            <div class="wsb-card-foot">
+                <span><i class="wsb-dot"></i> PK：主键 · FK：外键</span>
+                <span>||--o{ 一对多 · ||--o| 至多一条</span>
+                <span>窄屏可左右滑动 · 右上角可缩放</span>
+            </div>
+            <details class="wsb-source">
+                <summary>查看 Mermaid 源码 <span>er.mmd</span></summary>
+                <div class="wsb-code-head">
+                    <span>er.mmd</span>
+                    <button class="wsb-copy" type="button" data-copy="er">复制源码</button>
+                </div>
+                <pre><code id="erCode"></code></pre>
+            </details>
+        </article>
+
+        <section class="wsb-read">
+            <div class="wsb-read-head">
+                <h2>读图指南</h2>
+                <span>Reading Notes</span>
+            </div>
+            <div class="wsb-read-grid">
+                <article class="wsb-read-card">
+                    <i>01 / TEXT AS DIAGRAM</i>
+                    <b>把图写进文本</b>
+                    <p>Mermaid 用节点、箭头和关键字描述图表，浏览器在本地把它渲染成 SVG。改一行源码就能更新整张图，适合放进 Git 做版本管理。</p>
+                </article>
+                <article class="wsb-read-card">
+                    <i>02 / FLOWCHART</i>
+                    <b>六层请求链路</b>
+                    <p>流程图从渠道接入开始，经网关、适配、安全与会话路由进入对话引擎；RAG 从向量库和知识图谱取证据，置信度不足时自动转人工。</p>
+                </article>
+                <article class="wsb-read-card">
+                    <i>03 / ER MODEL</i>
+                    <b>实体与基数</b>
+                    <p>ER 图用主外键描述会话、消息、知识与工单的关系。||--o{ 表示一对多，||--o| 表示至多一条；知识条目通过引用字段与会话消息关联。</p>
+                </article>
+            </div>
+        </section>
+
+        <p class="wsb-note">说明：Mermaid 11.4.1 已下载至本地 <code>cdn/mermaid/mermaid.min.js</code>，页面无需联网即可渲染；系统分层与 ER 字段为教学演示模型，可按实际业务继续扩展。源码面板支持一键复制，两张图均可导出为 SVG。</p>
+        <p class="wsb-error" id="mermaidError">Mermaid 未能加载，请检查 cdn/mermaid/mermaid.min.js 是否存在。</p>
+    </main>
+
+    <script src="cdn/mermaid/mermaid.min.js"></script>
+    <script>
+        (function () {
+            'use strict';
+
+            var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            var flowCanvas = document.getElementById('flowCanvas');
+            var erCanvas = document.getElementById('erCanvas');
+
+            var FLOW_SOURCE = [
+                'flowchart TB',
+                '  %% 01 用户与渠道层',
+                '  subgraph CH["01 · 用户与渠道层"]',
+                '    direction LR',
+                '    web([Web 客服窗口])',
+                '    app([App / 小程序])',
+                '    wechat([企业微信 / 公众号])',
+                '    seat([人工坐席工作台])',
+                '  end',
+                '',
+                '  %% 02 接入与安全层',
+                '  subgraph ACCESS["02 · 接入与安全层"]',
+                '    direction LR',
+                '    gateway[[API 网关]]',
+                '    adapter[多渠道适配器]',
+                '    guard[安全与合规]',
+                '    router[会话路由]',
+                '  end',
+                '',
+                '  %% 03 智能对话引擎',
+                '  subgraph ENGINE["03 · 智能对话引擎"]',
+                '    direction LR',
+                '    nlu{{意图识别 NLU}}',
+                '    rewrite[查询改写]',
+                '    dm[多轮对话管理]',
+                '    rag[(RAG 混合检索)]',
+                '    llm{{大模型生成}}',
+                '    confidence{置信度判断}',
+                '  end',
+                '',
+                '  %% 04 知识与检索层',
+                '  subgraph KB["04 · 知识与检索层"]',
+                '    direction LR',
+                '    ingest[文档接入]',
+                '    parse[解析与切分]',
+                '    embed[Embedding 向量化]',
+                '    vdb[(向量数据库)]',
+                '    kg[知识图谱]',
+                '    rerank[重排 Reranker]',
+                '  end',
+                '',
+                '  %% 05 人工与工单',
+                '  subgraph HUMAN["05 · 人工与工单"]',
+                '    direction LR',
+                '    human[转人工坐席]',
+                '    ticket[工单中心]',
+                '    notify[消息通知]',
+                '  end',
+                '',
+                '  %% 06 数据与评测层',
+                '  subgraph DATA["06 · 数据与评测层"]',
+                '    direction LR',
+                '    logs[会话日志]',
+                '    eval[评测基准]',
+                '    monitor[监控告警]',
+                '    experiment[实验管理]',
+                '  end',
+                '',
+                '  reply[/答案组装与引用/]',
+                '',
+                '  %% 请求主链路',
+                '  web --> gateway',
+                '  app --> gateway',
+                '  wechat --> gateway',
+                '  seat --> gateway',
+                '  gateway --> adapter',
+                '  adapter --> guard',
+                '  guard --> router',
+                '  router --> nlu',
+                '  nlu --> rewrite',
+                '  rewrite --> dm',
+                '  dm --> rag',
+                '  rag -->|候选集| rerank',
+                '  rerank -->|Top-K 证据| llm',
+                '  llm --> confidence',
+                '  confidence -->|置信度 ≥ 0.80| reply',
+                '  confidence -->|低置信 / 投诉| human',
+                '',
+                '  %% 知识检索与证据流',
+                '  rag -.->|向量召回| vdb',
+                '  rag -.->|图谱推理| kg',
+                '  vdb -.->|候选片段| rerank',
+                '  kg -.->|结构化事实| rerank',
+                '  ingest --> parse',
+                '  parse --> embed',
+                '  embed --> vdb',
+                '  embed --> kg',
+                '',
+                '  %% 人工兜底与数据闭环',
+                '  human --> ticket',
+                '  ticket --> notify',
+                '  reply --> logs',
+                '  llm --> logs',
+                '  ticket -.->|工单结果| logs',
+                '  logs --> eval',
+                '  logs --> monitor',
+                '  eval --> experiment',
+                '  experiment -.->|策略回灌| rewrite',
+                '  monitor -.->|异常告警| router',
+                '',
+                '  %% 分层配色',
+                '  classDef channel fill:#0b1f2e,stroke:#38bdf8,color:#dff4ff,stroke-width:1.3px;',
+                '  classDef access fill:#0a1726,stroke:#60a5fa,color:#dbeafe,stroke-width:1.3px;',
+                '  classDef engine fill:#141a33,stroke:#a78bfa,color:#ece9ff,stroke-width:1.3px;',
+                '  classDef knowledge fill:#0b2420,stroke:#34d399,color:#dcfff5,stroke-width:1.3px;',
+                '  classDef human fill:#2a1523,stroke:#fb7185,color:#ffe4ea,stroke-width:1.3px;',
+                '  classDef data fill:#2a230d,stroke:#fbbf24,color:#fff4d6,stroke-width:1.3px;',
+                '  class web,app,wechat,seat channel;',
+                '  class gateway,adapter,guard,router access;',
+                '  class nlu,rewrite,dm,rag,llm,confidence,reply engine;',
+                '  class ingest,parse,embed,vdb,kg,rerank knowledge;',
+                '  class human,ticket,notify human;',
+                '  class logs,eval,monitor,experiment data;',
+                '',
+                '  style CH fill:#08111d,stroke:#1e3a52,color:#9fc4e0',
+                '  style ACCESS fill:#08111d,stroke:#1d3550,color:#9fc4e0',
+                '  style ENGINE fill:#0d1022,stroke:#3b3566,color:#c4b5fd',
+                '  style KB fill:#071c19,stroke:#1f5246,color:#a7f3d0',
+                '  style HUMAN fill:#1d0d16,stroke:#5b2738,color:#fecdd3',
+                '  style DATA fill:#1e1a07,stroke:#5b4a10,color:#fde68a',
+                '  linkStyle default stroke:#5b748c,stroke-width:1.3px;'
+            ].join('\n');
+
+            var ER_SOURCE = [
+                'erDiagram',
+                '  %% 用户与会话',
+                '  USER {',
+                '    bigint id PK "用户主键"',
+                '    varchar nickname "昵称"',
+                '    varchar phone "手机号"',
+                '    datetime created_at "注册时间"',
+                '  }',
+                '  CHANNEL {',
+                '    int id PK "渠道主键"',
+                '    varchar name "渠道名称"',
+                '    varchar type "Web / App / 微信"',
+                '  }',
+                '  SESSION {',
+                '    bigint id PK "会话主键"',
+                '    bigint user_id FK "所属用户"',
+                '    int channel_id FK "接入渠道"',
+                '    varchar status "进行中 / 已结束"',
+                '    datetime started_at "开始时间"',
+                '  }',
+                '  MESSAGE {',
+                '    bigint id PK "消息主键"',
+                '    bigint session_id FK "所属会话"',
+                '    varchar role "user / assistant / agent"',
+                '    text content "消息内容"',
+                '    decimal confidence "生成置信度"',
+                '    bigint knowledge_id FK "引用知识"',
+                '  }',
+                '  INTENT {',
+                '    int id PK "意图主键"',
+                '    varchar name "意图名称"',
+                '    varchar category "业务分类"',
+                '    decimal threshold "置信阈值"',
+                '  }',
+                '  KNOWLEDGE {',
+                '    bigint id PK "知识主键"',
+                '    varchar title "知识标题"',
+                '    varchar source "来源文档"',
+                '    varchar vector_id "向量索引 ID"',
+                '    datetime updated_at "更新时间"',
+                '  }',
+                '  AGENT {',
+                '    int id PK "坐席主键"',
+                '    varchar name "坐席姓名"',
+                '    varchar skill_group "技能组"',
+                '    boolean online "在线状态"',
+                '  }',
+                '  TICKET {',
+                '    bigint id PK "工单主键"',
+                '    bigint session_id FK "关联会话"',
+                '    bigint agent_id FK "处理坐席"',
+                '    varchar status "待处理 / 处理中 / 已关闭"',
+                '    varchar priority "优先级"',
+                '    datetime created_at "创建时间"',
+                '  }',
+                '',
+                '  %% 实体关系',
+                '  USER ||--o{ SESSION : "发起"',
+                '  CHANNEL ||--o{ SESSION : "接入"',
+                '  SESSION ||--|{ MESSAGE : "包含"',
+                '  INTENT ||--o{ SESSION : "识别"',
+                '  SESSION ||--o| TICKET : "转人工"',
+                '  AGENT ||--o{ SESSION : "接管"',
+                '  AGENT ||--o{ TICKET : "处理"',
+                '  KNOWLEDGE ||--o{ MESSAGE : "引用"',
+                '  TICKET ||--o{ MESSAGE : "关联"'
+            ].join('\n');
+
+            var LAYER_COLORS = {
+                '用户与渠道层': '#38bdf8',
+                '接入与安全层': '#60a5fa',
+                '智能对话引擎': '#a78bfa',
+                '知识与检索层': '#34d399',
+                '人工与工单': '#fb7185',
+                '数据与评测层': '#fbbf24',
+                '响应层': '#5eead4'
+            };
+
+            var FLOW_INFO = {
+                web: { title: 'Web 客服窗口', layer: '用户与渠道层', desc: '官网与帮助中心接入的悬浮客服窗口，是网页端用户发起咨询的主要入口。' },
+                app: { title: 'App / 小程序', layer: '用户与渠道层', desc: '移动端 App 与微信小程序内的客服入口，支持报名咨询、订单查询与消息通知。' },
+                wechat: { title: '企业微信 / 公众号', layer: '用户与渠道层', desc: '企业微信与公众号承接社交渠道咨询，支持客服消息、自动回复与人工转接。' },
+                seat: { title: '人工坐席工作台', layer: '用户与渠道层', desc: '人工坐席处理转接会话、投诉与工单，与机器人共享同一份会话上下文。' },
+                gateway: { title: 'API 网关', layer: '接入与安全层', desc: '统一入口，负责路由转发、限流熔断、灰度分流与接口鉴权。' },
+                adapter: { title: '多渠道适配器', layer: '接入与安全层', desc: '把网页、App、微信等不同渠道的消息协议转换为统一会话格式，屏蔽渠道差异。' },
+                guard: { title: '安全与合规', layer: '接入与安全层', desc: '敏感词过滤、个人信息脱敏、访问审计与风控，保证对话符合合规要求。' },
+                router: { title: '会话路由', layer: '接入与安全层', desc: '结合用户画像、历史会话与技能组状态，把请求分配给机器人或人工坐席。' },
+                nlu: { title: '意图识别 NLU', layer: '智能对话引擎', desc: '识别用户意图、实体与槽位，为查询改写与知识检索提供结构化输入。' },
+                rewrite: { title: '查询改写', layer: '智能对话引擎', desc: '结合多轮上下文完成指代消解与查询扩展，把口语化问题改写成可检索的查询。' },
+                dm: { title: '多轮对话管理', layer: '智能对话引擎', desc: '维护对话状态与槽位，决定追问、澄清、确认或结束，保证多轮任务型对话连贯。' },
+                rag: { title: 'RAG 混合检索', layer: '智能对话引擎', desc: '同时查询向量库与知识图谱，做混合召回与重排，把最相关的知识片段送入大模型。' },
+                llm: { title: '大模型生成', layer: '智能对话引擎', desc: '基于检索证据组织答案，输出引用与置信度；不确定时触发兜底而不是编造。' },
+                confidence: { title: '置信度判断', layer: '智能对话引擎', desc: '按置信阈值决定直接回复还是转人工；低置信、投诉与敏感问题进入人工兜底。' },
+                reply: { title: '答案组装与引用', layer: '响应层', desc: '把答案、知识出处与置信度组装成最终响应，返回用户并写入会话日志。' },
+                ingest: { title: '文档接入', layer: '知识与检索层', desc: '接入 FAQ、产品手册、赛事规则与历史工单，形成统一的知识来源清单。' },
+                parse: { title: '解析与切分', layer: '知识与检索层', desc: '对 PDF、网页与表格做 OCR、清洗与分块，切分粒度直接影响检索召回。' },
+                embed: { title: 'Embedding 向量化', layer: '知识与检索层', desc: '用领域语料微调的向量模型编码知识片段，把语义相似度变成可计算的检索问题。' },
+                vdb: { title: '向量数据库', layer: '知识与检索层', desc: '存储知识向量并支持近似最近邻检索，结合元数据过滤提升召回精度与响应速度。' },
+                kg: { title: '知识图谱', layer: '知识与检索层', desc: '沉淀赛事、用户、政策之间的实体与关系，为规则类问题提供结构化推理能力。' },
+                rerank: { title: '重排 Reranker', layer: '知识与检索层', desc: '对初筛结果做交叉编码重排，兼顾相关性与多样性，把最可信的 Top-K 送进生成模型。' },
+                human: { title: '转人工坐席', layer: '人工与工单', desc: '低置信、投诉与敏感问题自动转人工，保留完整会话上下文并创建工单。' },
+                ticket: { title: '工单中心', layer: '人工与工单', desc: '记录问题、分派坐席、跟踪处理状态，形成从受理到关闭的完整闭环。' },
+                notify: { title: '消息通知', layer: '人工与工单', desc: '向用户推送工单进度与处理结果，支持站内信、短信与公众号模板消息。' },
+                logs: { title: '会话日志', layer: '数据与评测层', desc: '记录用户问题、召回片段、生成答案与转人工结果，为分析与评测提供全链路样本。' },
+                eval: { title: '评测基准', layer: '数据与评测层', desc: '统计召回率、答案忠实度、任务完成率与转人工率，形成可对比的实验基线。' },
+                monitor: { title: '监控告警', layer: '数据与评测层', desc: '监控响应延迟、检索失败率、生成超时与转人工比例，异常时触发告警与降级。' },
+                experiment: { title: '实验管理', layer: '数据与评测层', desc: '管理检索策略、切分粒度与提示词版本的 A/B 实验，把结论回灌到对话引擎。' }
+            };
+
+            var QUICK_NODES = ['rag', 'confidence', 'human'];
+
+            var flowNodeEls = {};
+            var flowAdj = {};
+            var flowSelected = null;
+
+            var inspectorName = document.getElementById('flowInspectorName');
+            var inspectorLayer = document.getElementById('flowInspectorLayer');
+            var inspectorDesc = document.getElementById('flowInspectorDesc');
+            var tagsLabel = document.getElementById('flowTagsLabel');
+            var tagsBox = document.getElementById('flowTags');
+            var inspectorBar = document.getElementById('flowBar');
+            var resetBtn = document.getElementById('flowReset');
+
+            var nodeStat = document.querySelector('[data-stat="nodes"]');
+            if (nodeStat) { nodeStat.textContent = String(Object.keys(FLOW_INFO).length).padStart(2, '0'); }
+
+            document.getElementById('flowCode').textContent = FLOW_SOURCE;
+            document.getElementById('erCode').textContent = ER_SOURCE;
+
+            function layerColor(layer) {
+                return LAYER_COLORS[layer] || '#5eead4';
+            }
+
+            function hexToRgba(hex, alpha) {
+                var h = hex.replace('#', '');
+                if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+                var r = parseInt(h.slice(0, 2), 16);
+                var g = parseInt(h.slice(2, 4), 16);
+                var b = parseInt(h.slice(4, 6), 16);
+                return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + alpha + ')';
+            }
+
+            if (!window.mermaid) {
+                var err = document.getElementById('mermaidError');
+                if (err) { err.style.display = 'block'; }
+                flowCanvas.innerHTML = '<div class="wsb-render-error">Mermaid 未加载，图表无法渲染。</div>';
+                erCanvas.innerHTML = '<div class="wsb-render-error">Mermaid 未加载，图表无法渲染。</div>';
+                return;
+            }
+
+            mermaid.initialize({
+                startOnLoad: false,
+                securityLevel: 'strict',
+                theme: 'base',
+                fontFamily: '"PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif',
+                themeVariables: {
+                    darkMode: true,
+                    background: '#070c14',
+                    fontFamily: '"PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif',
+                    fontSize: '14px',
+                    primaryColor: '#0f1b2c',
+                    primaryTextColor: '#e6f1fb',
+                    primaryBorderColor: '#38bdf8',
+                    secondaryColor: '#0b1220',
+                    secondaryTextColor: '#dbe7f3',
+                    secondaryBorderColor: '#5eead4',
+                    tertiaryColor: '#0b1220',
+                    tertiaryTextColor: '#dbe7f3',
+                    tertiaryBorderColor: '#a78bfa',
+                    mainBkg: '#0f1b2c',
+                    nodeBorder: '#38bdf8',
+                    nodeTextColor: '#e6f1fb',
+                    textColor: '#dbe7f3',
+                    lineColor: '#5b748c',
+                    clusterBkg: '#08111d',
+                    clusterBorder: '#1e3a52',
+                    edgeLabelBackground: '#0a1220',
+                    titleColor: '#eaf3ff',
+                    attributeBackgroundColorOdd: '#0c1522',
+                    attributeBackgroundColorEven: '#0f1a2b'
+                },
+                flowchart: {
+                    useMaxWidth: false,
+                    htmlLabels: false,
+                    curve: 'basis',
+                    nodeSpacing: 30,
+                    rankSpacing: 52,
+                    padding: 14,
+                    diagramPadding: 12
+                },
+                er: {
+                    useMaxWidth: false,
+                    entityPadding: 14,
+                    minEntityWidth: 120,
+                    minEntityHeight: 64
+                }
+            });
+
+            function renderDiagram(id, source, container) {
+                return mermaid.render(id, source).then(function (result) {
+                    container.innerHTML = result.svg;
+                    if (result.bindFunctions) { result.bindFunctions(container); }
+                    var svg = container.querySelector('svg');
+                    if (svg) {
+                        svg.style.maxWidth = 'none';
+                        svg.style.width = '100%';
+                        svg.style.height = 'auto';
+                    }
+                    return svg;
+                }).catch(function (error) {
+                    container.innerHTML = '<div class="wsb-render-error">图表渲染失败：' + String(error && error.message ? error.message : error) + '</div>';
+                    return null;
+                });
+            }
+
+            function setupFlow(svg) {
+                if (!svg) { return; }
+                svg.setAttribute('aria-label', '智能客服请求流程图');
+
+                Array.prototype.forEach.call(svg.querySelectorAll('g.node'), function (g) {
+                    var match = /^flowchart-(.+?)-\d+$/.exec(g.id || '');
+                    var nid = match ? match[1] : null;
+                    if (!nid) {
+                        var text = (g.textContent || '').trim();
+                        Object.keys(FLOW_INFO).some(function (key) {
+                            if (text.indexOf(FLOW_INFO[key].title) > -1) {
+                                nid = key;
+                                return true;
+                            }
+                            return false;
+                        });
+                    }
+                    if (!nid || !FLOW_INFO[nid]) { return; }
+                    flowNodeEls[nid] = g;
+                    g.setAttribute('tabindex', '0');
+                    g.setAttribute('role', 'button');
+                    g.setAttribute('aria-label', FLOW_INFO[nid].title + '，' + FLOW_INFO[nid].layer);
+                    g.style.cursor = 'pointer';
+
+                    var titleEl = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+                    titleEl.textContent = FLOW_INFO[nid].title + '：' + FLOW_INFO[nid].desc;
+                    g.appendChild(titleEl);
+
+                    g.addEventListener('click', function (event) {
+                        event.stopPropagation();
+                        selectFlowNode(nid, g);
+                    });
+                    g.addEventListener('keydown', function (event) {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            selectFlowNode(nid, g);
+                        }
+                    });
+                });
+
+                Array.prototype.forEach.call(svg.querySelectorAll('path[id^="L_"]'), function (path) {
+                    var parts = path.id.slice(2).split('_');
+                    if (parts.length < 3) { return; }
+                    var source = parts[0];
+                    var target = parts[1];
+                    if (!FLOW_INFO[source] || !FLOW_INFO[target]) { return; }
+                    if (!flowAdj[source]) { flowAdj[source] = {}; }
+                    if (!flowAdj[target]) { flowAdj[target] = {}; }
+                    flowAdj[source][target] = true;
+                    flowAdj[target][source] = true;
+                });
+
+                svg.addEventListener('click', function (event) {
+                    if (event.target === svg) { resetFlowInspector(); }
+                });
+
+                resetFlowInspector();
+            }
+
+            var ER_ENTITY_COLORS = {
+                USER: '#38bdf8',
+                CHANNEL: '#38bdf8',
+                SESSION: '#38bdf8',
+                MESSAGE: '#38bdf8',
+                INTENT: '#34d399',
+                KNOWLEDGE: '#34d399',
+                AGENT: '#a78bfa',
+                TICKET: '#a78bfa'
+            };
+
+            function styleErDiagram(svg) {
+                if (!svg) { return; }
+                svg.setAttribute('aria-label', '智能客服数据实体关系图');
+                Array.prototype.forEach.call(svg.querySelectorAll('g[id^="entity-"]'), function (group) {
+                    var name = null;
+                    Object.keys(ER_ENTITY_COLORS).some(function (key) {
+                        if ((group.id || '').indexOf('entity-' + key + '-') === 0) {
+                            name = key;
+                            return true;
+                        }
+                        return false;
+                    });
+                    if (!name) { return; }
+                    var color = ER_ENTITY_COLORS[name];
+                    var box = group.querySelector('rect.entityBox');
+                    if (box) {
+                        box.style.stroke = color;
+                        box.style.strokeWidth = '1.4px';
+                    }
+                    var title = group.querySelector('.entityTitleText');
+                    if (title) { title.style.fill = color; }
+                    Array.prototype.forEach.call(group.querySelectorAll('rect.attributeBoxOdd, rect.attributeBoxEven'), function (row) {
+                        row.style.stroke = hexToRgba(color, 0.38);
+                    });
+                });
+            }
+
+            function bindTagButtons() {
+                Array.prototype.forEach.call(tagsBox.querySelectorAll('button[data-node]'), function (btn) {
+                    btn.addEventListener('click', function () {
+                        var nid = btn.getAttribute('data-node');
+                        selectFlowNode(nid, flowNodeEls[nid]);
+                    });
+                });
+            }
+
+            function renderQuickNodes() {
+                tagsLabel.textContent = '快速定位';
+                tagsBox.innerHTML = QUICK_NODES.map(function (nid) {
+                    var info = FLOW_INFO[nid];
+                    return '<button class="wsb-tag" type="button" data-node="' + nid + '">' +
+                        '<i style="--tag:' + layerColor(info.layer) + '"></i>' + info.title + '</button>';
+                }).join('');
+                bindTagButtons();
+            }
+
+            function resetFlowInspector() {
+                flowSelected = null;
+                Object.keys(flowNodeEls).forEach(function (nid) {
+                    flowNodeEls[nid].classList.remove('is-selected');
+                });
+                inspectorName.textContent = '点击流程图节点';
+                inspectorLayer.innerHTML = '<i></i>FLOWCHART / ' + Object.keys(FLOW_INFO).length + ' NODES';
+                inspectorDesc.textContent = '流程图按六层组织：渠道、接入、对话引擎、知识检索、人工工单与数据评测。点击节点可查看该模块的职责与直接关联节点。';
+                renderQuickNodes();
+                inspectorBar.style.width = '0';
+                resetBtn.hidden = true;
+            }
+
+            function selectFlowNode(nid, element) {
+                var info = FLOW_INFO[nid];
+                if (!info) { return; }
+                flowSelected = nid;
+                Object.keys(flowNodeEls).forEach(function (key) {
+                    flowNodeEls[key].classList.remove('is-selected');
+                });
+                var target = element || flowNodeEls[nid];
+                if (target) {
+                    target.classList.add('is-selected');
+                }
+
+                var related = Object.keys(flowAdj[nid] || {});
+                var color = layerColor(info.layer);
+                inspectorName.textContent = info.title;
+                inspectorLayer.innerHTML = '<i style="background:' + color + ';box-shadow:0 0 8px ' + hexToRgba(color, 0.6) + '"></i>' +
+                    info.layer + ' · 关联 ' + related.length + ' 个节点';
+                inspectorDesc.textContent = info.desc;
+                tagsLabel.textContent = related.length ? '直接关联' : '关联节点';
+                if (related.length) {
+                    tagsBox.innerHTML = related.slice(0, 8).map(function (rid) {
+                        var rInfo = FLOW_INFO[rid];
+                        if (!rInfo) { return ''; }
+                        return '<button class="wsb-tag" type="button" data-node="' + rid + '">' +
+                            '<i style="--tag:' + layerColor(rInfo.layer) + '"></i>' + rInfo.title + '</button>';
+                    }).join('');
+                    bindTagButtons();
+                } else {
+                    tagsBox.innerHTML = '<span class="wsb-tag-empty">该节点没有直接关联</span>';
+                }
+                inspectorBar.style.width = Math.min(100, related.length / 8 * 100) + '%';
+                resetBtn.hidden = false;
+
+                var aside = document.querySelector('.wsb-inspector');
+                if (aside && window.innerWidth <= 1040) {
+                    var rect = aside.getBoundingClientRect();
+                    if (rect.top > window.innerHeight - 40 || rect.bottom < 40) {
+                        aside.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+                    }
+                }
+            }
+
+            resetBtn.addEventListener('click', resetFlowInspector);
+
+            /* ---------- 缩放 ---------- */
+            function setupZoom(key) {
+                var group = document.querySelector('[data-zoom="' + key + '"]');
+                var stage = document.getElementById(key + 'Stage');
+                var canvas = document.getElementById(key + 'Canvas');
+                if (!group || !stage || !canvas) { return; }
+                var level = group.querySelector('.wsb-zoom-level');
+                var scale = 1;
+                var baseWidth = 0;
+
+                function apply() {
+                    var svg = canvas.querySelector('svg');
+                    if (!svg) { return; }
+                    if (scale <= 1) {
+                        svg.style.width = '100%';
+                        baseWidth = canvas.clientWidth;
+                        stage.classList.remove('is-zoomed');
+                        stage.scrollLeft = 0;
+                        stage.scrollTop = 0;
+                    } else {
+                        if (!baseWidth) { baseWidth = canvas.clientWidth; }
+                        svg.style.width = Math.round(baseWidth * scale) + 'px';
+                        stage.classList.add('is-zoomed');
+                    }
+                    svg.style.height = 'auto';
+                    svg.style.maxWidth = 'none';
+                    level.textContent = Math.round(scale * 100) + '%';
+                    group.setAttribute('data-scale', String(scale));
+                }
+
+                function setScale(next) {
+                    scale = Math.max(0.75, Math.min(2.25, Math.round(next * 100) / 100));
+                    apply();
+                }
+
+                group.querySelector('.wsb-zoom-in').addEventListener('click', function () { setScale(scale + 0.25); });
+                group.querySelector('.wsb-zoom-out').addEventListener('click', function () { setScale(scale - 0.25); });
+                group.querySelector('.wsb-zoom-reset').addEventListener('click', function () { setScale(1); });
+
+                baseWidth = canvas.clientWidth;
+                apply();
+
+                window.addEventListener('resize', function () {
+                    baseWidth = canvas.clientWidth;
+                    apply();
+                });
+
+                window.__wsbZoom = window.__wsbZoom || {};
+                window.__wsbZoom[key] = { setScale: setScale, getScale: function () { return scale; } };
+            }
+
+            /* ---------- 导出 SVG ---------- */
+            function downloadBlob(blob, filename) {
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                setTimeout(function () { URL.revokeObjectURL(url); }, 1200);
+            }
+
+            function exportSvg(key, filename) {
+                var canvas = document.getElementById(key + 'Canvas');
+                var svg = canvas.querySelector('svg');
+                if (!svg) { return; }
+                var clone = svg.cloneNode(true);
+                clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+                clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+                var box = svg.viewBox && svg.viewBox.baseVal;
+                if (box && box.width && box.height) {
+                    clone.setAttribute('width', Math.ceil(box.width));
+                    clone.setAttribute('height', Math.ceil(box.height));
+                }
+                clone.removeAttribute('style');
+                var rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                rect.setAttribute('x', '0');
+                rect.setAttribute('y', '0');
+                rect.setAttribute('width', '100%');
+                rect.setAttribute('height', '100%');
+                rect.setAttribute('fill', '#070c14');
+                clone.insertBefore(rect, clone.firstChild);
+                var source = '<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(clone);
+                downloadBlob(new Blob([source], { type: 'image/svg+xml;charset=utf-8' }), filename);
+            }
+
+            Array.prototype.forEach.call(document.querySelectorAll('.wsb-export'), function (btn) {
+                btn.addEventListener('click', function () {
+                    var type = btn.getAttribute('data-export');
+                    if (type === 'flow') { exportSvg('flow', '18-6-flowchart.svg'); }
+                    if (type === 'er') { exportSvg('er', '18-6-er.svg'); }
+                });
+            });
+
+            /* ---------- 复制源码 ---------- */
+            function copyText(text) {
+                function legacyCopy() {
+                    return new Promise(function (resolve, reject) {
+                        var ta = document.createElement('textarea');
+                        ta.value = text;
+                        ta.setAttribute('readonly', '');
+                        ta.style.position = 'fixed';
+                        ta.style.top = '-9999px';
+                        document.body.appendChild(ta);
+                        ta.select();
+                        var ok = false;
+                        try {
+                            ok = document.execCommand('copy');
+                        } catch (error) {
+                            ta.remove();
+                            reject(error);
+                            return;
+                        }
+                        ta.remove();
+                        if (ok) { resolve(); } else { reject(new Error('execCommand copy failed')); }
+                    });
+                }
+                if (navigator.clipboard && window.isSecureContext) {
+                    return navigator.clipboard.writeText(text).catch(legacyCopy);
+                }
+                return legacyCopy();
+            }
+
+            Array.prototype.forEach.call(document.querySelectorAll('.wsb-copy'), function (btn) {
+                btn.addEventListener('click', function () {
+                    var key = btn.getAttribute('data-copy');
+                    var code = document.getElementById(key === 'flow' ? 'flowCode' : 'erCode');
+                    if (!code) { return; }
+                    var original = btn.textContent;
+                    copyText(code.textContent).then(function () {
+                        btn.textContent = '已复制';
+                        setTimeout(function () { btn.textContent = original; }, 1400);
+                    }).catch(function () {
+                        btn.textContent = '复制失败';
+                        setTimeout(function () { btn.textContent = original; }, 1400);
+                    });
+                });
+            });
+
+            /* ---------- 渲染 ---------- */
+            renderDiagram('wsbFlowDiagram', FLOW_SOURCE, flowCanvas).then(function (svg) {
+                setupFlow(svg);
+                setupZoom('flow');
+                return renderDiagram('wsbErDiagram', ER_SOURCE, erCanvas);
+            }).then(function (svg) {
+                styleErDiagram(svg);
+                setupZoom('er');
+            });
+        })();
+    </script>
+</body>
+</html>

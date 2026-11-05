@@ -1,0 +1,1736 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#05080f">
+    <title>18-7 三维数据空间 · 魏士博</title>
+    <!--
+        作者：魏士博
+        建立时间：2026-11-05
+        使用的大模型功能名称：Trae DeepSeek-V4.1-Flash
+        页面说明：18-7 基于 Three.js 的三维数据空间，包含 3D 柱状图与三维曲面热度图
+    -->
+    <style>
+        :root {
+            --tjs-bg: #05080f;
+            --tjs-ink: #eaf3ff;
+            --tjs-muted: #8b9cb6;
+            --tjs-line: rgba(148, 180, 220, 0.16);
+            --tjs-cyan: #5eead4;
+            --tjs-blue: #38bdf8;
+            --tjs-violet: #a78bfa;
+            --tjs-green: #34d399;
+            --tjs-gold: #fbbf24;
+            --tjs-rose: #fb7185;
+            --tjs-serif: "Songti SC", "STSong", "SimSun", "Noto Serif SC", Georgia, serif;
+            --tjs-code: "Cascadia Code", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            min-height: 100vh;
+            background:
+                radial-gradient(980px 600px at 10% -8%, rgba(56, 189, 248, 0.11), transparent 62%),
+                radial-gradient(900px 540px at 92% 2%, rgba(167, 139, 250, 0.10), transparent 60%),
+                radial-gradient(760px 500px at 50% 40%, rgba(251, 191, 36, 0.035), transparent 65%),
+                linear-gradient(180deg, #05080f, #060a13 55%, #04070d);
+            color: var(--tjs-ink);
+            font-family: "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .tjs-page {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: clamp(24px, 4vw, 46px) clamp(16px, 3vw, 32px) 46px;
+        }
+        .tjs-head {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+        .tjs-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: #9fb6c9;
+            font-size: 9.5px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+        .tjs-kicker::before {
+            content: "";
+            width: 18px;
+            height: 1px;
+            background: var(--tjs-cyan);
+        }
+        .tjs-title {
+            margin-top: 18px;
+            font-family: var(--tjs-serif);
+            font-size: clamp(30px, 4.4vw, 50px);
+            line-height: 1.18;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+        }
+        .tjs-title em {
+            font-style: normal;
+            color: var(--tjs-cyan);
+            padding-bottom: 3px;
+            border-bottom: 1px solid rgba(94, 234, 212, 0.45);
+        }
+        .tjs-sub {
+            margin-top: 14px;
+            color: var(--tjs-muted);
+            font-size: 13px;
+            line-height: 1.95;
+            max-width: 700px;
+            letter-spacing: 0.3px;
+        }
+        .tjs-tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+        .tjs-tool {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(160, 200, 230, 0.24);
+            border-radius: 2px;
+            padding: 10px 16px;
+            background: transparent;
+            color: #d6e2ef;
+            font-family: inherit;
+            font-size: 11.5px;
+            letter-spacing: 0.8px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+        }
+        .tjs-tool:hover {
+            border-color: rgba(94, 234, 212, 0.6);
+            background: rgba(94, 234, 212, 0.06);
+            color: #f2fbff;
+        }
+        .tjs-tool:focus-visible,
+        .tjs-btn:focus-visible,
+        .tjs-link:focus-visible {
+            outline: 1px solid var(--tjs-cyan);
+            outline-offset: 2px;
+        }
+        .tjs-meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+        .tjs-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 6px 11px;
+            border: 1px solid rgba(148, 180, 220, 0.20);
+            border-radius: 2px;
+            color: #93a4ba;
+            font-size: 10.5px;
+            letter-spacing: 0.6px;
+        }
+        .tjs-chip b { color: #eaf3ff; font-weight: 600; }
+
+        /* ---------- Overview ---------- */
+        .tjs-overview {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            margin-top: 34px;
+            border-top: 1px solid rgba(148, 180, 220, 0.16);
+            border-bottom: 1px solid rgba(148, 180, 220, 0.12);
+        }
+        .tjs-overview > div {
+            position: relative;
+            padding: 18px 18px 16px;
+        }
+        .tjs-overview > div + div { border-left: 1px solid rgba(148, 180, 220, 0.10); }
+        .tjs-overview > div::before {
+            content: "";
+            position: absolute;
+            top: -1px;
+            left: 18px;
+            width: 34px;
+            height: 2px;
+            background: var(--accent, var(--tjs-cyan));
+        }
+        .tjs-overview b {
+            display: block;
+            font-family: var(--tjs-serif);
+            font-size: 27px;
+            line-height: 1;
+            color: #f2f8ff;
+            letter-spacing: 0.5px;
+            font-variant-numeric: tabular-nums;
+        }
+        .tjs-overview span {
+            display: block;
+            margin-top: 8px;
+            color: #93a4ba;
+            font-size: 11px;
+            letter-spacing: 0.8px;
+        }
+        .tjs-overview small {
+            display: block;
+            margin-top: 4px;
+            color: #56687e;
+            font-size: 8.5px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        /* ---------- Cards ---------- */
+        .tjs-card {
+            margin-top: 24px;
+            border: 1px solid rgba(148, 180, 220, 0.20);
+            border-radius: 3px;
+            background: linear-gradient(180deg, rgba(11, 18, 30, 0.88), rgba(6, 10, 18, 0.94));
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+        .tjs-card-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 20px 24px 18px;
+            border-bottom: 1px solid rgba(148, 180, 220, 0.13);
+        }
+        .tjs-card-index {
+            display: inline-block;
+            color: rgba(94, 234, 212, 0.68);
+            font-family: Georgia, serif;
+            font-size: 9px;
+            letter-spacing: 2.4px;
+        }
+        .tjs-card-head h2 {
+            margin-top: 7px;
+            font-family: var(--tjs-serif);
+            font-size: 21px;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            color: #f1f7fd;
+        }
+        .tjs-card-head p {
+            margin-top: 7px;
+            color: #8597ae;
+            font-size: 11.5px;
+            line-height: 1.8;
+            max-width: 640px;
+        }
+        .tjs-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .tjs-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            border: 1px solid rgba(160, 200, 230, 0.24);
+            border-radius: 2px;
+            padding: 8px 12px;
+            background: transparent;
+            color: #a9bacd;
+            font-family: inherit;
+            font-size: 10.5px;
+            letter-spacing: 0.6px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+        }
+        .tjs-btn:hover {
+            border-color: rgba(94, 234, 212, 0.55);
+            background: rgba(94, 234, 212, 0.06);
+            color: #e6fffb;
+        }
+        .tjs-toggle i {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #56687e;
+            transition: background 0.2s ease, box-shadow 0.2s ease;
+        }
+        .tjs-toggle.is-on {
+            border-color: rgba(94, 234, 212, 0.42);
+            background: rgba(94, 234, 212, 0.06);
+            color: #e6fffb;
+        }
+        .tjs-toggle.is-on i {
+            background: var(--tjs-cyan);
+            box-shadow: 0 0 8px rgba(94, 234, 212, 0.9);
+        }
+
+        /* ---------- Stage ---------- */
+        .tjs-bar-body { display: grid; grid-template-columns: minmax(0, 1fr) 292px; }
+        .tjs-stage-wrap { min-width: 0; }
+        .tjs-stage {
+            position: relative;
+            height: 520px;
+            overflow: hidden;
+            background:
+                linear-gradient(rgba(148, 180, 220, 0.045) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(148, 180, 220, 0.045) 1px, transparent 1px),
+                radial-gradient(720px 460px at 50% 30%, rgba(56, 189, 248, 0.08), transparent 72%),
+                #070c14;
+            background-size: 30px 30px, 30px 30px, auto, auto;
+        }
+        .tjs-stage::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            box-shadow: inset 0 0 130px rgba(0, 0, 0, 0.55);
+            z-index: 1;
+        }
+        .tjs-stage canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            outline: none;
+            cursor: grab;
+            touch-action: none;
+        }
+        .tjs-stage canvas:active { cursor: grabbing; }
+        .tjs-stage-surface {
+            height: 560px;
+            background:
+                linear-gradient(rgba(148, 180, 220, 0.045) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(148, 180, 220, 0.045) 1px, transparent 1px),
+                radial-gradient(760px 480px at 52% 32%, rgba(251, 191, 36, 0.06), transparent 70%),
+                radial-gradient(600px 420px at 20% 80%, rgba(167, 139, 250, 0.06), transparent 72%),
+                #070c14;
+            background-size: 30px 30px, 30px 30px, auto, auto, auto;
+        }
+        .tjs-corner {
+            position: absolute;
+            right: 14px;
+            bottom: 12px;
+            z-index: 2;
+            color: rgba(148, 180, 220, 0.52);
+            font-size: 9px;
+            letter-spacing: 1.2px;
+            pointer-events: none;
+        }
+        .tjs-live {
+            position: absolute;
+            left: 14px;
+            top: 14px;
+            z-index: 2;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 5px 8px;
+            border: 1px solid rgba(94, 234, 212, 0.24);
+            background: rgba(5, 10, 17, 0.62);
+            color: #9fc4e0;
+            font-size: 8.5px;
+            letter-spacing: 1.4px;
+            pointer-events: none;
+            backdrop-filter: blur(8px);
+        }
+        .tjs-live i {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--tjs-cyan);
+            box-shadow: 0 0 8px rgba(94, 234, 212, 0.9);
+            animation: tjsPulse 2s ease-in-out infinite;
+        }
+        @keyframes tjsPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.35; }
+        }
+        .tjs-height-legend {
+            position: absolute;
+            right: 14px;
+            top: 14px;
+            z-index: 2;
+            display: flex;
+            align-items: stretch;
+            gap: 7px;
+            padding: 8px 9px;
+            border: 1px solid rgba(148, 180, 220, 0.16);
+            background: rgba(5, 10, 17, 0.58);
+            pointer-events: none;
+            backdrop-filter: blur(8px);
+        }
+        .tjs-height-legend .ramp {
+            width: 7px;
+            height: 116px;
+            background: linear-gradient(to top, #071a2e 0%, #0b3454 15%, #126a96 34%, #1ea6c6 51%, #4de3c4 65%, #d99a1f 80%, #f7d77a 100%);
+            border: 1px solid rgba(148, 180, 220, 0.18);
+        }
+        .tjs-height-legend .ticks {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            color: #8fa5bb;
+            font-size: 8px;
+            letter-spacing: 0.4px;
+            font-variant-numeric: tabular-nums;
+        }
+        .tjs-tooltip {
+            position: absolute;
+            z-index: 5;
+            min-width: 132px;
+            padding: 10px 12px;
+            border: 1px solid rgba(94, 234, 212, 0.34);
+            background: rgba(7, 12, 20, 0.93);
+            box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
+            pointer-events: none;
+            backdrop-filter: blur(10px);
+        }
+        .tjs-tooltip b {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            color: #f2f8ff;
+            font-size: 11.5px;
+            font-weight: 600;
+            letter-spacing: 0.4px;
+            white-space: nowrap;
+        }
+        .tjs-tooltip b i {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--tjs-cyan);
+            box-shadow: 0 0 7px currentColor;
+        }
+        .tjs-tooltip span {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            margin-top: 6px;
+            color: #8fa5bb;
+            font-size: 10.5px;
+            letter-spacing: 0.2px;
+            white-space: nowrap;
+        }
+        .tjs-tooltip em {
+            color: var(--tjs-cyan);
+            font-style: normal;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+        .tjs-fallback {
+            position: absolute;
+            inset: 0;
+            z-index: 6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            background: #070c14;
+            color: #ffb4b4;
+            font-size: 12px;
+            line-height: 1.9;
+            text-align: center;
+        }
+        .tjs-legend {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            flex-wrap: wrap;
+            padding: 11px 18px;
+            border-top: 1px solid rgba(148, 180, 220, 0.10);
+            color: #8fa5bb;
+            font-size: 10px;
+            letter-spacing: 0.5px;
+        }
+        .tjs-legend span { display: inline-flex; align-items: center; gap: 6px; }
+        .tjs-legend i {
+            width: 7px;
+            height: 7px;
+            border-radius: 1px;
+            background: var(--c, var(--tjs-blue));
+            box-shadow: 0 0 6px var(--c, var(--tjs-blue));
+        }
+        .tjs-legend .tjs-legend-note {
+            margin-left: auto;
+            color: #5f7187;
+            font-size: 9.5px;
+        }
+
+        /* ---------- Inspector ---------- */
+        .tjs-inspector {
+            padding: 22px 20px;
+            border-left: 1px solid rgba(148, 180, 220, 0.13);
+            background: linear-gradient(180deg, rgba(56, 189, 248, 0.035), transparent 72%);
+        }
+        .tjs-ins-kicker {
+            color: rgba(148, 180, 220, 0.62);
+            font-size: 8.5px;
+            letter-spacing: 2.6px;
+            text-transform: uppercase;
+        }
+        .tjs-ins-title {
+            margin-top: 10px;
+            font-family: var(--tjs-serif);
+            font-size: 20px;
+            font-weight: 700;
+            color: #f2f8ff;
+            letter-spacing: 0.5px;
+            line-height: 1.4;
+        }
+        .tjs-ins-tag {
+            display: inline-flex;
+            align-items: center;
+            margin-top: 8px;
+            padding: 5px 8px;
+            border: 1px solid rgba(148, 180, 220, 0.17);
+            border-radius: 2px;
+            color: #93a9c2;
+            font-size: 9px;
+            letter-spacing: 1.1px;
+            text-transform: uppercase;
+        }
+        .tjs-ins-value {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .tjs-ins-value b {
+            font-family: var(--tjs-serif);
+            font-size: 40px;
+            line-height: 1;
+            color: #f2f8ff;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 0.5px;
+        }
+        .tjs-ins-value small {
+            color: #6f8299;
+            font-size: 9.5px;
+            letter-spacing: 0.6px;
+        }
+        .tjs-ins-desc {
+            margin-top: 12px;
+            color: #8496ac;
+            font-size: 11.5px;
+            line-height: 1.9;
+        }
+        .tjs-ins-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 12px;
+        }
+        .tjs-pill {
+            padding: 4px 7px;
+            border: 1px solid rgba(94, 234, 212, 0.22);
+            background: rgba(94, 234, 212, 0.055);
+            color: #a9d9d2;
+            font-size: 9.5px;
+            letter-spacing: 0.2px;
+            white-space: nowrap;
+        }
+        .tjs-ins-hint {
+            margin-top: 16px;
+            color: rgba(148, 180, 220, 0.55);
+            font-size: 8.5px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .tjs-mini { margin-top: 8px; display: grid; gap: 5px; }
+        .tjs-mini-row {
+            display: grid;
+            grid-template-columns: 34px minmax(0, 1fr) 34px;
+            gap: 7px;
+            align-items: center;
+            color: #75879d;
+            font-size: 9.5px;
+            font-variant-numeric: tabular-nums;
+        }
+        .tjs-mini-row .bar {
+            height: 3px;
+            background: rgba(148, 180, 220, 0.10);
+            overflow: hidden;
+        }
+        .tjs-mini-row .bar b {
+            display: block;
+            height: 100%;
+            width: 0;
+            background: linear-gradient(90deg, var(--tjs-blue), var(--tjs-cyan));
+        }
+        .tjs-mini-row em {
+            font-style: normal;
+            text-align: right;
+            color: #9fb1c6;
+        }
+        .tjs-mini-row.is-active { color: #eaf3ff; }
+        .tjs-mini-row.is-active em { color: var(--tjs-cyan); }
+        .tjs-mini-empty {
+            color: #5f7187;
+            font-size: 10px;
+            line-height: 1.8;
+        }
+        .tjs-link {
+            margin-top: 14px;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            color: rgba(94, 234, 212, 0.8);
+            font-family: inherit;
+            font-size: 10.5px;
+            letter-spacing: 0.6px;
+            cursor: pointer;
+        }
+        .tjs-link:hover { color: #b7fff4; }
+        .tjs-link[hidden] { display: none; }
+
+        /* ---------- Foot ---------- */
+        .tjs-foot {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+            padding: 12px 24px 14px;
+            border-top: 1px solid rgba(148, 180, 220, 0.10);
+            color: #6c7f96;
+            font-size: 10px;
+            letter-spacing: 0.4px;
+        }
+        .tjs-foot span { display: inline-flex; align-items: center; gap: 7px; }
+        .tjs-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--tjs-cyan);
+            box-shadow: 0 0 8px rgba(94, 234, 212, 0.7);
+        }
+
+        /* ---------- Reading notes ---------- */
+        .tjs-read { margin-top: 32px; }
+        .tjs-read-head {
+            display: flex;
+            align-items: baseline;
+            gap: 14px;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(148, 180, 220, 0.16);
+        }
+        .tjs-read-head h2 {
+            font-family: var(--tjs-serif);
+            font-size: 19px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        .tjs-read-head span {
+            color: rgba(94, 234, 212, 0.55);
+            font-size: 9px;
+            letter-spacing: 2.4px;
+            text-transform: uppercase;
+        }
+        .tjs-read-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+        }
+        .tjs-read-card {
+            position: relative;
+            padding: 20px 17px 16px;
+            border: 1px solid rgba(148, 180, 220, 0.12);
+            border-radius: 2px;
+            background: rgba(234, 243, 255, 0.014);
+        }
+        .tjs-read-card::before {
+            content: "";
+            position: absolute;
+            top: -1px;
+            left: -1px;
+            right: -1px;
+            height: 2px;
+            background: linear-gradient(90deg, rgba(94, 234, 212, 0.72), rgba(94, 234, 212, 0.04));
+        }
+        .tjs-read-card i {
+            display: inline-block;
+            margin-bottom: 11px;
+            color: rgba(94, 234, 212, 0.85);
+            font-style: normal;
+            font-size: 9px;
+            letter-spacing: 1.8px;
+        }
+        .tjs-read-card b {
+            display: block;
+            color: #eaf3ff;
+            font-family: var(--tjs-serif);
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+        }
+        .tjs-read-card p {
+            margin-top: 9px;
+            color: #8496ac;
+            font-size: 11.5px;
+            line-height: 1.85;
+        }
+        .tjs-note {
+            margin-top: 18px;
+            color: #5f7187;
+            font-size: 10.5px;
+            line-height: 1.8;
+            letter-spacing: 0.3px;
+        }
+        .tjs-note code {
+            color: #9fc4e0;
+            font-family: var(--tjs-code);
+            font-size: 10px;
+        }
+        .tjs-error {
+            display: none;
+            margin-top: 16px;
+            padding: 18px 20px;
+            border: 1px solid rgba(251, 113, 133, 0.35);
+            background: rgba(251, 113, 133, 0.06);
+            color: #ffb4b4;
+            font-size: 12px;
+            line-height: 1.9;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            *, *::before, *::after { animation: none !important; transition: none !important; }
+        }
+        @media (max-width: 1080px) {
+            .tjs-bar-body { grid-template-columns: 1fr; }
+            .tjs-inspector { border-left: 0; border-top: 1px solid rgba(148, 180, 220, 0.13); }
+            .tjs-overview { grid-template-columns: repeat(2, 1fr); }
+            .tjs-overview > div:nth-child(3) { border-left: 0; }
+            .tjs-overview > div:nth-child(n + 3) { border-top: 1px solid rgba(148, 180, 220, 0.10); }
+        }
+        @media (max-width: 900px) {
+            .tjs-read-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 760px) {
+            .tjs-head { align-items: flex-start; }
+            .tjs-tools { width: 100%; }
+            .tjs-tool { flex: 1; }
+            .tjs-card-head { flex-direction: column; gap: 12px; padding: 18px 18px 16px; }
+            .tjs-actions { width: 100%; }
+            .tjs-actions .tjs-btn { flex: 1; justify-content: center; }
+            .tjs-stage { height: 380px; }
+            .tjs-stage-surface { height: 400px; }
+            .tjs-corner { right: 10px; bottom: 9px; font-size: 8px; letter-spacing: 0.8px; }
+            .tjs-live { left: 10px; top: 10px; font-size: 8px; }
+            .tjs-height-legend { right: 10px; top: 10px; padding: 6px 7px; gap: 5px; }
+            .tjs-height-legend .ramp { height: 78px; }
+            .tjs-height-legend .ticks { font-size: 7px; }
+            .tjs-inspector { padding: 18px 18px 20px; }
+            .tjs-legend { padding: 10px 18px; gap: 14px; }
+            .tjs-legend .tjs-legend-note { display: none; }
+            .tjs-foot { padding: 12px 18px 14px; gap: 12px; }
+            .tjs-ins-value b { font-size: 34px; }
+        }
+    </style>
+</head>
+<body>
+    <main class="tjs-page">
+        <header class="tjs-head">
+            <div>
+                <div class="tjs-kicker">Three.js Spatial Lab / 18-7</div>
+                <h1 class="tjs-title">三维数据<em>空间</em></h1>
+                <p class="tjs-sub">把数据从表格里拿出来，放进三维坐标系：一张 3D 柱状图对照六个月、三个渠道的报名增长；一张三维曲面图用顶点高度与颜色同时编码内容热度，鼠标悬浮即可采样。</p>
+                <div class="tjs-meta">
+                    <span class="tjs-chip"><b>2</b> 张 Three.js 图表</span>
+                    <span class="tjs-chip"><b>3D 柱状 + 3D 曲面</b> 图型组合</span>
+                    <span class="tjs-chip"><b>Three.js r128</b> 本地 CDN</span>
+                    <span class="tjs-chip">可旋转 · 可缩放 · 可导出</span>
+                </div>
+            </div>
+            <div class="tjs-tools">
+                <a class="tjs-tool" href="#barCard">三维柱状图</a>
+                <a class="tjs-tool" href="#surfaceCard">三维曲面图</a>
+            </div>
+        </header>
+
+        <div class="tjs-overview">
+            <div style="--accent: #38bdf8">
+                <b data-stat="bars">18</b>
+                <span>三维柱体</span>
+                <small>Bar Samples</small>
+            </div>
+            <div style="--accent: #a78bfa">
+                <b>03</b>
+                <span>渠道维度</span>
+                <small>Channel Axis</small>
+            </div>
+            <div style="--accent: #5eead4">
+                <b data-stat="cells">1536</b>
+                <span>曲面网格</span>
+                <small>48 × 32 Cells</small>
+            </div>
+            <div style="--accent: #fbbf24">
+                <b>02</b>
+                <span>WebGL 场景</span>
+                <small>Live Scenes</small>
+            </div>
+        </div>
+
+        <!-- ================= 3D 柱状图 ================= -->
+        <article class="tjs-card" id="barCard">
+            <div class="tjs-card-head">
+                <div>
+                    <span class="tjs-card-index">FIG. 01 / 3D BAR CHART</span>
+                    <h2>赛事报名三维柱状图</h2>
+                    <p>6 个月 × 3 个渠道，共 18 根柱体。高度代表报名人次，颜色区分渠道；拖动旋转、悬浮高亮，点击柱体查看环比与渠道占比。</p>
+                </div>
+                <div class="tjs-actions">
+                    <button class="tjs-btn tjs-toggle" type="button" data-rotate="bar" aria-pressed="false"><i></i>自动旋转</button>
+                    <button class="tjs-btn" type="button" data-reset="bar">重置视角</button>
+                    <button class="tjs-btn" type="button" data-export="bar">导出 PNG</button>
+                </div>
+            </div>
+            <div class="tjs-bar-body">
+                <div class="tjs-stage-wrap">
+                    <div class="tjs-stage" id="barStage">
+                        <div class="tjs-tooltip" id="barTip" hidden></div>
+                        <div class="tjs-corner">拖拽旋转 · 滚轮缩放 · 点击柱体</div>
+                    </div>
+                    <div class="tjs-legend">
+                        <span style="--c:#38bdf8"><i></i>官网</span>
+                        <span style="--c:#a78bfa"><i></i>社群</span>
+                        <span style="--c:#fbbf24"><i></i>校园大使</span>
+                        <span class="tjs-legend-note">Y 轴：报名人次 · 数据为教学演示</span>
+                    </div>
+                </div>
+                <aside class="tjs-inspector" aria-live="polite">
+                    <div class="tjs-ins-kicker">Bar Inspector</div>
+                    <h3 class="tjs-ins-title" id="barInsTitle">点击任意柱体</h3>
+                    <p class="tjs-ins-tag" id="barInsTag">3D BAR / 18 BARS</p>
+                    <div class="tjs-ins-value"><b id="barInsValue">—</b><small>报名人次</small></div>
+                    <p class="tjs-ins-desc" id="barInsDesc">柱体高度由报名量线性映射，三个渠道沿 Z 轴排开。拖动可以旋转视角，滚轮缩放，悬浮查看数值，点击后在这里看到环比与渠道占比。</p>
+                    <div class="tjs-ins-meta" id="barInsMeta"></div>
+                    <p class="tjs-ins-hint" id="barMiniLabel">操作提示</p>
+                    <div class="tjs-mini" id="barMini"><p class="tjs-mini-empty">拖动旋转视角，悬浮或点击柱体查看月度报名数据。</p></div>
+                    <button class="tjs-link" id="barClear" type="button" hidden>清除选中</button>
+                </aside>
+            </div>
+            <div class="tjs-foot">
+                <span><i class="tjs-dot"></i> 18 根柱体 · 3 个渠道</span>
+                <span>高度映射报名量</span>
+                <span>悬浮高亮 · 点击查看详情</span>
+            </div>
+        </article>
+
+        <!-- ================= 3D 曲面图 ================= -->
+        <article class="tjs-card" id="surfaceCard">
+            <div class="tjs-card-head">
+                <div>
+                    <span class="tjs-card-index">FIG. 02 / 3D SURFACE</span>
+                    <h2>内容热度三维地形</h2>
+                    <p>48 × 32 网格的曲面，顶点高度与颜色同时编码热度：深蓝是低热区，青色是活跃区，金色是峰值。悬浮曲面即可实时读取坐标与热度。</p>
+                </div>
+                <div class="tjs-actions">
+                    <button class="tjs-btn tjs-toggle" type="button" data-rotate="surface" aria-pressed="false"><i></i>自动旋转</button>
+                    <button class="tjs-btn tjs-toggle tjs-grid-toggle" type="button" data-grid="surface" aria-pressed="true"><i></i>网格</button>
+                    <button class="tjs-btn" type="button" data-reset="surface">重置视角</button>
+                    <button class="tjs-btn" type="button" data-export="surface">导出 PNG</button>
+                </div>
+            </div>
+            <div class="tjs-stage tjs-stage-surface" id="surfaceStage">
+                <div class="tjs-live"><i></i>LIVE SURFACE · 48 × 32</div>
+                <div class="tjs-height-legend">
+                    <div class="ramp"></div>
+                    <div class="ticks"><span>100</span><span>75</span><span>50</span><span>25</span><span>0</span></div>
+                </div>
+                <div class="tjs-tooltip" id="surfaceTip" hidden></div>
+                <div class="tjs-corner">拖拽旋转 · 滚轮缩放 · 悬浮采样</div>
+            </div>
+            <div class="tjs-legend">
+                <span style="--c:#0b3454"><i></i>低热</span>
+                <span style="--c:#1ea6c6"><i></i>活跃</span>
+                <span style="--c:#4de3c4"><i></i>高热</span>
+                <span style="--c:#d99a1f"><i></i>峰值</span>
+                <span class="tjs-legend-note">顶点高度 + 顶点颜色双重编码 · 金色圆环标记峰值</span>
+            </div>
+            <div class="tjs-foot">
+                <span><i class="tjs-dot"></i> 48 × 32 网格 · 1617 顶点</span>
+                <span>顶点色按热度映射</span>
+                <span>射线拾取实时采样</span>
+            </div>
+        </article>
+
+        <section class="tjs-read">
+            <div class="tjs-read-head">
+                <h2>读图指南</h2>
+                <span>Reading Notes</span>
+            </div>
+            <div class="tjs-read-grid">
+                <article class="tjs-read-card">
+                    <i>01 / WEBGL PIPELINE</i>
+                    <b>场景图与渲染循环</b>
+                    <p>Three.js 把场景描述成 Scene、Camera 和 Mesh 的树。每一帧由 requestAnimationFrame 驱动，OrbitControls 负责把拖拽和滚轮转换成相机轨道运动。</p>
+                </article>
+                <article class="tjs-read-card">
+                    <i>02 / 3D BAR</i>
+                    <b>高度即数据</b>
+                    <p>每根柱体是一个 BoxGeometry，Y 轴缩放对应报名量。Raycaster 从鼠标位置发射射线，命中柱体后更新发光材质与右侧数据面板。</p>
+                </article>
+                <article class="tjs-read-card">
+                    <i>03 / SURFACE</i>
+                    <b>顶点位移与顶点色</b>
+                    <p>平面几何体的每个顶点按热度函数抬高，并写入从深蓝到金色的顶点颜色。悬浮时对曲面做射线拾取，用交点坐标反算热度值。</p>
+                </article>
+            </div>
+        </section>
+
+        <p class="tjs-note">说明：Three.js r128 与 OrbitControls 已下载至本地 <code>cdn/three/</code>，页面无需联网即可渲染；两张图的数据为教学演示模型，可替换为自己的业务数据。WebGL 场景支持拖拽旋转、滚轮缩放、自动旋转、重置视角与 PNG 导出。</p>
+        <p class="tjs-error" id="threeError">Three.js 或 OrbitControls 未能加载，请检查本地 cdn/three/ 目录。</p>
+    </main>
+
+    <script src="cdn/three/three.min.js"></script>
+    <script src="cdn/three/OrbitControls.js"></script>
+    <script>
+        (function () {
+            'use strict';
+
+            var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            var AUTO_START = !reduceMotion && window.innerWidth > 760;
+            var charts = {};
+            var errorNote = document.getElementById('threeError');
+
+            function showFallback(stage, message) {
+                if (!stage) { return; }
+                var el = document.createElement('div');
+                el.className = 'tjs-fallback';
+                el.textContent = message;
+                stage.appendChild(el);
+            }
+
+            if (!window.THREE) {
+                if (errorNote) { errorNote.style.display = 'block'; }
+                showFallback(document.getElementById('barStage'), 'Three.js 未能加载，无法创建 WebGL 场景。');
+                showFallback(document.getElementById('surfaceStage'), 'Three.js 未能加载，无法创建 WebGL 场景。');
+                return;
+            }
+            if (!THREE.OrbitControls) {
+                if (errorNote) {
+                    errorNote.style.display = 'block';
+                    errorNote.textContent = 'OrbitControls 未能加载，请检查 cdn/three/OrbitControls.js。';
+                }
+                showFallback(document.getElementById('barStage'), 'OrbitControls 未能加载，无法启用轨道控制。');
+                showFallback(document.getElementById('surfaceStage'), 'OrbitControls 未能加载，无法启用轨道控制。');
+                return;
+            }
+
+            /* ---------- 公共工具 ---------- */
+            function clamp(value, min, max) {
+                return Math.max(min, Math.min(max, value));
+            }
+
+            function makeSprite(text, color, fontSize) {
+                var size = fontSize || 30;
+                var pad = Math.round(size * 0.62);
+                var canvas = document.createElement('canvas');
+                var ctx = canvas.getContext('2d');
+                var font = '600 ' + size + 'px "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif';
+                ctx.font = font;
+                var width = Math.ceil(ctx.measureText(text).width) + pad * 2;
+                var height = size + pad * 2;
+                canvas.width = width;
+                canvas.height = height;
+                ctx = canvas.getContext('2d');
+                ctx.font = font;
+                ctx.fillStyle = color;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(text, width / 2, height / 2 + 1);
+
+                var texture = new THREE.CanvasTexture(canvas);
+                texture.minFilter = THREE.LinearFilter;
+                texture.magFilter = THREE.LinearFilter;
+                texture.encoding = THREE.sRGBEncoding;
+
+                var material = new THREE.SpriteMaterial({
+                    map: texture,
+                    transparent: true,
+                    depthWrite: false,
+                    depthTest: true
+                });
+                material.toneMapped = false;
+                var sprite = new THREE.Sprite(material);
+                var worldScale = 0.006;
+                sprite.scale.set(width * worldScale, height * worldScale, 1);
+                return sprite;
+            }
+
+            function createRenderer(stage, label) {
+                var renderer;
+                try {
+                    renderer = new THREE.WebGLRenderer({
+                        antialias: true,
+                        alpha: true,
+                        preserveDrawingBuffer: true,
+                        powerPreference: 'high-performance'
+                    });
+                } catch (error) {
+                    showFallback(stage, 'WebGL 初始化失败：' + (error && error.message ? error.message : error));
+                    return null;
+                }
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+                renderer.outputEncoding = THREE.sRGBEncoding;
+                renderer.toneMapping = THREE.ACESFilmicToneMapping;
+                renderer.toneMappingExposure = 1.0;
+                renderer.shadowMap.enabled = true;
+                renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+                var canvas = renderer.domElement;
+                canvas.setAttribute('role', 'img');
+                canvas.setAttribute('aria-label', label);
+                canvas.style.touchAction = 'none';
+                stage.insertBefore(canvas, stage.firstChild);
+                return renderer;
+            }
+
+            function watchVisibility(stage) {
+                var visible = true;
+                if ('IntersectionObserver' in window) {
+                    new IntersectionObserver(function (entries) {
+                        visible = entries[0].isIntersecting;
+                    }, { threshold: 0.01 }).observe(stage);
+                }
+                return function () { return visible && !document.hidden; };
+            }
+
+            function setupResize(stage, renderer, camera) {
+                function resize() {
+                    var width = stage.clientWidth;
+                    var height = stage.clientHeight;
+                    if (!width || !height) { return; }
+                    renderer.setSize(width, height, false);
+                    camera.aspect = width / height;
+                    camera.updateProjectionMatrix();
+                }
+                if ('ResizeObserver' in window) {
+                    new ResizeObserver(resize).observe(stage);
+                }
+                window.addEventListener('resize', resize);
+                resize();
+                requestAnimationFrame(resize);
+                return resize;
+            }
+
+            function downloadBlob(blob, filename) {
+                var url = URL.createObjectURL(blob);
+                var link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                setTimeout(function () { URL.revokeObjectURL(url); }, 1200);
+            }
+
+            function exportPng(renderer, scene, camera, filename) {
+                renderer.render(scene, camera);
+                var source = renderer.domElement;
+                var output = document.createElement('canvas');
+                output.width = source.width;
+                output.height = source.height;
+                var ctx = output.getContext('2d');
+                ctx.fillStyle = '#05080f';
+                ctx.fillRect(0, 0, output.width, output.height);
+                ctx.drawImage(source, 0, 0);
+                output.toBlob(function (blob) {
+                    if (blob) { downloadBlob(blob, filename); }
+                }, 'image/png');
+            }
+
+            function setToggle(button, on) {
+                if (!button) { return; }
+                button.classList.toggle('is-on', on);
+                button.setAttribute('aria-pressed', on ? 'true' : 'false');
+            }
+
+            function placeTooltip(tip, stage, clientX, clientY) {
+                var rect = stage.getBoundingClientRect();
+                var x = clientX - rect.left;
+                var y = clientY - rect.top;
+                tip.hidden = false;
+                var tw = tip.offsetWidth;
+                var th = tip.offsetHeight;
+                var left = clamp(x + 14, 8, Math.max(8, rect.width - tw - 8));
+                var top = y - th - 12;
+                if (top < 8) { top = y + 18; }
+                top = clamp(top, 8, Math.max(8, rect.height - th - 8));
+                tip.style.left = left + 'px';
+                tip.style.top = top + 'px';
+            }
+
+            /* ---------- 图 1：3D 柱状图 ---------- */
+            var MONTHS = ['1 月', '2 月', '3 月', '4 月', '5 月', '6 月'];
+            var CHANNELS = [
+                { name: '官网', color: 0x38bdf8, hex: '#38bdf8', values: [320, 410, 380, 520, 610, 690] },
+                { name: '社群', color: 0xa78bfa, hex: '#a78bfa', values: [210, 260, 300, 360, 420, 480] },
+                { name: '校园大使', color: 0xfbbf24, hex: '#fbbf24', values: [150, 190, 230, 280, 340, 390] }
+            ];
+            var CHANNEL_DESC = {
+                '官网': '官网注册弹窗与帮助中心是报名主入口，数据会随赛事节点与推荐位调整而波动。',
+                '社群': '社群运营以赛事提醒、答疑和拼团为主，转化稳定，规模小于官网但复访率更高。',
+                '校园大使': '校园大使带来线下扫码与社群扩散，增长更依赖赛季节点和校园活动排期。'
+            };
+
+            charts.bar = (function createBarChart() {
+                var stage = document.getElementById('barStage');
+                var tip = document.getElementById('barTip');
+                if (!stage || !tip) { return null; }
+
+                var renderer = createRenderer(stage, '赛事报名三维柱状图，可拖拽旋转与缩放');
+                if (!renderer) { return null; }
+
+                var scene = new THREE.Scene();
+                scene.fog = new THREE.FogExp2(new THREE.Color(0x05080f).convertSRGBToLinear(), 0.017);
+
+                var camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+                var startPos = new THREE.Vector3(8.8, 8.2, 11.6);
+                var startTarget = new THREE.Vector3(0, 1.9, 0);
+                camera.position.copy(startPos);
+
+                var controls = new THREE.OrbitControls(camera, renderer.domElement);
+                controls.enableDamping = true;
+                controls.dampingFactor = 0.07;
+                controls.target.copy(startTarget);
+                controls.minDistance = 9;
+                controls.maxDistance = 24;
+                controls.maxPolarAngle = Math.PI * 0.49;
+                controls.autoRotateSpeed = 0.55;
+                var rotateEnabled = AUTO_START;
+                controls.autoRotate = rotateEnabled;
+                controls.update();
+
+                var dragging = false;
+                controls.addEventListener('start', function () {
+                    dragging = true;
+                    controls.autoRotate = false;
+                    tip.hidden = true;
+                });
+                controls.addEventListener('end', function () {
+                    dragging = false;
+                    controls.autoRotate = rotateEnabled;
+                });
+
+                scene.add(new THREE.HemisphereLight(
+                    new THREE.Color(0x9fd8ff).convertSRGBToLinear(),
+                    new THREE.Color(0x05080f).convertSRGBToLinear(),
+                    0.55
+                ));
+
+                var keyLight = new THREE.DirectionalLight(0xffffff, 1.0);
+                keyLight.position.set(7, 12, 7);
+                keyLight.castShadow = true;
+                keyLight.shadow.mapSize.set(1024, 1024);
+                keyLight.shadow.camera.left = -9;
+                keyLight.shadow.camera.right = 9;
+                keyLight.shadow.camera.top = 10;
+                keyLight.shadow.camera.bottom = -3;
+                keyLight.shadow.camera.near = 0.5;
+                keyLight.shadow.camera.far = 32;
+                keyLight.shadow.bias = -0.0006;
+                scene.add(keyLight);
+
+                var fillLight = new THREE.PointLight(new THREE.Color(0x5eead4).convertSRGBToLinear(), 0.4, 24);
+                fillLight.position.set(-7, 4.5, -4);
+                scene.add(fillLight);
+
+                var rimLight = new THREE.PointLight(new THREE.Color(0xa78bfa).convertSRGBToLinear(), 0.35, 22);
+                rimLight.position.set(6, 3.5, 7);
+                scene.add(rimLight);
+
+                var grid = new THREE.GridHelper(13.5, 13, 0x1f405c, 0x0f1c2a);
+                grid.position.y = 0.002;
+                grid.material.transparent = true;
+                grid.material.opacity = 0.9;
+                scene.add(grid);
+
+                var shadowPlane = new THREE.Mesh(
+                    new THREE.PlaneGeometry(16, 16),
+                    new THREE.ShadowMaterial({ color: 0x000000, opacity: 0.38 })
+                );
+                shadowPlane.rotation.x = -Math.PI / 2;
+                shadowPlane.position.y = 0.001;
+                shadowPlane.receiveShadow = true;
+                scene.add(shadowPlane);
+
+                var starPositions = new Float32Array(140 * 3);
+                for (var s = 0; s < 140; s++) {
+                    starPositions[s * 3] = (Math.random() - 0.5) * 18;
+                    starPositions[s * 3 + 1] = 0.8 + Math.random() * 6.4;
+                    starPositions[s * 3 + 2] = (Math.random() - 0.5) * 14;
+                }
+                var starGeometry = new THREE.BufferGeometry();
+                starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+                var stars = new THREE.Points(starGeometry, new THREE.PointsMaterial({
+                    color: new THREE.Color(0x5eead4).convertSRGBToLinear(),
+                    size: 0.038,
+                    transparent: true,
+                    opacity: 0.34,
+                    depthWrite: false,
+                    blending: THREE.AdditiveBlending
+                }));
+                scene.add(stars);
+
+                function barHeight(value) {
+                    return Math.max(0.08, (value / 700) * 4.0);
+                }
+
+                var barGeometry = new THREE.BoxGeometry(0.62, 1, 0.62);
+                barGeometry.translate(0, 0.5, 0);
+                var edgeGeometry = new THREE.EdgesGeometry(barGeometry);
+                var bars = [];
+
+                CHANNELS.forEach(function (channel, channelIndex) {
+                    var baseColor = new THREE.Color(channel.color).convertSRGBToLinear();
+                    channel.values.forEach(function (value, monthIndex) {
+                        var material = new THREE.MeshStandardMaterial({
+                            color: baseColor.clone().multiplyScalar(0.92),
+                            metalness: 0.32,
+                            roughness: 0.36,
+                            emissive: baseColor,
+                            emissiveIntensity: 0.08
+                        });
+                        var mesh = new THREE.Mesh(barGeometry, material);
+                        mesh.position.set((monthIndex - 2.5) * 1.5, 0, (channelIndex - 1) * 1.2);
+                        mesh.scale.y = barHeight(value);
+                        mesh.castShadow = true;
+                        mesh.receiveShadow = true;
+                        mesh.userData = {
+                            monthIndex: monthIndex,
+                            channelIndex: channelIndex,
+                            value: value,
+                            month: MONTHS[monthIndex],
+                            channel: channel.name
+                        };
+
+                        var edge = new THREE.LineSegments(
+                            edgeGeometry,
+                            new THREE.LineBasicMaterial({
+                                color: baseColor,
+                                transparent: true,
+                                opacity: 0.5
+                            })
+                        );
+                        mesh.add(edge);
+                        scene.add(mesh);
+                        bars.push(mesh);
+                    });
+                });
+
+                MONTHS.forEach(function (name, index) {
+                    var label = makeSprite(name, '#b9d6ee', 32);
+                    label.position.set((index - 2.5) * 1.5, 0.24, 2.7);
+                    scene.add(label);
+                });
+
+                CHANNELS.forEach(function (channel, index) {
+                    var label = makeSprite(channel.name, channel.hex, 28);
+                    label.position.set(-4.95, 0.4, (index - 1) * 1.2);
+                    scene.add(label);
+                });
+
+                [0, 200, 400, 600].forEach(function (value) {
+                    var label = makeSprite(String(value), '#8ba0b5', 25);
+                    label.position.set(-4.95, barHeight(value) + 0.02, -2.25);
+                    scene.add(label);
+                });
+
+                var axisGeometry = new THREE.BufferGeometry().setFromPoints([
+                    new THREE.Vector3(-4.55, 0, -2.25),
+                    new THREE.Vector3(-4.55, 4.25, -2.25)
+                ]);
+                scene.add(new THREE.Line(axisGeometry, new THREE.LineBasicMaterial({
+                    color: 0x35516b,
+                    transparent: true,
+                    opacity: 0.75
+                })));
+
+                var raycaster = new THREE.Raycaster();
+                var pointer = new THREE.Vector2();
+                var hovered = null;
+                var selected = null;
+                var pointerDown = null;
+
+                var insTitle = document.getElementById('barInsTitle');
+                var insTag = document.getElementById('barInsTag');
+                var insValue = document.getElementById('barInsValue');
+                var insDesc = document.getElementById('barInsDesc');
+                var insMeta = document.getElementById('barInsMeta');
+                var miniLabel = document.getElementById('barMiniLabel');
+                var mini = document.getElementById('barMini');
+                var clearButton = document.getElementById('barClear');
+
+                function refreshBars() {
+                    bars.forEach(function (bar) {
+                        var active = bar === hovered || bar === selected;
+                        bar.material.emissiveIntensity = active ? 0.55 : 0.05;
+                        if (bar.children[0]) {
+                            bar.children[0].material.opacity = active ? 1 : 0.5;
+                        }
+                    });
+                }
+
+                function pickBar(clientX, clientY) {
+                    var rect = renderer.domElement.getBoundingClientRect();
+                    if (!rect.width || !rect.height) { return null; }
+                    pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+                    pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+                    raycaster.setFromCamera(pointer, camera);
+                    var hits = raycaster.intersectObjects(bars, false);
+                    return hits.length ? hits[0].object : null;
+                }
+
+                function showTip(bar, clientX, clientY) {
+                    var data = bar.userData;
+                    var channel = CHANNELS[data.channelIndex];
+                    tip.innerHTML =
+                        '<b><i style="background:' + channel.hex + ';color:' + channel.hex + '"></i>' +
+                        data.month + ' · ' + data.channel + '</b>' +
+                        '<span>报名 <em>' + data.value + '</em> 人次</span>';
+                    placeTooltip(tip, stage, clientX, clientY);
+                }
+
+                function updateInspector(bar) {
+                    if (!bar) {
+                        insTitle.textContent = '点击任意柱体';
+                        insTag.textContent = '3D BAR / ' + bars.length + ' BARS';
+                        insValue.textContent = '—';
+                        insDesc.textContent = '柱体高度由报名量线性映射，三个渠道沿 Z 轴排开。拖动可以旋转视角，滚轮缩放，悬浮查看数值，点击后在这里看到环比与渠道占比。';
+                        insMeta.innerHTML = '';
+                        miniLabel.textContent = '操作提示';
+                        mini.innerHTML = '<p class="tjs-mini-empty">拖动旋转视角，悬浮或点击柱体查看月度报名数据。</p>';
+                        clearButton.hidden = true;
+                        return;
+                    }
+
+                    var data = bar.userData;
+                    var channel = CHANNELS[data.channelIndex];
+                    var total = channel.values.reduce(function (sum, value) { return sum + value; }, 0);
+                    var share = data.value / total * 100;
+                    var previous = data.monthIndex > 0 ? channel.values[data.monthIndex - 1] : null;
+                    var delta = previous ? (data.value - previous) / previous * 100 : null;
+                    var max = Math.max.apply(null, channel.values);
+
+                    insTitle.textContent = data.month + ' · ' + channel.name;
+                    insTag.textContent = 'CHANNEL 0' + (data.channelIndex + 1) + ' / 3D BAR';
+                    insValue.textContent = String(data.value);
+                    insDesc.textContent = CHANNEL_DESC[channel.name];
+                    insMeta.innerHTML =
+                        '<span class="tjs-pill">' + (delta === null ? '首月基线' : (delta >= 0 ? '↑ ' : '↓ ') + Math.abs(delta).toFixed(1) + '% 环比') + '</span>' +
+                        '<span class="tjs-pill">渠道占比 ' + share.toFixed(1) + '%</span>';
+                    miniLabel.textContent = '该渠道 6 个月走势';
+                    mini.innerHTML = channel.values.map(function (value, index) {
+                        return '<div class="tjs-mini-row' + (index === data.monthIndex ? ' is-active' : '') + '">' +
+                            '<span>' + MONTHS[index] + '</span>' +
+                            '<div class="bar"><b style="width:' + (value / max * 100).toFixed(1) + '%;background:linear-gradient(90deg,' + channel.hex + ',' + (index === data.monthIndex ? '#5eead4' : channel.hex) + ')"></b></div>' +
+                            '<em>' + value + '</em></div>';
+                    }).join('');
+                    clearButton.hidden = false;
+                }
+
+                function clearSelection() {
+                    selected = null;
+                    hovered = null;
+                    refreshBars();
+                    updateInspector(null);
+                    tip.hidden = true;
+                }
+
+                renderer.domElement.addEventListener('pointerdown', function (event) {
+                    pointerDown = { x: event.clientX, y: event.clientY };
+                    tip.hidden = true;
+                });
+
+                renderer.domElement.addEventListener('pointermove', function (event) {
+                    if (dragging) { return; }
+                    var bar = pickBar(event.clientX, event.clientY);
+                    hovered = bar;
+                    refreshBars();
+                    if (bar) {
+                        showTip(bar, event.clientX, event.clientY);
+                    } else {
+                        tip.hidden = true;
+                    }
+                });
+
+                renderer.domElement.addEventListener('pointerleave', function () {
+                    hovered = null;
+                    refreshBars();
+                    tip.hidden = true;
+                });
+
+                renderer.domElement.addEventListener('click', function (event) {
+                    var moved = pointerDown ? Math.hypot(event.clientX - pointerDown.x, event.clientY - pointerDown.y) : 99;
+                    if (moved > 6) { return; }
+                    var bar = pickBar(event.clientX, event.clientY);
+                    if (bar) {
+                        selected = bar;
+                        hovered = bar;
+                        refreshBars();
+                        updateInspector(bar);
+                        showTip(bar, event.clientX, event.clientY);
+                    } else {
+                        clearSelection();
+                    }
+                });
+
+                clearButton.addEventListener('click', clearSelection);
+                updateInspector(null);
+
+                setupResize(stage, renderer, camera);
+                var isVisible = watchVisibility(stage);
+                var clock = new THREE.Clock();
+
+                function animate() {
+                    requestAnimationFrame(animate);
+                    if (!isVisible()) { return; }
+                    var time = clock.getElapsedTime();
+                    stars.rotation.y = time * 0.018;
+                    fillLight.intensity = 0.36 + Math.sin(time * 1.6) * 0.06;
+                    controls.update();
+                    renderer.render(scene, camera);
+                }
+                animate();
+
+                return {
+                    setAutoRotate: function (on) {
+                        rotateEnabled = on;
+                        controls.autoRotate = on;
+                    },
+                    reset: function () {
+                        camera.position.copy(startPos);
+                        controls.target.copy(startTarget);
+                        controls.update();
+                        tip.hidden = true;
+                    },
+                    exportImage: function () {
+                        exportPng(renderer, scene, camera, '18-7-3d-bar.png');
+                    }
+                };
+            })();
+
+            /* ---------- 图 2：3D 曲面图 ---------- */
+            charts.surface = (function createSurfaceChart() {
+                var stage = document.getElementById('surfaceStage');
+                var tip = document.getElementById('surfaceTip');
+                if (!stage || !tip) { return null; }
+
+                var renderer = createRenderer(stage, '内容热度三维曲面图，可拖拽旋转、缩放与悬浮采样');
+                if (!renderer) { return null; }
+
+                var SEG_X = 48;
+                var SEG_Z = 32;
+
+                var scene = new THREE.Scene();
+                scene.fog = new THREE.FogExp2(new THREE.Color(0x05080f).convertSRGBToLinear(), 0.015);
+
+                var camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+                var startPos = new THREE.Vector3(10.2, 8.6, 11.4);
+                var startTarget = new THREE.Vector3(0, 1.15, 0);
+                camera.position.copy(startPos);
+
+                var controls = new THREE.OrbitControls(camera, renderer.domElement);
+                controls.enableDamping = true;
+                controls.dampingFactor = 0.07;
+                controls.target.copy(startTarget);
+                controls.minDistance = 9;
+                controls.maxDistance = 26;
+                controls.maxPolarAngle = Math.PI * 0.48;
+                controls.autoRotateSpeed = 0.36;
+                var rotateEnabled = AUTO_START;
+                controls.autoRotate = rotateEnabled;
+                controls.update();
+
+                var dragging = false;
+                controls.addEventListener('start', function () {
+                    dragging = true;
+                    controls.autoRotate = false;
+                    tip.hidden = true;
+                });
+                controls.addEventListener('end', function () {
+                    dragging = false;
+                    controls.autoRotate = rotateEnabled;
+                });
+
+                scene.add(new THREE.HemisphereLight(
+                    new THREE.Color(0x9fd8ff).convertSRGBToLinear(),
+                    new THREE.Color(0x05080f).convertSRGBToLinear(),
+                    0.6
+                ));
+
+                var keyLight = new THREE.DirectionalLight(0xffffff, 1.05);
+                keyLight.position.set(8, 12, 6);
+                scene.add(keyLight);
+
+                var cyanLight = new THREE.PointLight(new THREE.Color(0x5eead4).convertSRGBToLinear(), 0.4, 26);
+                cyanLight.position.set(-8, 5, -5);
+                scene.add(cyanLight);
+
+                var goldLight = new THREE.PointLight(new THREE.Color(0xfbbf24).convertSRGBToLinear(), 0.3, 20);
+                goldLight.position.set(6, 4, 6);
+                scene.add(goldLight);
+
+                var grid = new THREE.GridHelper(14, 14, 0x1c3a52, 0x0e1b28);
+                grid.position.y = -0.02;
+                grid.material.transparent = true;
+                grid.material.opacity = 0.75;
+                scene.add(grid);
+
+                function heatAt(x, z) {
+                    var value = Math.sin(x * 0.52) * Math.cos(z * 0.46) * 0.5 +
+                        Math.sin(x * 1.18 + z * 0.62) * 0.22 +
+                        Math.cos(z * 0.95) * 0.16;
+                    value = (value + 0.88) / 1.76;
+                    value += 0.22 * Math.exp(-(((x - 2.1) * (x - 2.1)) / 2.8 + ((z + 1.1) * (z + 1.1)) / 1.8));
+                    value += 0.13 * Math.exp(-(((x + 3.2) * (x + 3.2)) / 1.6 + ((z - 1.5) * (z - 1.5)) / 1.2));
+                    return clamp(value, 0.02, 0.985);
+                }
+
+                var COLOR_STOPS = [
+                    { at: 0.20, color: new THREE.Color(0x071a2e).convertSRGBToLinear() },
+                    { at: 0.32, color: new THREE.Color(0x0b3454).convertSRGBToLinear() },
+                    { at: 0.46, color: new THREE.Color(0x126a96).convertSRGBToLinear() },
+                    { at: 0.58, color: new THREE.Color(0x1ea6c6).convertSRGBToLinear() },
+                    { at: 0.70, color: new THREE.Color(0x4de3c4).convertSRGBToLinear() },
+                    { at: 0.82, color: new THREE.Color(0xf6c453).convertSRGBToLinear() },
+                    { at: 0.94, color: new THREE.Color(0xfff3c4).convertSRGBToLinear() }
+                ];
+
+                function heatColor(value) {
+                    var t = clamp(value, 0.2, 1);
+                    for (var i = 1; i < COLOR_STOPS.length; i++) {
+                        if (t <= COLOR_STOPS[i].at) {
+                            var a = COLOR_STOPS[i - 1];
+                            var b = COLOR_STOPS[i];
+                            var k = (t - a.at) / (b.at - a.at || 1);
+                            return a.color.clone().lerp(b.color, k);
+                        }
+                    }
+                    return COLOR_STOPS[COLOR_STOPS.length - 1].color.clone();
+                }
+
+                var geometry = new THREE.PlaneGeometry(12, 8, SEG_X, SEG_Z);
+                geometry.rotateX(-Math.PI / 2);
+                var positions = geometry.attributes.position;
+                var colors = [];
+                var peakValue = -1;
+                var peakX = 0;
+                var peakZ = 0;
+
+                for (var i = 0; i < positions.count; i++) {
+                    var x = positions.getX(i);
+                    var z = positions.getZ(i);
+                    var value = heatAt(x, z);
+                    positions.setY(i, value * 3.0);
+                    var color = heatColor(value);
+                    colors.push(color.r, color.g, color.b);
+                    if (value > peakValue) {
+                        peakValue = value;
+                        peakX = x;
+                        peakZ = z;
+                    }
+                }
+                positions.needsUpdate = true;
+                geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+                geometry.computeVertexNormals();
+
+                var surfaceMaterial = new THREE.MeshStandardMaterial({
+                    vertexColors: true,
+                    metalness: 0.24,
+                    roughness: 0.5,
+                    side: THREE.DoubleSide,
+                    emissive: new THREE.Color(0x061018).convertSRGBToLinear(),
+                    emissiveIntensity: 0.22
+                });
+                var surfaceMesh = new THREE.Mesh(geometry, surfaceMaterial);
+                scene.add(surfaceMesh);
+
+                var wireframe = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({
+                    color: new THREE.Color(0x8bd8ff).convertSRGBToLinear(),
+                    wireframe: true,
+                    transparent: true,
+                    opacity: 0.11,
+                    depthWrite: false
+                }));
+                wireframe.position.y = 0.006;
+                scene.add(wireframe);
+
+                var peakHeight = heatAt(peakX, peakZ) * 3.0;
+                var peakRing = new THREE.Mesh(
+                    new THREE.TorusGeometry(0.44, 0.014, 8, 64),
+                    new THREE.MeshBasicMaterial({
+                        color: new THREE.Color(0xfbbf24).convertSRGBToLinear(),
+                        transparent: true,
+                        opacity: 0.85
+                    })
+                );
+                peakRing.rotation.x = -Math.PI / 2;
+                peakRing.position.set(peakX, peakHeight + 0.06, peakZ);
+                scene.add(peakRing);
+
+                var peakLineGeometry = new THREE.BufferGeometry().setFromPoints([
+                    new THREE.Vector3(peakX, peakHeight, peakZ),
+                    new THREE.Vector3(peakX, peakHeight + 1.15, peakZ)
+                ]);
+                scene.add(new THREE.Line(peakLineGeometry, new THREE.LineBasicMaterial({
+                    color: new THREE.Color(0xfbbf24).convertSRGBToLinear(),
+                    transparent: true,
+                    opacity: 0.55
+                })));
+
+                var peakLabel = makeSprite('峰值 ' + Math.round(peakValue * 100), '#f6c453', 30);
+                peakLabel.position.set(peakX, peakHeight + 1.38, peakZ);
+                scene.add(peakLabel);
+
+                var particlePositions = new Float32Array(90 * 3);
+                for (var p = 0; p < 90; p++) {
+                    particlePositions[p * 3] = (Math.random() - 0.5) * 13;
+                    particlePositions[p * 3 + 1] = 0.6 + Math.random() * 4.4;
+                    particlePositions[p * 3 + 2] = (Math.random() - 0.5) * 9;
+                }
+                var particleGeometry = new THREE.BufferGeometry();
+                particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+                var particles = new THREE.Points(particleGeometry, new THREE.PointsMaterial({
+                    color: new THREE.Color(0xf6c453).convertSRGBToLinear(),
+                    size: 0.032,
+                    transparent: true,
+                    opacity: 0.28,
+                    depthWrite: false,
+                    blending: THREE.AdditiveBlending
+                }));
+                scene.add(particles);
+
+                var hoverDot = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.065, 14, 14),
+                    new THREE.MeshBasicMaterial({ color: new THREE.Color(0xfff1b8).convertSRGBToLinear() })
+                );
+                hoverDot.visible = false;
+                scene.add(hoverDot);
+
+                var raycaster = new THREE.Raycaster();
+                var pointer = new THREE.Vector2();
+
+                function pickSurface(clientX, clientY) {
+                    var rect = renderer.domElement.getBoundingClientRect();
+                    if (!rect.width || !rect.height) { return null; }
+                    pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+                    pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+                    raycaster.setFromCamera(pointer, camera);
+                    var hits = raycaster.intersectObject(surfaceMesh, false);
+                    return hits.length ? hits[0] : null;
+                }
+
+                function sampleAt(event) {
+                    if (dragging) { return; }
+                    var hit = pickSurface(event.clientX, event.clientY);
+                    if (!hit) {
+                        hoverDot.visible = false;
+                        tip.hidden = true;
+                        return;
+                    }
+                    var x = hit.point.x;
+                    var z = hit.point.z;
+                    var value = heatAt(x, z);
+                    hoverDot.visible = true;
+                    hoverDot.position.set(x, value * 3.0 + 0.07, z);
+
+                    tip.innerHTML =
+                        '<b>内容热度采样</b>' +
+                        '<span>坐标 x <em>' + x.toFixed(2) + '</em> · z <em>' + z.toFixed(2) + '</em></span>' +
+                        '<span>热度 <em>' + (value * 100).toFixed(1) + '</em> / 100</span>';
+                    placeTooltip(tip, stage, event.clientX, event.clientY);
+                }
+
+                renderer.domElement.addEventListener('pointermove', sampleAt);
+                renderer.domElement.addEventListener('pointerdown', function () {
+                    hoverDot.visible = false;
+                    tip.hidden = true;
+                });
+                renderer.domElement.addEventListener('pointerleave', function () {
+                    hoverDot.visible = false;
+                    tip.hidden = true;
+                });
+
+                setupResize(stage, renderer, camera);
+                var isVisible = watchVisibility(stage);
+                var clock = new THREE.Clock();
+
+                function animate() {
+                    requestAnimationFrame(animate);
+                    if (!isVisible()) { return; }
+                    var time = clock.getElapsedTime();
+                    var pulse = 1 + Math.sin(time * 2.2) * 0.1;
+                    peakRing.scale.setScalar(pulse);
+                    peakRing.material.opacity = 0.65 + Math.sin(time * 2.2) * 0.18;
+                    hoverDot.scale.setScalar(1 + Math.sin(time * 5) * 0.12);
+                    particles.rotation.y = time * 0.012;
+                    controls.update();
+                    renderer.render(scene, camera);
+                }
+                animate();
+
+                var gridOn = true;
+
+                return {
+                    setAutoRotate: function (on) {
+                        rotateEnabled = on;
+                        controls.autoRotate = on;
+                    },
+                    reset: function () {
+                        camera.position.copy(startPos);
+                        controls.target.copy(startTarget);
+                        controls.update();
+                        hoverDot.visible = false;
+                        tip.hidden = true;
+                    },
+                    exportImage: function () {
+                        exportPng(renderer, scene, camera, '18-7-3d-surface.png');
+                    },
+                    toggleGrid: function () {
+                        gridOn = !gridOn;
+                        wireframe.visible = gridOn;
+                        return gridOn;
+                    }
+                };
+            })();
+
+            /* ---------- 控件绑定 ---------- */
+            Array.prototype.forEach.call(document.querySelectorAll('[data-rotate]'), function (button) {
+                var key = button.getAttribute('data-rotate');
+                var chart = charts[key];
+                var on = chart ? AUTO_START : false;
+                setToggle(button, on);
+                button.addEventListener('click', function () {
+                    on = !on;
+                    setToggle(button, on);
+                    if (chart) { chart.setAutoRotate(on); }
+                });
+            });
+
+            Array.prototype.forEach.call(document.querySelectorAll('[data-reset]'), function (button) {
+                button.addEventListener('click', function () {
+                    var chart = charts[button.getAttribute('data-reset')];
+                    if (chart) { chart.reset(); }
+                });
+            });
+
+            Array.prototype.forEach.call(document.querySelectorAll('[data-export]'), function (button) {
+                button.addEventListener('click', function () {
+                    var chart = charts[button.getAttribute('data-export')];
+                    if (chart) { chart.exportImage(); }
+                });
+            });
+
+            Array.prototype.forEach.call(document.querySelectorAll('[data-grid]'), function (button) {
+                var key = button.getAttribute('data-grid');
+                var chart = charts[key];
+                setToggle(button, true);
+                button.addEventListener('click', function () {
+                    if (!chart || !chart.toggleGrid) { return; }
+                    var on = chart.toggleGrid();
+                    setToggle(button, on);
+                });
+            });
+
+            var barStat = document.querySelector('[data-stat="bars"]');
+            if (barStat) { barStat.textContent = String(MONTHS.length * CHANNELS.length); }
+            var cellStat = document.querySelector('[data-stat="cells"]');
+            if (cellStat) { cellStat.textContent = String(48 * 32); }
+        })();
+    </script>
+</body>
+</html>

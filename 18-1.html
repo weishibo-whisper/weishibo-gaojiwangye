@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#05080f">
+    <title>18-1 Canvas 动画实验室 · 魏士博</title>
+    <!--
+        作者：魏士博
+        建立时间：2026-11-05
+        使用的大模型功能名称：Trae DeepSeek-V4.1-Flash
+        页面说明：18-1 Canvas 动画实验室，包含粒子星链、声波曲面、流光丝带三种动画场景
+    -->
+    <style>
+        :root {
+            --wsb-bg: #05080f;
+            --wsb-ink: #eaf3ff;
+            --wsb-muted: #8b9cb6;
+            --wsb-cyan: #5eead4;
+            --wsb-violet: #a78bfa;
+            --wsb-line: rgba(148, 180, 220, 0.16);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; }
+        body {
+            overflow: hidden;
+            background: var(--wsb-bg);
+            color: var(--wsb-ink);
+            font-family: "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .wsb-lab { position: relative; width: 100%; height: 100%; min-height: 520px; }
+        .wsb-canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            touch-action: none;
+        }
+        .wsb-vignette {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(ellipse at 50% 120%, rgba(94, 234, 212, 0.10), transparent 55%),
+                radial-gradient(ellipse at 50% -20%, rgba(167, 139, 250, 0.14), transparent 60%);
+        }
+        .wsb-top {
+            position: absolute;
+            top: clamp(22px, 5vh, 56px);
+            left: clamp(22px, 4vw, 64px);
+            max-width: min(680px, 72vw);
+            pointer-events: none;
+            z-index: 3;
+        }
+        .wsb-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            padding: 7px 12px;
+            border: 1px solid var(--wsb-line);
+            border-radius: 999px;
+            background: rgba(10, 18, 32, 0.5);
+            color: var(--wsb-muted);
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            backdrop-filter: blur(8px);
+        }
+        .wsb-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--wsb-cyan);
+            box-shadow: 0 0 10px var(--wsb-cyan);
+        }
+        .wsb-title {
+            margin-top: 20px;
+            font-size: clamp(38px, 6.2vw, 76px);
+            line-height: 0.98;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+        .wsb-title em {
+            font-style: normal;
+            color: transparent;
+            background: linear-gradient(100deg, #5eead4 9%, #38bdf8 42%, #a78bfa 78%, #f472b6);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+        .wsb-lead {
+            margin-top: 18px;
+            max-width: 430px;
+            color: var(--wsb-muted);
+            font-size: clamp(12px, 1.2vw, 14px);
+            line-height: 1.9;
+            letter-spacing: 0.4px;
+        }
+        .wsb-stats {
+            position: absolute;
+            top: clamp(22px, 5vh, 56px);
+            right: clamp(20px, 4vw, 64px);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 3;
+            pointer-events: none;
+        }
+        .wsb-stat {
+            min-width: 104px;
+            padding: 10px 14px;
+            border: 1px solid var(--wsb-line);
+            border-radius: 12px;
+            background: rgba(9, 16, 29, 0.55);
+            backdrop-filter: blur(8px);
+            text-align: right;
+        }
+        .wsb-stat b {
+            display: block;
+            font-size: 19px;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            color: #dff7ff;
+        }
+        .wsb-stat span {
+            display: block;
+            margin-top: 2px;
+            color: var(--wsb-muted);
+            font-size: 9px;
+            letter-spacing: 1.6px;
+            text-transform: uppercase;
+        }
+        .wsb-dock {
+            position: absolute;
+            left: 50%;
+            bottom: clamp(16px, 3.5vh, 38px);
+            transform: translateX(-50%);
+            width: min(920px, calc(100% - 36px));
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 10px 12px;
+            border: 1px solid var(--wsb-line);
+            border-radius: 18px;
+            background: rgba(8, 14, 26, 0.72);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(16px);
+            z-index: 4;
+        }
+        .wsb-modes { display: flex; align-items: center; gap: 6px; }
+        .wsb-mode {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid transparent;
+            border-radius: 11px;
+            padding: 9px 14px;
+            background: transparent;
+            color: var(--wsb-muted);
+            font-family: inherit;
+            font-size: 12px;
+            cursor: pointer;
+            transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+        }
+        .wsb-mode i {
+            font-style: normal;
+            font-size: 9px;
+            letter-spacing: 1px;
+            opacity: 0.55;
+        }
+        .wsb-mode:hover { color: #eaf3ff; background: rgba(255, 255, 255, 0.05); }
+        .wsb-mode.is-on {
+            color: #052029;
+            background: linear-gradient(120deg, #5eead4, #7dd3fc);
+            border-color: rgba(94, 234, 212, 0.7);
+        }
+        .wsb-mode.is-on i { opacity: 0.7; }
+        .wsb-actions {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            min-width: 0;
+        }
+        .wsb-hint {
+            color: var(--wsb-muted);
+            font-size: 11px;
+            line-height: 1.5;
+            text-align: right;
+            max-width: 260px;
+        }
+        .wsb-pause {
+            flex: 0 0 auto;
+            border: 1px solid rgba(94, 234, 212, 0.35);
+            border-radius: 11px;
+            padding: 9px 16px;
+            background: rgba(94, 234, 212, 0.08);
+            color: #bdf8ee;
+            font-family: inherit;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .wsb-pause:hover { background: rgba(94, 234, 212, 0.16); }
+        .wsb-paused {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            padding: 10px 18px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 999px;
+            background: rgba(4, 8, 14, 0.65);
+            color: #cbd5e1;
+            font-size: 10px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+            z-index: 5;
+        }
+        .wsb-paused.is-on { opacity: 1; }
+        @media (max-width: 700px) {
+            .wsb-top { max-width: 82vw; }
+            .wsb-lead { display: none; }
+            .wsb-stats { gap: 6px; }
+            .wsb-stat { min-width: 78px; padding: 8px 10px; }
+            .wsb-stat b { font-size: 15px; }
+            .wsb-dock {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 9px;
+                border-radius: 16px;
+            }
+            .wsb-modes { justify-content: space-between; gap: 3px; }
+            .wsb-mode { flex: 1; justify-content: center; padding: 8px 6px; font-size: 11px; }
+            .wsb-mode i { display: none; }
+            .wsb-actions { justify-content: space-between; gap: 10px; }
+            .wsb-hint { text-align: left; font-size: 10px; max-width: none; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .wsb-paused { transition: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="wsb-lab">
+        <canvas class="wsb-canvas" aria-label="Canvas 动画画布"></canvas>
+        <div class="wsb-vignette"></div>
+
+        <header class="wsb-top">
+            <div class="wsb-kicker"><span class="wsb-dot"></span>Canvas Motion Lab / 18-1</div>
+            <h1 class="wsb-title">让粒子<br><em>呼吸</em></h1>
+            <p class="wsb-lead">同一块画布，三种动画语言：粒子星链的相互牵引、声波曲面的起伏、流光丝带的穿梭。全部由 Canvas 2D 实时绘制。</p>
+        </header>
+
+        <div class="wsb-stats" aria-hidden="true">
+            <div class="wsb-stat"><b class="wsb-fps">60</b><span>FPS 帧率</span></div>
+            <div class="wsb-stat"><b class="wsb-count">0</b><span>粒子数量</span></div>
+            <div class="wsb-stat"><b class="wsb-mode-name">微光粒子</b><span>当前场景</span></div>
+        </div>
+
+        <footer class="wsb-dock">
+            <div class="wsb-modes" role="tablist" aria-label="动画场景切换">
+                <button class="wsb-mode is-on" type="button" data-mode="0"><i>01</i>微光粒子</button>
+                <button class="wsb-mode" type="button" data-mode="1"><i>02</i>声波曲面</button>
+                <button class="wsb-mode" type="button" data-mode="2"><i>03</i>流光丝带</button>
+            </div>
+            <div class="wsb-actions">
+                <span class="wsb-hint">移动鼠标扰动粒子，点击画布产生涟漪</span>
+                <button class="wsb-pause" type="button">暂停</button>
+            </div>
+        </footer>
+
+        <div class="wsb-paused">Paused</div>
+    </div>
+
+    <script>
+        (function () {
+            'use strict';
+
+            var TAU = Math.PI * 2;
+            var COLORS = ['#5eead4', '#38bdf8', '#a78bfa', '#f472b6', '#fbbf24'];
+            var MODE_NAMES = ['微光粒子', '声波曲面', '流光丝带'];
+            var HINTS = [
+                '移动鼠标扰动粒子，点击画布产生涟漪',
+                '鼠标靠近会抬高附近的波形',
+                '拖动鼠标可以扭曲流动的光带'
+            ];
+
+            var canvas = document.querySelector('.wsb-canvas');
+            var ctx = canvas.getContext('2d');
+            var fpsEl = document.querySelector('.wsb-fps');
+            var countEl = document.querySelector('.wsb-count');
+            var modeNameEl = document.querySelector('.wsb-mode-name');
+            var hintEl = document.querySelector('.wsb-hint');
+            var pauseBtn = document.querySelector('.wsb-pause');
+            var pausedEl = document.querySelector('.wsb-paused');
+            var modeButtons = document.querySelectorAll('.wsb-mode');
+
+            var W = 0;
+            var H = 0;
+            var dpr = 1;
+            var bgGrad = null;
+            var mode = 0;
+            var paused = false;
+            var time = 0;
+            var lastTime = 0;
+            var particles = [];
+            var rings = [];
+            var sparks = [];
+            var pointer = { x: -9999, y: -9999, active: false };
+            var frames = 0;
+            var fpsClock = 0;
+            var fps = 60;
+
+            function resize() {
+                dpr = Math.min(window.devicePixelRatio || 1, 2);
+                W = canvas.clientWidth;
+                H = canvas.clientHeight;
+                canvas.width = Math.max(1, Math.round(W * dpr));
+                canvas.height = Math.max(1, Math.round(H * dpr));
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                bgGrad = ctx.createRadialGradient(
+                    W * 0.5, H * 0.42, 0,
+                    W * 0.5, H * 0.42, Math.max(W, H) * 0.78
+                );
+                bgGrad.addColorStop(0, '#0c1829');
+                bgGrad.addColorStop(0.55, '#071120');
+                bgGrad.addColorStop(1, '#04070d');
+                buildParticles();
+                countEl.textContent = particles.length;
+                draw();
+            }
+
+            function buildParticles() {
+                var target = Math.max(56, Math.min(150, Math.round(W * H / 13000)));
+                particles = [];
+                for (var i = 0; i < target; i++) {
+                    particles.push({
+                        x: Math.random() * W,
+                        y: Math.random() * H,
+                        vx: (Math.random() - 0.5) * 0.42,
+                        vy: (Math.random() - 0.5) * 0.42,
+                        r: 1 + Math.random() * 2.2,
+                        color: COLORS[i % COLORS.length],
+                        phase: Math.random() * TAU
+                    });
+                }
+            }
+
+            function updateParticles(dt) {
+                var speed = dt * 60;
+                for (var i = 0; i < particles.length; i++) {
+                    var p = particles[i];
+                    p.x += p.vx * speed;
+                    p.y += p.vy * speed;
+                    p.phase += dt * 1.4;
+
+                    if (p.x < -20) p.x = W + 20;
+                    if (p.x > W + 20) p.x = -20;
+                    if (p.y < -20) p.y = H + 20;
+                    if (p.y > H + 20) p.y = -20;
+
+                    if (pointer.active) {
+                        var dx = p.x - pointer.x;
+                        var dy = p.y - pointer.y;
+                        var dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < 140 && dist > 0.1) {
+                            var force = (1 - dist / 140) * 0.55;
+                            p.vx += (dx / dist) * force;
+                            p.vy += (dy / dist) * force;
+                        }
+                    }
+
+                    p.vx *= 0.988;
+                    p.vy *= 0.988;
+                    var maxSpeed = 2.4;
+                    if (Math.abs(p.vx) > maxSpeed) p.vx = p.vx > 0 ? maxSpeed : -maxSpeed;
+                    if (Math.abs(p.vy) > maxSpeed) p.vy = p.vy > 0 ? maxSpeed : -maxSpeed;
+                }
+            }
+
+            function drawRings(dt) {
+                for (var i = rings.length - 1; i >= 0; i--) {
+                    var ring = rings[i];
+                    ring.r += ring.speed * dt;
+                    ring.life -= dt;
+                    if (ring.life <= 0) {
+                        rings.splice(i, 1);
+                        continue;
+                    }
+                    ctx.beginPath();
+                    ctx.arc(ring.x, ring.y, ring.r, 0, TAU);
+                    ctx.strokeStyle = 'rgba(148, 240, 230, ' + Math.max(0, ring.life) * 0.55 + ')';
+                    ctx.lineWidth = 1.3;
+                    ctx.stroke();
+                }
+            }
+
+            function drawSparks(dt) {
+                for (var i = sparks.length - 1; i >= 0; i--) {
+                    var s = sparks[i];
+                    s.x += s.vx * dt * 60;
+                    s.y += s.vy * dt * 60;
+                    s.vx *= 0.96;
+                    s.vy *= 0.96;
+                    s.life -= dt;
+                    if (s.life <= 0) {
+                        sparks.splice(i, 1);
+                        continue;
+                    }
+                    ctx.globalAlpha = Math.max(0, s.life) * 0.9;
+                    ctx.fillStyle = s.color;
+                    ctx.beginPath();
+                    ctx.arc(s.x, s.y, 1.8, 0, TAU);
+                    ctx.fill();
+                    ctx.globalAlpha = 1;
+                }
+            }
+
+            function renderParticles(dt) {
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.fillStyle = bgGrad;
+                ctx.fillRect(0, 0, W, H);
+
+                var linkDist = 128;
+                ctx.lineWidth = 1;
+                for (var i = 0; i < particles.length; i++) {
+                    var a = particles[i];
+                    for (var j = i + 1; j < particles.length; j++) {
+                        var b = particles[j];
+                        var dx = a.x - b.x;
+                        var dy = a.y - b.y;
+                        var d2 = dx * dx + dy * dy;
+                        if (d2 < linkDist * linkDist) {
+                            var alpha = (1 - Math.sqrt(d2) / linkDist) * 0.32;
+                            ctx.strokeStyle = 'rgba(94, 234, 212, ' + alpha.toFixed(3) + ')';
+                            ctx.beginPath();
+                            ctx.moveTo(a.x, a.y);
+                            ctx.lineTo(b.x, b.y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+
+                if (pointer.active) {
+                    for (var k = 0; k < particles.length; k++) {
+                        var q = particles[k];
+                        var mx = q.x - pointer.x;
+                        var my = q.y - pointer.y;
+                        var md = Math.sqrt(mx * mx + my * my);
+                        if (md < 210) {
+                            ctx.strokeStyle = 'rgba(167, 139, 250, ' + ((1 - md / 210) * 0.5).toFixed(3) + ')';
+                            ctx.beginPath();
+                            ctx.moveTo(pointer.x, pointer.y);
+                            ctx.lineTo(q.x, q.y);
+                            ctx.stroke();
+                        }
+                    }
+                    ctx.beginPath();
+                    ctx.arc(pointer.x, pointer.y, 5, 0, TAU);
+                    ctx.strokeStyle = 'rgba(94, 234, 212, 0.75)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+
+                ctx.globalCompositeOperation = 'lighter';
+                for (var m = 0; m < particles.length; m++) {
+                    var p = particles[m];
+                    var pulse = 0.55 + 0.45 * Math.sin(time * 2 + p.phase);
+                    ctx.globalAlpha = 0.16 * pulse;
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r * 3.4, 0, TAU);
+                    ctx.fill();
+
+                    ctx.globalAlpha = 0.9;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r, 0, TAU);
+                    ctx.fill();
+                }
+                ctx.globalAlpha = 1;
+                ctx.globalCompositeOperation = 'source-over';
+
+                drawRings(dt);
+                drawSparks(dt);
+            }
+
+            function renderWaves(dt) {
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.fillStyle = bgGrad;
+                ctx.fillRect(0, 0, W, H);
+
+                var layers = 7;
+                for (var i = 0; i < layers; i++) {
+                    var baseY = H * 0.18 + i * (H * 0.64 / (layers - 1));
+                    var amp = 18 + i * 4;
+                    var color = COLORS[i % COLORS.length];
+                    ctx.beginPath();
+                    for (var x = 0; x <= W; x += 10) {
+                        var boost = 0;
+                        if (pointer.active) {
+                            var dx2 = x - pointer.x;
+                            boost = Math.exp(-(dx2 * dx2) / (2 * 150 * 150)) * 52;
+                        }
+                        var y = baseY
+                            + Math.sin(x * 0.008 + time * 0.9 + i * 0.6) * amp
+                            + Math.sin(x * 0.022 - time * 1.5 + i) * 6
+                            + boost * Math.sin(time * 2.2 + x * 0.02);
+                        if (x === 0) ctx.moveTo(x, y);
+                        else ctx.lineTo(x, y);
+                    }
+                    ctx.strokeStyle = color;
+                    ctx.globalAlpha = 0.42 + 0.18 * Math.sin(time + i);
+                    ctx.lineWidth = 1.6;
+                    ctx.shadowColor = color;
+                    ctx.shadowBlur = 16;
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+                    ctx.globalAlpha = 1;
+                }
+
+                ctx.globalCompositeOperation = 'lighter';
+                for (var n = 0; n < particles.length; n++) {
+                    var p = particles[n];
+                    var px = p.x;
+                    var py = H * 0.5 + Math.sin(px * 0.008 + time * 0.9) * 60;
+                    ctx.globalAlpha = 0.35;
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(px, py, 1.4, 0, TAU);
+                    ctx.fill();
+                }
+                ctx.globalAlpha = 1;
+                ctx.globalCompositeOperation = 'source-over';
+
+                drawRings(dt);
+                drawSparks(dt);
+            }
+
+            function ribbonY(x, index, t) {
+                var y = H * 0.5
+                    + Math.sin(x * 0.0068 + t * 0.85 + index * 1.15) * (H * 0.22)
+                    + Math.sin(x * 0.003 - t * 0.45 + index) * 34;
+                if (pointer.active) {
+                    var d = x - pointer.x;
+                    var pull = Math.exp(-(d * d) / (2 * 170 * 170));
+                    y += pull * (pointer.y - y) * 0.55;
+                }
+                return y;
+            }
+
+            function renderRibbons(dt) {
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.fillStyle = bgGrad;
+                ctx.fillRect(0, 0, W, H);
+
+                ctx.globalCompositeOperation = 'lighter';
+                for (var i = 0; i < 5; i++) {
+                    var color = COLORS[i % COLORS.length];
+                    var grad = ctx.createLinearGradient(0, 0, W, 0);
+                    grad.addColorStop(0, 'rgba(94, 234, 212, 0)');
+                    grad.addColorStop(0.35, color);
+                    grad.addColorStop(0.65, color);
+                    grad.addColorStop(1, 'rgba(244, 114, 182, 0)');
+
+                    ctx.beginPath();
+                    for (var x = 0; x <= W; x += 8) {
+                        var y = ribbonY(x, i, time);
+                        if (x === 0) ctx.moveTo(x, y);
+                        else ctx.lineTo(x, y);
+                    }
+                    ctx.strokeStyle = grad;
+                    ctx.globalAlpha = 0.16;
+                    ctx.lineWidth = 24;
+                    ctx.shadowColor = color;
+                    ctx.shadowBlur = 26;
+                    ctx.stroke();
+
+                    ctx.globalAlpha = 0.72;
+                    ctx.lineWidth = 1.7;
+                    ctx.shadowBlur = 10;
+                    ctx.stroke();
+
+                    ctx.globalAlpha = 0.9;
+                    ctx.lineWidth = 1;
+                    ctx.shadowBlur = 0;
+                    ctx.strokeStyle = 'rgba(235, 255, 252, 0.55)';
+                    ctx.stroke();
+                }
+                ctx.globalAlpha = 1;
+                ctx.shadowBlur = 0;
+
+                for (var k = 0; k < particles.length; k++) {
+                    var p = particles[k];
+                    ctx.globalAlpha = 0.4;
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 1.2, 0, TAU);
+                    ctx.fill();
+                }
+                ctx.globalAlpha = 1;
+                ctx.globalCompositeOperation = 'source-over';
+
+                drawRings(dt);
+                drawSparks(dt);
+            }
+
+            function draw() {
+                if (!W || !H) return;
+                if (mode === 0) renderParticles(1 / 60);
+                else if (mode === 1) renderWaves(1 / 60);
+                else renderRibbons(1 / 60);
+            }
+
+            function spawnRipple(x, y) {
+                for (var i = 0; i < 3; i++) {
+                    rings.push({
+                        x: x,
+                        y: y,
+                        r: 6 + i * 14,
+                        speed: 150 + i * 40,
+                        life: 1.05 - i * 0.12
+                    });
+                }
+                for (var j = 0; j < 14; j++) {
+                    var angle = Math.random() * TAU;
+                    var velocity = 1.4 + Math.random() * 2.2;
+                    sparks.push({
+                        x: x,
+                        y: y,
+                        vx: Math.cos(angle) * velocity,
+                        vy: Math.sin(angle) * velocity,
+                        color: COLORS[j % COLORS.length],
+                        life: 0.5 + Math.random() * 0.45
+                    });
+                }
+            }
+
+            function loop(now) {
+                var dt = lastTime ? Math.min(0.032, (now - lastTime) / 1000) : 0.016;
+                lastTime = now;
+
+                frames++;
+                if (!fpsClock) fpsClock = now;
+                if (now - fpsClock > 600) {
+                    fps = Math.round(frames * 1000 / (now - fpsClock));
+                    frames = 0;
+                    fpsClock = now;
+                    fpsEl.textContent = Math.max(1, fps);
+                }
+
+                if (!paused) {
+                    time += dt;
+                    if (mode === 0) updateParticles(dt);
+                    if (mode === 0) renderParticles(dt);
+                    else if (mode === 1) renderWaves(dt);
+                    else renderRibbons(dt);
+                }
+
+                requestAnimationFrame(loop);
+            }
+
+            function setMode(next) {
+                mode = next;
+                rings = [];
+                sparks = [];
+                modeNameEl.textContent = MODE_NAMES[mode];
+                hintEl.textContent = HINTS[mode];
+                for (var i = 0; i < modeButtons.length; i++) {
+                    var btn = modeButtons[i];
+                    btn.classList.toggle('is-on', Number(btn.getAttribute('data-mode')) === mode);
+                    btn.setAttribute('aria-selected', Number(btn.getAttribute('data-mode')) === mode ? 'true' : 'false');
+                }
+                draw();
+            }
+
+            function toLocal(event) {
+                var rect = canvas.getBoundingClientRect();
+                return {
+                    x: event.clientX - rect.left,
+                    y: event.clientY - rect.top
+                };
+            }
+
+            canvas.addEventListener('pointermove', function (event) {
+                var pos = toLocal(event);
+                pointer.x = pos.x;
+                pointer.y = pos.y;
+                pointer.active = true;
+            });
+
+            canvas.addEventListener('pointerdown', function (event) {
+                var pos = toLocal(event);
+                pointer.x = pos.x;
+                pointer.y = pos.y;
+                pointer.active = true;
+                spawnRipple(pos.x, pos.y);
+            });
+
+            canvas.addEventListener('pointerleave', function () {
+                pointer.active = false;
+                pointer.x = -9999;
+                pointer.y = -9999;
+            });
+
+            for (var i = 0; i < modeButtons.length; i++) {
+                modeButtons[i].addEventListener('click', function () {
+                    setMode(Number(this.getAttribute('data-mode')));
+                });
+            }
+
+            pauseBtn.addEventListener('click', function () {
+                paused = !paused;
+                pauseBtn.textContent = paused ? '继续' : '暂停';
+                pausedEl.classList.toggle('is-on', paused);
+            });
+
+            window.addEventListener('resize', resize);
+            resize();
+            requestAnimationFrame(loop);
+        })();
+    </script>
+</body>
+</html>

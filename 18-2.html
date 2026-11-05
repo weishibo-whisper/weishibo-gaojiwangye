@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#05080f">
+    <title>18-2 赛氪全站系统架构图 · 魏士博</title>
+    <!--
+        作者：魏士博
+        建立时间：2026-11-05
+        使用的大模型功能名称：Trae DeepSeek-V4.1-Flash
+        页面说明：18-2 基于 Canvas 绘制的赛氪全站系统架构图，支持节点悬停、点击查看职责与核心链路高亮
+    -->
+    <style>
+        :root {
+            --wsb-bg: #05080f;
+            --wsb-panel: #0b1524;
+            --wsb-ink: #e9f2ff;
+            --wsb-muted: #8ea3bf;
+            --wsb-line: rgba(148, 180, 220, 0.16);
+            --wsb-cyan: #5eead4;
+            --wsb-violet: #a78bfa;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            min-height: 100vh;
+            background:
+                radial-gradient(900px 500px at 12% 0%, rgba(94, 234, 212, 0.08), transparent 65%),
+                radial-gradient(900px 500px at 88% 10%, rgba(167, 139, 250, 0.10), transparent 65%),
+                var(--wsb-bg);
+            color: var(--wsb-ink);
+            font-family: "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .wsb-page {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: clamp(24px, 4vw, 46px) clamp(16px, 3vw, 32px) 46px;
+        }
+        .wsb-head {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+        .wsb-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            color: var(--wsb-muted);
+            font-size: 10px;
+            letter-spacing: 2.2px;
+            text-transform: uppercase;
+        }
+        .wsb-kicker::before {
+            content: "";
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--wsb-cyan);
+            box-shadow: 0 0 12px var(--wsb-cyan);
+        }
+        .wsb-title {
+            margin-top: 14px;
+            font-size: clamp(26px, 4vw, 42px);
+            line-height: 1.15;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+        .wsb-title em {
+            font-style: normal;
+            color: transparent;
+            background: linear-gradient(100deg, #5eead4, #38bdf8 50%, #a78bfa);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+        .wsb-sub {
+            margin-top: 10px;
+            color: var(--wsb-muted);
+            font-size: 13px;
+            line-height: 1.8;
+            max-width: 560px;
+        }
+        .wsb-tools { display: flex; flex-wrap: wrap; gap: 8px; }
+        .wsb-tool {
+            border: 1px solid var(--wsb-line);
+            border-radius: 10px;
+            padding: 9px 15px;
+            background: rgba(255, 255, 255, 0.03);
+            color: #c6d6ea;
+            font-family: inherit;
+            font-size: 12px;
+            cursor: pointer;
+            transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+        }
+        .wsb-tool:hover { border-color: rgba(94, 234, 212, 0.45); color: #eafffb; }
+        .wsb-tool.is-on {
+            border-color: rgba(94, 234, 212, 0.65);
+            background: rgba(94, 234, 212, 0.14);
+            color: #c9fff8;
+        }
+        .wsb-tool-primary {
+            border-color: rgba(94, 234, 212, 0.5);
+            background: linear-gradient(120deg, rgba(94, 234, 212, 0.22), rgba(56, 189, 248, 0.16));
+            color: #e9fffd;
+        }
+        .wsb-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 22px;
+        }
+        .wsb-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 6px 12px;
+            border: 1px solid var(--wsb-line);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--wsb-muted);
+            font-size: 11px;
+        }
+        .wsb-chip b { color: #d8e8fa; font-weight: 600; }
+        .wsb-scroll {
+            margin-top: 20px;
+            overflow-x: auto;
+            padding-bottom: 6px;
+        }
+        .wsb-swipe {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            color: #84a0bf;
+            font-size: 11px;
+        }
+        .wsb-swipe i {
+            font-style: normal;
+            color: var(--wsb-cyan);
+            letter-spacing: 2px;
+        }
+        .wsb-stage {
+            position: relative;
+            width: 100%;
+            min-width: 960px;
+            aspect-ratio: 1200 / 640;
+            border-radius: 18px;
+            border: 1px solid var(--wsb-line);
+            background: #060c16;
+            box-shadow: 0 26px 70px rgba(0, 0, 0, 0.42);
+        }
+        .wsb-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            border-radius: 18px;
+        }
+        .wsb-tip {
+            position: absolute;
+            z-index: 6;
+            max-width: 230px;
+            padding: 10px 13px;
+            border: 1px solid rgba(94, 234, 212, 0.28);
+            border-radius: 10px;
+            background: rgba(6, 15, 26, 0.94);
+            box-shadow: 0 14px 36px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transform: translateY(4px);
+            pointer-events: none;
+            transition: opacity 0.14s ease, transform 0.14s ease;
+        }
+        .wsb-tip.is-on { opacity: 1; transform: translateY(0); }
+        .wsb-tip-title {
+            display: block;
+            color: #eafffd;
+            font-size: 13px;
+            font-weight: 700;
+        }
+        .wsb-tip-sub {
+            display: block;
+            margin-top: 4px;
+            color: var(--wsb-muted);
+            font-size: 10.5px;
+            line-height: 1.5;
+        }
+        .wsb-detail {
+            display: grid;
+            grid-template-columns: minmax(120px, 0.32fr) 1fr;
+            gap: 18px;
+            margin-top: 16px;
+            padding: 18px 20px;
+            border: 1px solid var(--wsb-line);
+            border-radius: 16px;
+            background: linear-gradient(120deg, rgba(14, 27, 45, 0.75), rgba(8, 16, 29, 0.65));
+        }
+        .wsb-detail-kicker {
+            color: var(--wsb-muted);
+            font-size: 9px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .wsb-detail-title {
+            margin-top: 8px;
+            font-size: 19px;
+            font-weight: 700;
+            color: #f2fbff;
+        }
+        .wsb-detail-look {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            gap: 10px;
+            margin-top: 8px;
+        }
+        .wsb-detail-layer {
+            color: var(--wsb-cyan);
+            font-size: 11px;
+        }
+        .wsb-detail-text {
+            color: #a9bdd6;
+            font-size: 12.5px;
+            line-height: 1.9;
+        }
+        .wsb-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+            margin-top: 14px;
+            color: var(--wsb-muted);
+            font-size: 11px;
+        }
+        .wsb-legend span { display: inline-flex; align-items: center; gap: 7px; }
+        .wsb-dash {
+            width: 26px;
+            height: 1px;
+            background: repeating-linear-gradient(90deg, rgba(120, 180, 220, 0.7) 0 5px, transparent 5px 9px);
+        }
+        .wsb-glow-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--wsb-cyan);
+            box-shadow: 0 0 9px var(--wsb-cyan);
+        }
+        .wsb-note {
+            margin-top: 10px;
+            color: #657b96;
+            font-size: 10.5px;
+            line-height: 1.7;
+        }
+        @media (max-width: 960px) {
+            .wsb-swipe { display: flex; }
+        }
+        @media (max-width: 760px) {
+            .wsb-head { align-items: flex-start; }
+            .wsb-detail { grid-template-columns: 1fr; gap: 10px; }
+            .wsb-tools { width: 100%; }
+            .wsb-tool { flex: 1; justify-content: center; text-align: center; }
+            .wsb-scroll { margin-left: -8px; margin-right: -8px; padding-left: 8px; padding-right: 8px; }
+        }
+    </style>
+</head>
+<body>
+    <main class="wsb-page">
+        <header class="wsb-head">
+            <div>
+                <div class="wsb-kicker">Canvas Architecture / 18-2</div>
+                <h1 class="wsb-title">赛氪全站<em>系统架构</em></h1>
+                <p class="wsb-sub">用 Canvas 2D 绘制四层架构：用户层发起请求，接入层负责路由与鉴权，业务服务层处理赛事与报名，数据层完成落库、缓存与检索。</p>
+                <div class="wsb-meta">
+                    <span class="wsb-chip"><b>4</b> 层架构</span>
+                    <span class="wsb-chip"><b>20</b> 个节点</span>
+                    <span class="wsb-chip"><b>1</b> 条核心链路</span>
+                    <span class="wsb-chip">Canvas 实时绘制</span>
+                </div>
+            </div>
+            <div class="wsb-tools">
+                <button class="wsb-tool wsb-path" type="button" aria-pressed="false">核心链路</button>
+                <button class="wsb-tool wsb-tool-primary wsb-export" type="button">导出 PNG</button>
+                <button class="wsb-tool wsb-reset" type="button">重置</button>
+            </div>
+        </header>
+
+        <div class="wsb-scroll">
+            <div class="wsb-stage">
+                <canvas class="wsb-canvas" aria-label="赛氪全站系统架构图"></canvas>
+                <div class="wsb-tip">
+                    <strong class="wsb-tip-title"></strong>
+                    <span class="wsb-tip-sub"></span>
+                </div>
+            </div>
+        </div>
+
+        <p class="wsb-swipe"><i>←</i> 左右滑动查看完整架构图 <i>→</i></p>
+
+        <section class="wsb-detail">
+            <div>
+                <div class="wsb-detail-kicker">Node Inspector</div>
+                <h2 class="wsb-detail-title">点击任意节点</h2>
+                <div class="wsb-detail-look"><span class="wsb-detail-layer">架构说明</span></div>
+            </div>
+            <p class="wsb-detail-text">鼠标悬停可查看节点摘要，点击节点查看职责与依赖关系。打开「核心链路」可以看到一次报名请求如何穿过四层架构：PC 官网 → API 网关 → 报名服务 → MySQL / Redis。</p>
+        </section>
+
+        <div class="wsb-legend">
+            <span><i class="wsb-dash"></i>虚线：请求与数据流向</span>
+            <span><i class="wsb-glow-dot"></i>高亮：核心报名链路</span>
+            <span>点击节点：查看职责</span>
+        </div>
+        <p class="wsb-note">说明：图中分层与节点为依据赛氪业务场景绘制的教学示意，实际部署会按环境拆分集群与可用区。移动端可左右滑动查看完整架构图。</p>
+    </main>
+
+    <script>
+        (function () {
+            'use strict';
+
+            var LOGICAL_W = 1200;
+            var LOGICAL_H = 640;
+            var BAND_X = 160;
+            var BAND_W = 1024;
+            var NODE_X = 176;
+            var NODE_W = 992;
+
+            var canvas = document.querySelector('.wsb-canvas');
+            var stage = canvas.parentElement;
+            var ctx = canvas.getContext('2d');
+            var tip = document.querySelector('.wsb-tip');
+            var tipTitle = document.querySelector('.wsb-tip-title');
+            var tipSub = document.querySelector('.wsb-tip-sub');
+            var detailTitle = document.querySelector('.wsb-detail-title');
+            var detailLayer = document.querySelector('.wsb-detail-layer');
+            var detailText = document.querySelector('.wsb-detail-text');
+            var pathBtn = document.querySelector('.wsb-path');
+            var exportBtn = document.querySelector('.wsb-export');
+            var resetBtn = document.querySelector('.wsb-reset');
+
+            var layers = [
+                {
+                    name: '用户层',
+                    en: 'USER LAYER',
+                    color: '#5eead4',
+                    y: 22,
+                    nodes: [
+                        { key: 'pc', title: 'PC 官网', sub: '浏览 / 搜索 / 详情', detail: '桌面端承载赛事浏览、搜索筛选、赛事详情与个人中心，是赛氪的主要流量入口之一。' },
+                        { key: 'h5', title: '移动端 H5', sub: '报名 / 支付 / 分享', detail: '移动端 H5 负责报名、支付与分享，适配微信内打开，减少从浏览到报名的跳转流失。' },
+                        { key: 'mini', title: '微信小程序', sub: '消息触达 / 快捷报名', detail: '小程序承担消息触达、快捷报名与订单查询，依赖微信登录态完成用户识别。' },
+                        { key: 'admin', title: '运营管理后台', sub: '审核 / 内容 / 数据', detail: '运营后台用于赛事审核、内容编排、报名名单导出与数据看板，是内部人员的操作入口。' }
+                    ]
+                },
+                {
+                    name: '接入层',
+                    en: 'ACCESS LAYER',
+                    color: '#38bdf8',
+                    y: 154,
+                    nodes: [
+                        { key: 'cdn', title: 'CDN 静态加速', sub: '图片 / 静态资源', detail: '图片、样式与脚本等静态资源就近分发，降低源站带宽压力与首屏加载延迟。' },
+                        { key: 'gateway', title: 'API 网关', sub: '路由 / 限流 / 鉴权', detail: '统一入口，负责路由转发、限流熔断、灰度分流与接口鉴权，是前后端流量的汇聚点。' },
+                        { key: 'lb', title: '负载均衡', sub: '流量分发 / 容灾', detail: '多实例负载均衡按健康检查结果摘除故障节点，把请求分配到可用服务实例。' },
+                        { key: 'auth', title: '统一鉴权', sub: '登录态 / 权限校验', detail: '统一维护登录态与权限模型，向下游服务下发用户身份、角色与访问范围。' }
+                    ]
+                },
+                {
+                    name: '业务服务层',
+                    en: 'SERVICE LAYER',
+                    color: '#a78bfa',
+                    y: 286,
+                    nodes: [
+                        { key: 'user', title: '用户服务', sub: '账号 / 资料 / 消息', detail: '维护账号、资料、消息与实名信息，为其他服务提供统一的用户维度数据。' },
+                        { key: 'contest', title: '赛事服务', sub: '赛事 / 赛程 / 榜单', detail: '管理赛事、赛程、组别与榜单，是赛氪平台的核心业务域。' },
+                        { key: 'signup', title: '报名服务', sub: '组队 / 名额 / 审核', detail: '处理个人与团队报名、名额校验、材料提交与审核状态流转，是下单前的关键环节。' },
+                        { key: 'pay', title: '支付服务', sub: '订单 / 退款 / 对账', detail: '生成订单、对接支付渠道、处理退款与对账，保证资金链路可追溯。' },
+                        { key: 'content', title: '内容服务', sub: '资讯 / 社区 / 评论', detail: '承载资讯、社区、评论与专题内容，同时为搜索与推荐提供内容数据来源。' },
+                        { key: 'search', title: '搜索服务', sub: '索引 / 联想 / 排序', detail: '基于 Elasticsearch 构建赛事与资讯索引，提供关键词联想、筛选与结果排序。' }
+                    ]
+                },
+                {
+                    name: '数据与基础设施',
+                    en: 'DATA LAYER',
+                    color: '#34d399',
+                    y: 418,
+                    nodes: [
+                        { key: 'mysql', title: 'MySQL 集群', sub: '用户 / 订单 / 报名', detail: '存储用户、赛事、报名与订单等核心事务数据，采用主从分离承担读写流量。' },
+                        { key: 'redis', title: 'Redis 缓存', sub: '会话 / 热点 / 限流', detail: '缓存会话、热点赛事与限流计数，降低数据库压力并支撑高并发读取。' },
+                        { key: 'oss', title: '对象存储', sub: '证书 / 图片 / 附件', detail: '存放证书、作品附件与赛事图片等非结构化文件，配合 CDN 完成分发。' },
+                        { key: 'mq', title: '消息队列', sub: '异步 / 削峰 / 通知', detail: '承接报名成功通知、支付回调、短信邮件等异步任务，实现削峰与服务解耦。' },
+                        { key: 'es', title: 'Elasticsearch', sub: '赛事 / 资讯检索', detail: '为赛事、资讯与社区内容建立倒排索引，支撑全文搜索与聚合筛选。' },
+                        { key: 'monitor', title: '监控与日志', sub: '指标 / 告警 / 追踪', detail: '采集指标、日志与链路追踪数据，配置告警规则并支撑线上故障定位。' }
+                    ]
+                }
+            ];
+
+            var coreKeys = ['pc', 'gateway', 'signup', 'mysql', 'redis'];
+            var allNodes = [];
+            var hoverNode = null;
+            var selectedNode = null;
+            var pathMode = false;
+            var startTime = 0;
+            var cssW = 0;
+            var cssH = 0;
+
+            function layout() {
+                allNodes = [];
+                for (var l = 0; l < layers.length; l++) {
+                    var layer = layers[l];
+                    var count = layer.nodes.length;
+                    var gap = count >= 6 ? 14 : 18;
+                    var width = (NODE_W - gap * (count - 1)) / count;
+                    for (var i = 0; i < count; i++) {
+                        var node = layer.nodes[i];
+                        node.x = NODE_X + i * (width + gap);
+                        node.y = layer.y + 17;
+                        node.w = width;
+                        node.h = 70;
+                        node.color = layer.color;
+                        node.layerName = layer.name;
+                        allNodes.push(node);
+                    }
+                }
+            }
+
+            function roundRect(x, y, w, h, r) {
+                var radius = Math.min(r, w / 2, h / 2);
+                ctx.beginPath();
+                ctx.moveTo(x + radius, y);
+                ctx.lineTo(x + w - radius, y);
+                ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+                ctx.lineTo(x + w, y + h - radius);
+                ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+                ctx.lineTo(x + radius, y + h);
+                ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+                ctx.lineTo(x, y + radius);
+                ctx.quadraticCurveTo(x, y, x + radius, y);
+                ctx.closePath();
+            }
+
+            function hexA(hex, alpha) {
+                var r = parseInt(hex.slice(1, 3), 16);
+                var g = parseInt(hex.slice(3, 5), 16);
+                var b = parseInt(hex.slice(5, 7), 16);
+                return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + alpha + ')';
+            }
+
+            function ellipsis(text, maxWidth, font) {
+                ctx.font = font;
+                if (ctx.measureText(text).width <= maxWidth) return text;
+                var out = text;
+                while (out.length > 1 && ctx.measureText(out + '…').width > maxWidth) {
+                    out = out.slice(0, -1);
+                }
+                return out + '…';
+            }
+
+            function drawBackground() {
+                var bg = ctx.createLinearGradient(0, 0, LOGICAL_W, LOGICAL_H);
+                bg.addColorStop(0, '#07111f');
+                bg.addColorStop(0.55, '#081422');
+                bg.addColorStop(1, '#050a12');
+                ctx.fillStyle = bg;
+                ctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
+
+                ctx.strokeStyle = 'rgba(120, 180, 255, 0.045)';
+                ctx.lineWidth = 1;
+                for (var x = 0; x <= LOGICAL_W; x += 40) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, LOGICAL_H);
+                    ctx.stroke();
+                }
+                for (var y = 0; y <= LOGICAL_H; y += 40) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(LOGICAL_W, y);
+                    ctx.stroke();
+                }
+
+                var glow = ctx.createRadialGradient(600, 250, 0, 600, 250, 620);
+                glow.addColorStop(0, 'rgba(56, 189, 248, 0.08)');
+                glow.addColorStop(0.55, 'rgba(56, 189, 248, 0.02)');
+                glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                ctx.fillStyle = glow;
+                ctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
+            }
+
+            function drawBands() {
+                for (var i = 0; i < layers.length; i++) {
+                    var layer = layers[i];
+                    roundRect(BAND_X, layer.y, BAND_W, 104, 16);
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.022)';
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(148, 180, 220, 0.11)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+
+                    var grad = ctx.createLinearGradient(BAND_X, layer.y, BAND_X + 180, layer.y);
+                    grad.addColorStop(0, hexA(layer.color, 0.55));
+                    grad.addColorStop(1, hexA(layer.color, 0));
+                    roundRect(BAND_X, layer.y + 10, 3, 84, 1.5);
+                    ctx.fillStyle = grad;
+                    ctx.fill();
+
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillStyle = layer.color;
+                    ctx.font = '600 15px "Microsoft YaHei", "PingFang SC", sans-serif';
+                    ctx.fillText(layer.name, 36, layer.y + 44);
+                    ctx.fillStyle = 'rgba(142, 163, 191, 0.7)';
+                    ctx.font = '9px "Segoe UI", sans-serif';
+                    ctx.fillText(layer.en, 36, layer.y + 62);
+                }
+            }
+
+            function drawConnectors(t) {
+                var positions = [420, 672, 924];
+                for (var l = 0; l < layers.length - 1; l++) {
+                    var top = layers[l].y + 104;
+                    var bottom = layers[l + 1].y;
+                    var color = layers[l].color;
+                    for (var p = 0; p < positions.length; p++) {
+                        var x = positions[p];
+                        ctx.save();
+                        ctx.globalAlpha = pathMode ? 0.18 : 1;
+                        ctx.setLineDash([6, 8]);
+                        ctx.lineDashOffset = -t * 26;
+                        ctx.strokeStyle = hexA(color, 0.35);
+                        ctx.lineWidth = 1.2;
+                        ctx.beginPath();
+                        ctx.moveTo(x, top + 4);
+                        ctx.lineTo(x, bottom - 8);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+
+                        ctx.beginPath();
+                        ctx.moveTo(x - 5, bottom - 13);
+                        ctx.lineTo(x, bottom - 6);
+                        ctx.lineTo(x + 5, bottom - 13);
+                        ctx.closePath();
+                        ctx.fillStyle = hexA(color, 0.55);
+                        ctx.fill();
+
+                        var flow = (t * 0.22 + l * 0.18 + p * 0.12) % 1;
+                        var fy = top + 8 + flow * (bottom - top - 20);
+                        ctx.beginPath();
+                        ctx.arc(x, fy, 2, 0, Math.PI * 2);
+                        ctx.fillStyle = hexA(color, 0.7);
+                        ctx.fill();
+                        ctx.restore();
+                    }
+                }
+            }
+
+            function getNode(key) {
+                for (var i = 0; i < allNodes.length; i++) {
+                    if (allNodes[i].key === key) return allNodes[i];
+                }
+                return null;
+            }
+
+            function corePoints() {
+                var points = [];
+                for (var i = 0; i < coreKeys.length; i++) {
+                    var node = getNode(coreKeys[i]);
+                    if (node) {
+                        points.push({ x: node.x + node.w / 2, y: node.y + node.h / 2 });
+                    }
+                }
+                return points;
+            }
+
+            function pointOnPolyline(points, progress) {
+                var total = 0;
+                var lengths = [];
+                for (var i = 0; i < points.length - 1; i++) {
+                    var dx = points[i + 1].x - points[i].x;
+                    var dy = points[i + 1].y - points[i].y;
+                    var len = Math.sqrt(dx * dx + dy * dy);
+                    lengths.push(len);
+                    total += len;
+                }
+                var target = total * progress;
+                var walked = 0;
+                for (var j = 0; j < lengths.length; j++) {
+                    if (walked + lengths[j] >= target) {
+                        var ratio = (target - walked) / lengths[j];
+                        return {
+                            x: points[j].x + (points[j + 1].x - points[j].x) * ratio,
+                            y: points[j].y + (points[j + 1].y - points[j].y) * ratio
+                        };
+                    }
+                    walked += lengths[j];
+                }
+                return points[points.length - 1];
+            }
+
+            function drawCorePath(t) {
+                if (!pathMode) return;
+                var points = corePoints();
+                if (points.length < 2) return;
+
+                ctx.save();
+                ctx.setLineDash([9, 7]);
+                ctx.lineDashOffset = -t * 34;
+                ctx.strokeStyle = 'rgba(94, 234, 212, 0.55)';
+                ctx.lineWidth = 2.4;
+                ctx.shadowColor = 'rgba(94, 234, 212, 0.55)';
+                ctx.shadowBlur = 16;
+                ctx.beginPath();
+                ctx.moveTo(points[0].x, points[0].y);
+                for (var i = 1; i < points.length; i++) {
+                    ctx.lineTo(points[i].x, points[i].y);
+                }
+                ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.restore();
+            }
+
+            function drawCoreDot(t) {
+                if (!pathMode) return;
+                var points = corePoints();
+                if (points.length < 2) return;
+                var progress = (t * 0.18) % 1;
+                var dot = pointOnPolyline(points, progress);
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(dot.x, dot.y, 4.5, 0, Math.PI * 2);
+                ctx.fillStyle = '#bdfef4';
+                ctx.shadowColor = 'rgba(94, 234, 212, 0.9)';
+                ctx.shadowBlur = 20;
+                ctx.fill();
+                ctx.restore();
+            }
+
+            function drawNode(node) {
+                var isCore = coreKeys.indexOf(node.key) !== -1;
+                var isHover = hoverNode === node;
+                var isSelected = selectedNode === node;
+                var dim = pathMode && !isCore;
+
+                ctx.save();
+                if (dim) ctx.globalAlpha = 0.3;
+
+                roundRect(node.x, node.y, node.w, node.h, 11);
+                var fill = ctx.createLinearGradient(node.x, node.y, node.x, node.y + node.h);
+                if (isHover || isSelected) {
+                    fill.addColorStop(0, '#1a3350');
+                    fill.addColorStop(1, '#12263d');
+                } else {
+                    fill.addColorStop(0, '#14263c');
+                    fill.addColorStop(1, '#0d1a2b');
+                }
+                ctx.fillStyle = fill;
+                ctx.fill();
+
+                ctx.lineWidth = isSelected ? 2 : 1;
+                ctx.strokeStyle = isHover || isSelected
+                    ? hexA(node.color, 0.75)
+                    : 'rgba(148, 180, 220, 0.14)';
+                if (isHover || isSelected) {
+                    ctx.shadowColor = hexA(node.color, 0.55);
+                    ctx.shadowBlur = 18;
+                }
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+
+                roundRect(node.x + 1, node.y + 12, 3, node.h - 24, 1.5);
+                ctx.fillStyle = hexA(node.color, isHover || isSelected ? 0.95 : 0.55);
+                ctx.fill();
+
+                var titleFont = node.w > 200
+                    ? '600 14.5px "Microsoft YaHei", "PingFang SC", sans-serif'
+                    : '600 13px "Microsoft YaHei", "PingFang SC", sans-serif';
+                var subFont = '10.5px "Microsoft YaHei", "PingFang SC", sans-serif';
+
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = '#eff7ff';
+                ctx.font = titleFont;
+                ctx.fillText(ellipsis(node.title, node.w - 28, titleFont), node.x + 15, node.y + 27);
+
+                ctx.fillStyle = 'rgba(148, 171, 201, 0.82)';
+                ctx.font = subFont;
+                ctx.fillText(ellipsis(node.sub, node.w - 28, subFont), node.x + 15, node.y + 49);
+
+                if (isSelected) {
+                    ctx.beginPath();
+                    ctx.arc(node.x + node.w - 12, node.y + 12, 3.2, 0, Math.PI * 2);
+                    ctx.fillStyle = node.color;
+                    ctx.fill();
+                }
+                ctx.restore();
+            }
+
+            function drawExternal(t) {
+                ctx.save();
+                roundRect(BAND_X, 548, BAND_W, 48, 12);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.018)';
+                ctx.fill();
+                ctx.setLineDash([5, 5]);
+                ctx.lineDashOffset = -t * 12;
+                ctx.strokeStyle = 'rgba(148, 180, 220, 0.16)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = 'rgba(142, 163, 191, 0.85)';
+                ctx.font = '11px "Microsoft YaHei", sans-serif';
+                ctx.fillText('外部依赖', 176, 572);
+                ctx.fillStyle = 'rgba(142, 163, 191, 0.45)';
+                ctx.font = '8.5px "Segoe UI", sans-serif';
+                ctx.fillText('EXTERNAL', 176, 586);
+
+                var items = ['微信支付', '短信 / 邮件', '实名认证', '云 CDN 服务'];
+                var pillX = 282;
+                var pillW = 142;
+                for (var i = 0; i < items.length; i++) {
+                    var x = pillX + i * (pillW + 12);
+                    roundRect(x, 559, pillW, 26, 13);
+                    ctx.fillStyle = 'rgba(94, 234, 212, 0.055)';
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(94, 234, 212, 0.18)';
+                    ctx.stroke();
+
+                    ctx.textAlign = 'center';
+                    ctx.fillStyle = 'rgba(213, 235, 247, 0.8)';
+                    ctx.font = '10.5px "Microsoft YaHei", sans-serif';
+                    ctx.fillText(items[i], x + pillW / 2, 572);
+                }
+
+                ctx.textAlign = 'left';
+                ctx.fillStyle = 'rgba(142, 163, 191, 0.5)';
+                ctx.font = '9.5px "Microsoft YaHei", sans-serif';
+                ctx.fillText('按需调用 · 凭证托管', 960, 572);
+                ctx.restore();
+            }
+
+            function draw(t) {
+                if (!cssW || !cssH) return;
+                ctx.clearRect(0, 0, LOGICAL_W, LOGICAL_H);
+                drawBackground();
+                drawBands();
+                drawConnectors(t);
+                drawCorePath(t);
+                for (var i = 0; i < allNodes.length; i++) {
+                    drawNode(allNodes[i]);
+                }
+                drawCoreDot(t);
+                drawExternal(t);
+            }
+
+            function setPath(on) {
+                pathMode = on;
+                pathBtn.classList.toggle('is-on', on);
+                pathBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+                pathBtn.textContent = on ? '退出链路' : '核心链路';
+                if (on) {
+                    selectedNode = null;
+                    detailTitle.textContent = '核心报名链路';
+                    detailLayer.textContent = '用户层 → 接入层 → 业务服务层 → 数据层';
+                    detailText.textContent = '用户从 PC 官网进入，经 API 网关完成路由、限流与鉴权，由报名服务校验名额并写入 MySQL，同时把热点数据放入 Redis。虚线表示请求与数据流向，亮起的节点为链路经过的节点。';
+                } else {
+                    updatePanel(null);
+                }
+            }
+
+            function updatePanel(node) {
+                if (node) {
+                    detailTitle.textContent = node.title;
+                    detailLayer.textContent = node.layerName;
+                    detailText.textContent = node.detail;
+                } else {
+                    detailTitle.textContent = '点击任意节点';
+                    detailLayer.textContent = '架构说明';
+                    detailText.textContent = '鼠标悬停可查看节点摘要，点击节点查看职责与依赖关系。打开「核心链路」可以看到一次报名请求如何穿过四层架构：PC 官网 → API 网关 → 报名服务 → MySQL / Redis。';
+                }
+            }
+
+            function findNode(x, y) {
+                for (var i = 0; i < allNodes.length; i++) {
+                    var n = allNodes[i];
+                    if (x >= n.x && x <= n.x + n.w && y >= n.y && y <= n.y + n.h) {
+                        return n;
+                    }
+                }
+                return null;
+            }
+
+            function fit() {
+                cssW = stage.clientWidth;
+                cssH = stage.clientHeight;
+                if (!cssW || !cssH) return;
+                var dpr = Math.min(window.devicePixelRatio || 1, 2);
+                canvas.width = Math.max(1, Math.round(cssW * dpr));
+                canvas.height = Math.max(1, Math.round(cssH * dpr));
+                var sx = dpr * cssW / LOGICAL_W;
+                var sy = dpr * cssH / LOGICAL_H;
+                ctx.setTransform(sx, 0, 0, sy, 0, 0);
+                var now = (performance.now() - startTime) / 1000;
+                draw(now);
+            }
+
+            function localPoint(event) {
+                var rect = canvas.getBoundingClientRect();
+                return {
+                    x: (event.clientX - rect.left) / rect.width * LOGICAL_W,
+                    y: (event.clientY - rect.top) / rect.height * LOGICAL_H
+                };
+            }
+
+            function showTip(node, event) {
+                if (!node) {
+                    tip.classList.remove('is-on');
+                    return;
+                }
+                tipTitle.textContent = node.title;
+                tipSub.textContent = node.sub;
+                var stageRect = stage.getBoundingClientRect();
+                var left = event.clientX - stageRect.left + 16;
+                var top = event.clientY - stageRect.top + 16;
+                if (left > stage.clientWidth - 238) left -= 252;
+                if (top > stage.clientHeight - 92) top -= 84;
+                tip.style.left = Math.max(8, left) + 'px';
+                tip.style.top = Math.max(8, top) + 'px';
+                tip.classList.add('is-on');
+            }
+
+            canvas.addEventListener('pointermove', function (event) {
+                var point = localPoint(event);
+                var node = findNode(point.x, point.y);
+                if (node !== hoverNode) {
+                    hoverNode = node;
+                    canvas.style.cursor = node ? 'pointer' : 'default';
+                }
+                showTip(node, event);
+            });
+
+            canvas.addEventListener('pointerleave', function () {
+                hoverNode = null;
+                tip.classList.remove('is-on');
+                canvas.style.cursor = 'default';
+            });
+
+            canvas.addEventListener('click', function (event) {
+                var point = localPoint(event);
+                var node = findNode(point.x, point.y);
+                selectedNode = node;
+                if (node) {
+                    if (pathMode) setPath(false);
+                    updatePanel(node);
+                } else {
+                    updatePanel(null);
+                }
+            });
+
+            pathBtn.addEventListener('click', function () {
+                setPath(!pathMode);
+            });
+
+            resetBtn.addEventListener('click', function () {
+                setPath(false);
+                selectedNode = null;
+                hoverNode = null;
+                tip.classList.remove('is-on');
+                updatePanel(null);
+            });
+
+            exportBtn.addEventListener('click', function () {
+                var link = document.createElement('a');
+                link.download = '赛氪系统架构图.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+
+            window.addEventListener('resize', fit);
+            if (window.ResizeObserver) {
+                new ResizeObserver(fit).observe(stage);
+            }
+
+            layout();
+            startTime = performance.now();
+            fit();
+            requestAnimationFrame(function frame(now) {
+                draw((now - startTime) / 1000);
+                requestAnimationFrame(frame);
+            });
+        })();
+    </script>
+</body>
+</html>

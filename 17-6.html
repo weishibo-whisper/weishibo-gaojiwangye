@@ -680,6 +680,7 @@
             height: 268px;
             margin: 0;
             padding: 9px 14px 12px;
+            overflow-x: hidden;
             overflow-y: auto;
             list-style: none;
             scrollbar-color: #57453b transparent;
@@ -689,11 +690,18 @@
         .demo-log li {
             display: flex;
             gap: 8px;
+            min-width: 0;
             padding: 3px 0;
             color: #d6c8be;
             font-family: var(--mono);
             font-size: 10px;
             line-height: 1.75;
+        }
+
+        .demo-log li span {
+            min-width: 0;
+            overflow-wrap: anywhere;
+            word-break: break-word;
         }
 
         .demo-log time {
@@ -704,7 +712,7 @@
         }
 
         .demo-log li.success span { color: #6ee7b7; }
-        .demo-log li.parallel span { color: #fcd34d; }
+        .demo-log li.concurrent span { color: #fcd34d; }
         .demo-log li.info span { color: #d6c8be; }
         .demo-log li.error span { color: #fca5a5; }
 
@@ -1337,7 +1345,7 @@
                 await runStep("pick");
 
                 setCurrent("正在进行：和面 + 和馅（同时进行）");
-                addLog("原料就位：和面与和馅同时开始（Promise.all）", "parallel");
+                addLog("原料就位：和面与和馅同时开始（Promise.all）", "concurrent");
 
                 await Promise.all([
                     runStep("dough", "和面 + 和馅"),
