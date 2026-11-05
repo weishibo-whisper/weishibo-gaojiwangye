@@ -1,0 +1,1902 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#030810">
+    <title>18-8 赛事运营数据驾驶舱 · 魏士博</title>
+    <!--
+        作者：魏士博
+        建立时间：2026-11-05
+        使用的大模型功能名称：Trae DeepSeek-V4.1-Flash
+        页面说明：18-8 基于 ECharts 的三列数据大屏，中间上方为中国地理热力地图，
+                  配套 KPI、条形图、趋势图、漏斗图、渠道环图、高校榜单、能力雷达与健康度仪表盘
+    -->
+    <style>
+        :root {
+            --dv-bg: #030810;
+            --dv-panel: rgba(7, 20, 34, 0.88);
+            --dv-panel-deep: rgba(4, 12, 22, 0.94);
+            --dv-line: rgba(74, 152, 196, 0.22);
+            --dv-line-soft: rgba(74, 152, 196, 0.10);
+            --dv-cyan: #5eead4;
+            --dv-blue: #38bdf8;
+            --dv-violet: #a78bfa;
+            --dv-gold: #fbbf24;
+            --dv-green: #34d399;
+            --dv-rose: #fb7185;
+            --dv-text: #dceeff;
+            --dv-muted: #7f9db5;
+            --dv-dim: #55738c;
+            --dv-font: "Bahnschrift", "DIN Alternate", "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+            --dv-mono: "Cascadia Code", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html { background: var(--dv-bg); }
+
+        body {
+            min-width: 320px;
+            min-height: 100vh;
+            color: var(--dv-text);
+            font-family: var(--dv-font);
+            background: var(--dv-bg);
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+        }
+
+        button, a { -webkit-tap-highlight-color: transparent; }
+        button:focus-visible,
+        a:focus-visible {
+            outline: 1px solid var(--dv-cyan);
+            outline-offset: 3px;
+        }
+
+        .dv-app {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background:
+                radial-gradient(1200px 700px at 50% -12%, rgba(56, 189, 248, 0.13), transparent 62%),
+                radial-gradient(820px 520px at -6% 104%, rgba(94, 234, 212, 0.06), transparent 62%),
+                radial-gradient(820px 520px at 106% 102%, rgba(167, 139, 250, 0.07), transparent 62%),
+                linear-gradient(180deg, #030810 0%, #040d18 46%, #030810 100%);
+        }
+
+        .dv-bg-grid {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(rgba(56, 189, 248, 0.045) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(56, 189, 248, 0.045) 1px, transparent 1px);
+            background-size: 44px 44px;
+            opacity: 0.72;
+            -webkit-mask-image: radial-gradient(ellipse at 50% 42%, #000 0%, transparent 78%);
+            mask-image: radial-gradient(ellipse at 50% 42%, #000 0%, transparent 78%);
+        }
+
+        .dv-scan {
+            position: fixed;
+            top: -180px;
+            left: 0;
+            right: 0;
+            z-index: 0;
+            height: 180px;
+            pointer-events: none;
+            background: linear-gradient(180deg, transparent, rgba(94, 234, 212, 0.055), transparent);
+            animation: dvScan 12s linear infinite;
+        }
+
+        @keyframes dvScan {
+            to { transform: translateY(calc(100vh + 360px)); }
+        }
+
+        /* ---------- 顶部标题 ---------- */
+        .dv-head {
+            position: relative;
+            z-index: 3;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 18px;
+            padding: 13px 22px 11px;
+            border-bottom: 1px solid rgba(74, 152, 196, 0.14);
+            background: linear-gradient(180deg, rgba(4, 12, 22, 0.82), rgba(4, 12, 22, 0.18));
+        }
+
+        .dv-head::after {
+            content: "";
+            position: absolute;
+            left: 22px;
+            right: 22px;
+            bottom: -1px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.55), rgba(94, 234, 212, 0.45), rgba(56, 189, 248, 0.55), transparent);
+            opacity: 0.7;
+        }
+
+        .dv-head-left,
+        .dv-head-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+            font-family: var(--dv-mono);
+            font-size: 9px;
+            letter-spacing: 0.04em;
+            color: var(--dv-muted);
+        }
+
+        .dv-head-right { justify-content: flex-end; }
+
+        .dv-live {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            flex: none;
+            padding: 3px 7px 2px;
+            border: 1px solid rgba(94, 234, 212, 0.32);
+            background: rgba(94, 234, 212, 0.05);
+            color: var(--dv-cyan);
+            font-size: 8px;
+            letter-spacing: 0.18em;
+        }
+
+        .dv-live i,
+        .dv-sync i,
+        .dv-foot-label i {
+            display: block;
+            flex: none;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--dv-cyan);
+            box-shadow: 0 0 8px var(--dv-cyan);
+            animation: dvPulse 1.8s ease-in-out infinite;
+        }
+
+        @keyframes dvPulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.35; transform: scale(0.65); }
+        }
+
+        .dv-date { color: #6c8ba3; white-space: nowrap; }
+
+        .dv-clock {
+            color: #dff4ff;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.11em;
+            white-space: nowrap;
+            text-shadow: 0 0 16px rgba(94, 234, 212, 0.28);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .dv-brand {
+            position: relative;
+            padding: 0 34px;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .dv-brand-kicker {
+            display: block;
+            margin-bottom: 2px;
+            color: #5d8faa;
+            font-family: var(--dv-mono);
+            font-size: 7.5px;
+            letter-spacing: 0.4em;
+        }
+
+        .dv-brand h1 {
+            margin: 0;
+            color: #e8f7ff;
+            font-size: clamp(21px, 2.15vw, 30px);
+            font-weight: 600;
+            line-height: 1.08;
+            letter-spacing: 0.2em;
+            text-shadow: 0 0 30px rgba(56, 189, 248, 0.28);
+        }
+
+        .dv-brand h1 em {
+            font-style: normal;
+            background: linear-gradient(92deg, #a6f6f0 0%, #5eead4 46%, #38bdf8 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .dv-brand-sub {
+            display: block;
+            margin-top: 4px;
+            color: #486a83;
+            font-family: var(--dv-mono);
+            font-size: 6.8px;
+            letter-spacing: 0.3em;
+        }
+
+        .dv-sync {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: #6f8da5;
+            white-space: nowrap;
+        }
+
+        .dv-sync i { background: var(--dv-green); box-shadow: 0 0 8px var(--dv-green); }
+
+        .dv-sync b {
+            color: #cfe9f7;
+            font-weight: 500;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .dv-back {
+            padding: 3px 1px;
+            border-bottom: 1px solid transparent;
+            color: #7f9db5;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: color 0.2s ease, border-color 0.2s ease;
+        }
+
+        .dv-back:hover { color: var(--dv-cyan); border-color: rgba(94, 234, 212, 0.5); }
+
+        .dv-full {
+            padding: 4px 9px 3px;
+            border: 1px solid rgba(56, 189, 248, 0.28);
+            border-radius: 2px;
+            background: rgba(56, 189, 248, 0.06);
+            color: #bfe4f5;
+            font-family: var(--dv-font);
+            font-size: 9px;
+            letter-spacing: 0.08em;
+            cursor: pointer;
+            transition: background 0.2s ease, border-color 0.2s ease;
+        }
+
+        .dv-full:hover {
+            background: rgba(56, 189, 248, 0.14);
+            border-color: rgba(94, 234, 212, 0.62);
+        }
+
+        /* ---------- 主体三列 ---------- */
+        .dv-main {
+            position: relative;
+            z-index: 2;
+            display: grid;
+            flex: 1 1 auto;
+            grid-template-columns: clamp(292px, 22vw, 352px) minmax(0, 1fr) clamp(312px, 23vw, 374px);
+            gap: 12px;
+            min-height: 560px;
+            padding: 12px 18px 8px;
+        }
+
+        .dv-col {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-width: 0;
+            min-height: 0;
+        }
+
+        .dv-center-bottom {
+            display: grid;
+            flex: 1 1 auto;
+            grid-template-columns: 1.12fr 0.88fr;
+            gap: 12px;
+            min-height: 0;
+        }
+
+        /* ---------- 面板 ---------- */
+        .dv-panel {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            min-height: 0;
+            border: 1px solid var(--dv-line);
+            background: linear-gradient(180deg, rgba(8, 23, 39, 0.9) 0%, rgba(4, 12, 22, 0.95) 100%);
+            box-shadow:
+                inset 0 0 38px rgba(30, 120, 180, 0.045),
+                0 10px 30px rgba(0, 0, 0, 0.24);
+        }
+
+        .dv-panel::before {
+            content: "";
+            position: absolute;
+            top: -1px;
+            left: -1px;
+            z-index: 1;
+            width: 15px;
+            height: 15px;
+            border-top: 1px solid rgba(94, 234, 212, 0.66);
+            border-left: 1px solid rgba(94, 234, 212, 0.66);
+            pointer-events: none;
+        }
+
+        .dv-panel::after {
+            content: "";
+            position: absolute;
+            right: -1px;
+            bottom: -1px;
+            z-index: 1;
+            width: 15px;
+            height: 15px;
+            border-right: 1px solid rgba(56, 189, 248, 0.5);
+            border-bottom: 1px solid rgba(56, 189, 248, 0.5);
+            pointer-events: none;
+        }
+
+        .dv-panel-head {
+            display: flex;
+            flex: 0 0 36px;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            height: 36px;
+            padding: 0 12px;
+            border-bottom: 1px solid var(--dv-line-soft);
+            background: linear-gradient(90deg, rgba(56, 189, 248, 0.07), transparent 58%);
+        }
+
+        .dv-panel-head h2 {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+            color: #cfe9f7;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            white-space: nowrap;
+        }
+
+        .dv-panel-head h2 i {
+            display: block;
+            flex: none;
+            width: 3px;
+            height: 11px;
+            background: linear-gradient(180deg, var(--dv-cyan), var(--dv-blue));
+            box-shadow: 0 0 10px rgba(94, 234, 212, 0.5);
+        }
+
+        .dv-panel-head > span {
+            flex: none;
+            color: #527189;
+            font-family: var(--dv-mono);
+            font-size: 7.2px;
+            letter-spacing: 0.12em;
+            white-space: nowrap;
+        }
+
+        .dv-chart {
+            position: relative;
+            flex: 1 1 auto;
+            width: 100%;
+            min-height: 0;
+        }
+
+        .dv-chart-error {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 16px;
+            color: var(--dv-rose);
+            font-size: 10px;
+            line-height: 1.7;
+            text-align: center;
+        }
+
+        /* ---------- 左列 ---------- */
+        .dv-panel-kpi { flex: 0.95 1 0; }
+        .dv-panel-bar { flex: 1.12 1 0; }
+        .dv-panel-line { flex: 1.08 1 0; }
+
+        .dv-kpis {
+            display: grid;
+            flex: 1 1 auto;
+            grid-template-columns: 1fr 1fr;
+            grid-auto-rows: minmax(0, 1fr);
+            gap: 1px;
+            min-height: 0;
+            background: rgba(74, 152, 196, 0.11);
+        }
+
+        .dv-kpi {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 2px;
+            min-width: 0;
+            padding: 9px 11px;
+            overflow: hidden;
+            background: linear-gradient(180deg, rgba(5, 16, 29, 0.92), rgba(4, 12, 22, 0.97));
+        }
+
+        .dv-kpi::before {
+            content: "";
+            position: absolute;
+            top: 12px;
+            bottom: 12px;
+            left: 0;
+            width: 2px;
+            background: var(--dv-blue);
+            opacity: 0.8;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.45);
+        }
+
+        .dv-kpi:nth-child(2)::before { background: var(--dv-violet); box-shadow: 0 0 10px rgba(167, 139, 250, 0.45); }
+        .dv-kpi:nth-child(3)::before { background: var(--dv-gold); box-shadow: 0 0 10px rgba(251, 191, 36, 0.4); }
+        .dv-kpi:nth-child(4)::before { background: var(--dv-green); box-shadow: 0 0 10px rgba(52, 211, 153, 0.4); }
+
+        .dv-kpi small {
+            overflow: hidden;
+            color: #7190a8;
+            font-size: 8px;
+            letter-spacing: 0.12em;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .dv-kpi b {
+            color: #e9f7ff;
+            font-family: var(--dv-font);
+            font-size: clamp(21px, 1.85vw, 30px);
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 0.02em;
+            line-height: 1.06;
+            text-shadow: 0 0 18px rgba(56, 189, 248, 0.12);
+        }
+
+        .dv-kpi b em {
+            margin-left: 1px;
+            color: #8fb4cc;
+            font-size: 11px;
+            font-style: normal;
+        }
+
+        .dv-delta {
+            color: var(--dv-cyan);
+            font-family: var(--dv-mono);
+            font-size: 8px;
+            letter-spacing: 0.02em;
+        }
+
+        .dv-delta.is-gold { color: var(--dv-gold); }
+        .dv-delta.is-violet { color: var(--dv-violet); }
+        .dv-delta.is-green { color: var(--dv-green); }
+
+        .dv-spark {
+            position: absolute;
+            right: 8px;
+            bottom: 8px;
+            width: 46px;
+            height: 15px;
+            opacity: 0.62;
+            pointer-events: none;
+        }
+
+        .dv-spark path {
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1;
+            vector-effect: non-scaling-stroke;
+        }
+
+        .dv-spark.c1 { color: var(--dv-blue); }
+        .dv-spark.c2 { color: var(--dv-violet); }
+        .dv-spark.c3 { color: var(--dv-gold); }
+        .dv-spark.c4 { color: var(--dv-green); }
+
+        .dv-kpi-foot {
+            display: flex;
+            flex: 0 0 21px;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 11px;
+            border-top: 1px solid rgba(74, 152, 196, 0.08);
+            color: #4f6e86;
+            font-size: 7px;
+            letter-spacing: 0.05em;
+        }
+
+        /* ---------- 中列地图 ---------- */
+        .dv-panel-map { flex: 1.66 1 0; }
+
+        .dv-map-wrap {
+            position: relative;
+            display: flex;
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .dv-map-wrap::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 78%;
+            height: 74%;
+            transform: translate(-50%, -50%) rotate(-7deg);
+            border: 1px dashed rgba(94, 234, 212, 0.08);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .dv-map {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+        }
+
+        .dv-map-tools {
+            position: absolute;
+            top: 8px;
+            right: 10px;
+            z-index: 3;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #577991;
+            font-size: 7.2px;
+            letter-spacing: 0.04em;
+            pointer-events: none;
+        }
+
+        .dv-map-tools button {
+            padding: 2px 6px;
+            border: 1px solid rgba(74, 152, 196, 0.24);
+            background: rgba(4, 14, 24, 0.66);
+            color: #8db6cd;
+            font-family: var(--dv-font);
+            font-size: 7.2px;
+            letter-spacing: 0.04em;
+            cursor: pointer;
+            pointer-events: auto;
+        }
+
+        .dv-map-tools button:hover {
+            border-color: rgba(94, 234, 212, 0.56);
+            color: var(--dv-cyan);
+        }
+
+        .dv-map-legend {
+            position: absolute;
+            bottom: 9px;
+            left: 12px;
+            z-index: 3;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #6f91a8;
+            font-size: 7.2px;
+            letter-spacing: 0.03em;
+            pointer-events: none;
+        }
+
+        .dv-map-legend span { color: #8aa9bf; }
+
+        .dv-map-legend i {
+            display: block;
+            width: 82px;
+            height: 6px;
+            border: 1px solid rgba(94, 234, 212, 0.14);
+            background: linear-gradient(90deg, #0a2236 0%, #0e4466 25%, #1c7fa2 50%, #41c7c0 75%, #fbbf24 100%);
+        }
+
+        .dv-map-stats {
+            display: grid;
+            flex: 0 0 48px;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            border-top: 1px solid rgba(74, 152, 196, 0.12);
+            background: rgba(4, 12, 22, 0.58);
+        }
+
+        .dv-map-stats > div {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 1px;
+            min-width: 0;
+            padding: 6px 11px;
+            border-right: 1px solid rgba(74, 152, 196, 0.09);
+        }
+
+        .dv-map-stats > div:last-child { border-right: 0; }
+
+        .dv-map-stats small {
+            overflow: hidden;
+            color: #5f7f98;
+            font-size: 7.2px;
+            letter-spacing: 0.05em;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .dv-map-stats b {
+            overflow: hidden;
+            color: #dff2ff;
+            font-family: var(--dv-font);
+            font-size: 15px;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 0.02em;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .dv-map-stats b em {
+            margin-left: 2px;
+            color: #6e93aa;
+            font-size: 8px;
+            font-style: normal;
+        }
+
+        .dv-map-stats b.dv-ok { color: var(--dv-cyan); }
+
+        /* ---------- 右列 ---------- */
+        .dv-panel-rank { flex: 1.18 1 0; }
+        .dv-panel-radar { flex: 0.96 1 0; }
+        .dv-panel-gauge { flex: 0.9 1 0; }
+
+        .dv-rank-list {
+            display: flex;
+            flex: 1 1 auto;
+            flex-direction: column;
+            justify-content: space-around;
+            gap: 3px;
+            min-height: 0;
+            padding: 7px 12px 3px;
+            list-style: none;
+        }
+
+        .dv-rank-list li {
+            display: grid;
+            grid-template-columns: 22px minmax(0, 1fr);
+            align-items: center;
+            gap: 7px;
+            padding: 2px 0;
+        }
+
+        .dv-rank-no {
+            color: #55738c;
+            font-family: var(--dv-mono);
+            font-size: 9.5px;
+            letter-spacing: 0.02em;
+        }
+
+        .dv-rank-list li:nth-child(1) .dv-rank-no { color: var(--dv-gold); }
+        .dv-rank-list li:nth-child(2) .dv-rank-no { color: #b7d3e6; }
+        .dv-rank-list li:nth-child(3) .dv-rank-no { color: #c58a5e; }
+
+        .dv-rank-body { min-width: 0; }
+
+        .dv-rank-top {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 6px;
+        }
+
+        .dv-rank-top b {
+            overflow: hidden;
+            color: #cfe6f3;
+            font-size: 10px;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .dv-rank-top em {
+            flex: none;
+            color: #eaf7ff;
+            font-family: var(--dv-font);
+            font-size: 10.5px;
+            font-style: normal;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .dv-rank-bar {
+            height: 3px;
+            margin: 4px 0 3px;
+            overflow: hidden;
+            background: rgba(56, 189, 248, 0.08);
+        }
+
+        .dv-rank-bar i {
+            display: block;
+            height: 100%;
+            background: linear-gradient(90deg, rgba(56, 189, 248, 0.32), var(--dv-cyan));
+            box-shadow: 0 0 8px rgba(94, 234, 212, 0.3);
+        }
+
+        .dv-rank-list li:nth-child(1) .dv-rank-bar i {
+            background: linear-gradient(90deg, rgba(251, 191, 36, 0.28), var(--dv-gold));
+            box-shadow: 0 0 8px rgba(251, 191, 36, 0.28);
+        }
+
+        .dv-rank-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            color: #57758d;
+            font-size: 7.2px;
+            letter-spacing: 0.02em;
+        }
+
+        .dv-rank-meta .up { color: var(--dv-cyan); }
+        .dv-rank-meta .down { color: var(--dv-rose); }
+
+        .dv-rank-foot {
+            flex: 0 0 18px;
+            padding: 0 12px;
+            color: #4f6c83;
+            font-size: 7px;
+            letter-spacing: 0.03em;
+            line-height: 18px;
+        }
+
+        .dv-gauge-meta {
+            display: grid;
+            flex: 0 0 40px;
+            grid-template-columns: repeat(3, 1fr);
+            border-top: 1px solid rgba(74, 152, 196, 0.1);
+            background: rgba(4, 12, 22, 0.4);
+        }
+
+        .dv-gauge-meta > div {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1px;
+            border-right: 1px solid rgba(74, 152, 196, 0.08);
+        }
+
+        .dv-gauge-meta > div:last-child { border-right: 0; }
+
+        .dv-gauge-meta small {
+            color: #5f7f98;
+            font-size: 7px;
+            letter-spacing: 0.04em;
+        }
+
+        .dv-gauge-meta b {
+            color: #dff2ff;
+            font-family: var(--dv-font);
+            font-size: 12px;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .dv-gauge-meta b em {
+            margin-left: 1px;
+            color: #6e93aa;
+            font-size: 7.5px;
+            font-style: normal;
+        }
+
+        .dv-gauge-meta b.dv-ok { color: var(--dv-green); }
+
+        /* ---------- 底部滚动条 ---------- */
+        .dv-foot {
+            position: relative;
+            z-index: 3;
+            display: flex;
+            flex: 0 0 31px;
+            align-items: center;
+            gap: 12px;
+            padding: 0 18px;
+            border-top: 1px solid rgba(74, 152, 196, 0.14);
+            background: rgba(3, 10, 18, 0.84);
+            color: #5d7b93;
+            font-size: 8px;
+        }
+
+        .dv-foot-label {
+            display: flex;
+            flex: none;
+            align-items: center;
+            gap: 5px;
+            color: var(--dv-cyan);
+            letter-spacing: 0.12em;
+            white-space: nowrap;
+        }
+
+        .dv-foot-track {
+            flex: 1 1 auto;
+            min-width: 0;
+            overflow: hidden;
+            -webkit-mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
+            mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
+        }
+
+        .dv-foot-run {
+            display: flex;
+            width: max-content;
+            animation: dvMarquee 38s linear infinite;
+        }
+
+        .dv-foot-group { display: flex; }
+
+        .dv-foot-group span {
+            padding-right: 46px;
+            color: #6d8ca3;
+            white-space: nowrap;
+        }
+
+        .dv-foot-group span b {
+            color: #bfe6f4;
+            font-weight: 500;
+        }
+
+        @keyframes dvMarquee {
+            from { transform: translateX(0); }
+            to { transform: translateX(-50%); }
+        }
+
+        .dv-foot-meta {
+            flex: none;
+            color: #4f6c83;
+            white-space: nowrap;
+        }
+
+        .dv-foot-meta b {
+            margin-left: 4px;
+            color: #a9c9da;
+            font-family: var(--dv-mono);
+            font-weight: 500;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* ---------- 响应式 ---------- */
+        @media (max-width: 1360px) {
+            .dv-main {
+                grid-template-columns: clamp(280px, 21.5vw, 320px) minmax(0, 1fr) clamp(298px, 22.5vw, 342px);
+                padding-right: 14px;
+                padding-left: 14px;
+            }
+            .dv-brand { padding: 0 18px; }
+            .dv-head { padding-right: 18px; padding-left: 18px; }
+            .dv-head-left, .dv-head-right { gap: 8px; }
+            .dv-map-stats > div { padding: 5px 8px; }
+            .dv-map-stats b { font-size: 13px; }
+        }
+
+        @media (max-width: 1100px) {
+            .dv-main {
+                grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+                min-height: 0;
+            }
+            .dv-center {
+                grid-column: 1 / -1;
+                order: -1;
+            }
+            .dv-panel-map { flex: 0 0 470px; }
+            .dv-center-bottom { flex: 0 0 260px; }
+            .dv-panel-kpi { flex: 0 0 220px; }
+            .dv-panel-bar { flex: 0 0 250px; }
+            .dv-panel-line { flex: 0 0 260px; }
+            .dv-panel-rank { flex: 0 0 300px; }
+            .dv-panel-radar { flex: 0 0 260px; }
+            .dv-panel-gauge { flex: 0 0 230px; }
+        }
+
+        @media (max-width: 760px) {
+            .dv-head {
+                grid-template-columns: 1fr;
+                gap: 6px;
+                padding: 11px 13px 9px;
+                text-align: center;
+            }
+            .dv-head-left { order: 2; justify-content: center; flex-wrap: wrap; font-size: 8px; }
+            .dv-head-right { order: 3; justify-content: center; flex-wrap: wrap; gap: 8px; font-size: 8px; }
+            .dv-brand { order: 1; padding: 0; }
+            .dv-brand h1 { font-size: 21px; letter-spacing: 0.14em; white-space: normal; }
+            .dv-brand-kicker { font-size: 6.6px; letter-spacing: 0.28em; }
+            .dv-brand-sub { display: none; }
+            .dv-clock { font-size: 12px; }
+            .dv-sync { display: none; }
+            .dv-main {
+                grid-template-columns: minmax(0, 1fr);
+                gap: 10px;
+                padding: 10px 10px 8px;
+            }
+            .dv-center { grid-column: auto; }
+            .dv-panel-map { flex: 0 0 430px; }
+            .dv-center-bottom {
+                flex: 0 0 auto;
+                grid-template-columns: minmax(0, 1fr);
+                gap: 10px;
+            }
+            .dv-center-bottom .dv-panel { height: 255px; }
+            .dv-panel-kpi { flex: 0 0 230px; }
+            .dv-panel-bar { flex: 0 0 240px; }
+            .dv-panel-line { flex: 0 0 250px; }
+            .dv-panel-rank { flex: 0 0 310px; }
+            .dv-panel-radar { flex: 0 0 260px; }
+            .dv-panel-gauge { flex: 0 0 230px; }
+            .dv-map-stats { flex-basis: auto; grid-template-columns: 1fr 1fr; }
+            .dv-map-stats > div { height: 37px; border-bottom: 1px solid rgba(74, 152, 196, 0.09); }
+            .dv-map-stats > div:nth-child(2n) { border-right: 0; }
+            .dv-map-stats > div:nth-child(n + 3) { border-bottom: 0; }
+            .dv-map-stats b { font-size: 13px; }
+            .dv-map-tools span { display: none; }
+            .dv-map-tools button { display: none; }
+            .dv-map-legend { bottom: 7px; left: 8px; }
+            .dv-map-legend i { width: 68px; }
+            .dv-foot { flex-basis: 29px; gap: 8px; padding: 0 10px; }
+            .dv-foot-meta { display: none; }
+            .dv-panel-head > span { font-size: 6.6px; letter-spacing: 0.06em; }
+        }
+
+        @media (max-width: 420px) {
+            .dv-brand h1 { font-size: 19px; letter-spacing: 0.1em; }
+            .dv-date { display: none; }
+            .dv-panel-head h2 { font-size: 11px; letter-spacing: 0.07em; }
+            .dv-kpi b { font-size: 23px; }
+            .dv-map-stats small { font-size: 6.8px; }
+            .dv-map-stats b { font-size: 12px; }
+            .dv-rank-top b { font-size: 9.5px; }
+            .dv-foot-label { letter-spacing: 0.06em; }
+        }
+
+        @media (min-width: 1101px) and (max-height: 800px) {
+            .dv-head { padding-top: 8px; padding-bottom: 7px; }
+            .dv-brand h1 { font-size: 24px; }
+            .dv-brand-sub { display: none; }
+            .dv-main { min-height: 500px; padding-top: 8px; padding-bottom: 6px; }
+            .dv-map-stats { flex-basis: 42px; }
+            .dv-map-stats > div { padding-top: 3px; padding-bottom: 3px; }
+            .dv-foot { flex-basis: 28px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.001ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.001ms !important;
+            }
+            .dv-foot-run { animation: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="dv-app" id="dvApp">
+        <div class="dv-bg-grid" aria-hidden="true"></div>
+        <div class="dv-scan" aria-hidden="true"></div>
+
+        <header class="dv-head">
+            <div class="dv-head-left">
+                <span class="dv-live"><i aria-hidden="true"></i>LIVE</span>
+                <span class="dv-date" id="dvDate">2026-11-05 周四</span>
+                <b class="dv-clock" id="dvClock">00:00:00</b>
+            </div>
+            <div class="dv-brand">
+                <span class="dv-brand-kicker">SAIKR · DATA COMMAND CENTER</span>
+                <h1>赛事运营<em>数据驾驶舱</em></h1>
+                <span class="dv-brand-sub">NATIONAL COMPETITION OPERATIONS / 18-8</span>
+            </div>
+            <div class="dv-head-right">
+                <span class="dv-sync"><i aria-hidden="true"></i>数据同步 <b id="dvSync">--:--:--</b></span>
+                <a class="dv-back" href="index.html">返回目录</a>
+                <button class="dv-full" id="dvFull" type="button" aria-pressed="false">全屏</button>
+            </div>
+        </header>
+
+        <main class="dv-main">
+            <!-- 左列 -->
+            <section class="dv-col dv-left" aria-label="核心指标与趋势">
+                <article class="dv-panel dv-panel-kpi">
+                    <header class="dv-panel-head">
+                        <h2><i aria-hidden="true"></i>核心指标</h2>
+                        <span>METRICS / 01</span>
+                    </header>
+                    <div class="dv-kpis">
+                        <div class="dv-kpi">
+                            <small>今日报名</small>
+                            <b>8,642</b>
+                            <span class="dv-delta">↑ 12.4% 较昨日</span>
+                            <svg class="dv-spark c1" viewBox="0 0 46 15" preserveAspectRatio="none" aria-hidden="true"><path d="M1 12 L7 10 L13 11 L19 7 L25 8 L31 5 L37 6 L45 2"/></svg>
+                        </div>
+                        <div class="dv-kpi">
+                            <small>在线会话</small>
+                            <b>1,284</b>
+                            <span class="dv-delta is-violet">↑ 6.8% 较昨日</span>
+                            <svg class="dv-spark c2" viewBox="0 0 46 15" preserveAspectRatio="none" aria-hidden="true"><path d="M1 11 L7 12 L13 8 L19 9 L25 6 L31 7 L37 4 L45 5"/></svg>
+                        </div>
+                        <div class="dv-kpi">
+                            <small>报名转化率</small>
+                            <b>39.6<em>%</em></b>
+                            <span class="dv-delta is-gold">↑ 2.1pt 较昨日</span>
+                            <svg class="dv-spark c3" viewBox="0 0 46 15" preserveAspectRatio="none" aria-hidden="true"><path d="M1 13 L7 11 L13 12 L19 9 L25 10 L31 7 L37 5 L45 4"/></svg>
+                        </div>
+                        <div class="dv-kpi">
+                            <small>覆盖高校</small>
+                            <b>326</b>
+                            <span class="dv-delta is-green">↑ 18 所 本周新增</span>
+                            <svg class="dv-spark c4" viewBox="0 0 46 15" preserveAspectRatio="none" aria-hidden="true"><path d="M1 12 L7 9 L13 10 L19 8 L25 5 L31 6 L37 3 L45 2"/></svg>
+                        </div>
+                    </div>
+                    <div class="dv-kpi-foot">
+                        <span>较昨日同期</span>
+                        <span>数据口径：全站</span>
+                    </div>
+                </article>
+
+                <article class="dv-panel dv-panel-bar">
+                    <header class="dv-panel-head">
+                        <h2><i aria-hidden="true"></i>省份报名 TOP 6</h2>
+                        <span>RANK / 02</span>
+                    </header>
+                    <div class="dv-chart" id="barChart" role="img" aria-label="省份今日报名人数前六名条形图"></div>
+                </article>
+
+                <article class="dv-panel dv-panel-line">
+                    <header class="dv-panel-head">
+                        <h2><i aria-hidden="true"></i>24 小时访问趋势</h2>
+                        <span>TREND / 03</span>
+                    </header>
+                    <div class="dv-chart" id="lineChart" role="img" aria-label="24 小时访问量与报名量趋势图"></div>
+                </article>
+            </section>
+
+            <!-- 中列 -->
+            <section class="dv-col dv-center" aria-label="全国地理分布与转化">
+                <article class="dv-panel dv-panel-map">
+                    <header class="dv-panel-head">
+                        <h2><i aria-hidden="true"></i>全国报名热力分布</h2>
+                        <span>GEO / CHINA</span>
+                    </header>
+                    <div class="dv-map-wrap">
+                        <div class="dv-chart dv-map" id="mapChart" role="img" aria-label="中国各省今日报名人数热力地图"></div>
+                        <div class="dv-map-tools">
+                            <span id="mapHint">滚轮缩放 · 拖拽平移</span>
+                            <button type="button" id="mapReset">复位</button>
+                        </div>
+                        <div class="dv-map-legend">
+                            <span>报名人数</span>
+                            <b>低</b><i aria-hidden="true"></i><b>高</b>
+                        </div>
+                    </div>
+                    <div class="dv-map-stats">
+                        <div><small>覆盖省级行政区</small><b>31</b></div>
+                        <div><small>今日报名总量</small><b>8,642</b></div>
+                        <div><small>峰值省份</small><b>广东 <em>930</em></b></div>
+                        <div><small>实时流入</small><b class="dv-ok">+36<em>/min</em></b></div>
+                    </div>
+                </article>
+
+                <div class="dv-center-bottom">
+                    <article class="dv-panel">
+                        <header class="dv-panel-head">
+                            <h2><i aria-hidden="true"></i>报名转化漏斗</h2>
+                            <span>FUNNEL / 04</span>
+                        </header>
+                        <div class="dv-chart" id="funnelChart" role="img" aria-label="从曝光到完赛的报名转化漏斗"></div>
+                    </article>
+                    <article class="dv-panel">
+                        <header class="dv-panel-head">
+                            <h2><i aria-hidden="true"></i>渠道构成</h2>
+                            <span>MIX / 05</span>
+                        </header>
+                        <div class="dv-chart" id="pieChart" role="img" aria-label="报名渠道构成环形图"></div>
+                    </article>
+                </div>
+            </section>
+
+            <!-- 右列 -->
+            <section class="dv-col dv-right" aria-label="高校榜单与服务状态">
+                <article class="dv-panel dv-panel-rank">
+                    <header class="dv-panel-head">
+                        <h2><i aria-hidden="true"></i>高校报名榜</h2>
+                        <span>TOP / 06</span>
+                    </header>
+                    <ol class="dv-rank-list">
+                        <li>
+                            <span class="dv-rank-no">01</span>
+                            <div class="dv-rank-body">
+                                <div class="dv-rank-top"><b>浙江大学</b><em>486</em></div>
+                                <div class="dv-rank-bar"><i style="width:100%"></i></div>
+                                <div class="dv-rank-meta"><span>浙江 · 杭州</span><span class="up">↑ 8</span></div>
+                            </div>
+                        </li>
+                        <li>
+                            <span class="dv-rank-no">02</span>
+                            <div class="dv-rank-body">
+                                <div class="dv-rank-top"><b>上海交通大学</b><em>452</em></div>
+                                <div class="dv-rank-bar"><i style="width:93%"></i></div>
+                                <div class="dv-rank-meta"><span>上海 · 闵行</span><span class="up">↑ 5</span></div>
+                            </div>
+                        </li>
+                        <li>
+                            <span class="dv-rank-no">03</span>
+                            <div class="dv-rank-body">
+                                <div class="dv-rank-top"><b>华中科技大学</b><em>418</em></div>
+                                <div class="dv-rank-bar"><i style="width:86%"></i></div>
+                                <div class="dv-rank-meta"><span>湖北 · 武汉</span><span class="up">↑ 11</span></div>
+                            </div>
+                        </li>
+                        <li>
+                            <span class="dv-rank-no">04</span>
+                            <div class="dv-rank-body">
+                                <div class="dv-rank-top"><b>四川大学</b><em>392</em></div>
+                                <div class="dv-rank-bar"><i style="width:81%"></i></div>
+                                <div class="dv-rank-meta"><span>四川 · 成都</span><span class="down">↓ 2</span></div>
+                            </div>
+                        </li>
+                        <li>
+                            <span class="dv-rank-no">05</span>
+                            <div class="dv-rank-body">
+                                <div class="dv-rank-top"><b>山东大学</b><em>366</em></div>
+                                <div class="dv-rank-bar"><i style="width:75%"></i></div>
+                                <div class="dv-rank-meta"><span>山东 · 济南</span><span class="up">↑ 3</span></div>
+                            </div>
+                        </li>
+                        <li>
+                            <span class="dv-rank-no">06</span>
+                            <div class="dv-rank-body">
+                                <div class="dv-rank-top"><b>南京大学</b><em>340</em></div>
+                                <div class="dv-rank-bar"><i style="width:70%"></i></div>
+                                <div class="dv-rank-meta"><span>江苏 · 南京</span><span class="up">↑ 4</span></div>
+                            </div>
+                        </li>
+                    </ol>
+                    <div class="dv-rank-foot">按今日报名人数排序 · 每 5 分钟更新</div>
+                </article>
+
+                <article class="dv-panel dv-panel-radar">
+                    <header class="dv-panel-head">
+                        <h2><i aria-hidden="true"></i>服务能力雷达</h2>
+                        <span>RADAR / 07</span>
+                    </header>
+                    <div class="dv-chart" id="radarChart" role="img" aria-label="智能客服本周服务能力雷达图"></div>
+                </article>
+
+                <article class="dv-panel dv-panel-gauge">
+                    <header class="dv-panel-head">
+                        <h2><i aria-hidden="true"></i>系统健康度</h2>
+                        <span>HEALTH / 08</span>
+                    </header>
+                    <div class="dv-chart" id="gaugeChart" role="img" aria-label="系统健康度 98.6%"></div>
+                    <div class="dv-gauge-meta">
+                        <div><small>接口延迟</small><b>82 <em>ms</em></b></div>
+                        <div><small>可用率</small><b>99.98 <em>%</em></b></div>
+                        <div><small>当前告警</small><b class="dv-ok">0</b></div>
+                    </div>
+                </article>
+            </section>
+        </main>
+
+        <footer class="dv-foot">
+            <div class="dv-foot-label"><i aria-hidden="true"></i>实时监测</div>
+            <div class="dv-foot-track">
+                <div class="dv-foot-run">
+                    <div class="dv-foot-group">
+                        <span>全国 <b>31</b> 个省级行政区数据已接入</span>
+                        <span>今日累计报名 <b>8,642</b> 人 · 较昨日 <b>+12.4%</b></span>
+                        <span>广东报名热度 <b>930</b> · 持续领跑</span>
+                        <span>杭州站报名通道剩余 <b>128</b> 席</span>
+                        <span>客服平均响应 <b>12s</b> · 满意度 <b>96.2%</b></span>
+                        <span>系统运行平稳 · <b>0</b> 告警</span>
+                        <span>下一场：全国大学生算法挑战赛 · <b>11-12</b> 开赛</span>
+                    </div>
+                </div>
+            </div>
+            <div class="dv-foot-meta">魏士博 · 课堂演示<b id="dvFootTime">00:00:00</b></div>
+        </footer>
+    </div>
+
+    <script src="cdn/echarts/echarts.min.js"></script>
+    <script src="cdn/geo/china.js"></script>
+    <script>
+    (function () {
+        'use strict';
+
+        var reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+        var charts = [];
+        var mapChart = null;
+        var FONT = '"Bahnschrift", "DIN Alternate", "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif';
+        var TOOLTIP = {
+            backgroundColor: 'rgba(4, 14, 24, 0.96)',
+            borderColor: 'rgba(94, 234, 212, 0.38)',
+            borderWidth: 1,
+            padding: [7, 9],
+            textStyle: { color: '#dceeff', fontSize: 11, fontFamily: FONT },
+            extraCssText: 'box-shadow:0 10px 30px rgba(0,0,0,.45);border-radius:3px;'
+        };
+        var AXIS_LABEL = { color: '#6f8da5', fontSize: 8.5, fontFamily: FONT };
+
+        // 今日各省报名数据，合计 8,642 人
+        var PROVINCE_DATA = [
+            { name: '广东省', value: 930 },
+            { name: '江苏省', value: 800 },
+            { name: '浙江省', value: 720 },
+            { name: '山东省', value: 630 },
+            { name: '河南省', value: 570 },
+            { name: '四川省', value: 510 },
+            { name: '湖北省', value: 455 },
+            { name: '湖南省', value: 420 },
+            { name: '河北省', value: 380 },
+            { name: '福建省', value: 360 },
+            { name: '安徽省', value: 342 },
+            { name: '陕西省', value: 315 },
+            { name: '辽宁省', value: 295 },
+            { name: '江西省', value: 278 },
+            { name: '重庆市', value: 256 },
+            { name: '上海市', value: 248 },
+            { name: '北京市', value: 228 },
+            { name: '天津市', value: 182 },
+            { name: '云南省', value: 172 },
+            { name: '广西壮族自治区', value: 124 },
+            { name: '山西省', value: 60 },
+            { name: '海南省', value: 55 },
+            { name: '黑龙江省', value: 50 },
+            { name: '贵州省', value: 48 },
+            { name: '吉林省', value: 45 },
+            { name: '内蒙古自治区', value: 40 },
+            { name: '甘肃省', value: 35 },
+            { name: '新疆维吾尔自治区', value: 30 },
+            { name: '台湾省', value: 18 },
+            { name: '香港特别行政区', value: 14 },
+            { name: '宁夏回族自治区', value: 12 },
+            { name: '青海省', value: 10 },
+            { name: '西藏自治区', value: 6 },
+            { name: '澳门特别行政区', value: 4 }
+        ];
+
+        // 城市实时热度指数（非报名人数），用于地图上的呼吸点
+        var CITY_DATA = [
+            { name: '北京', value: [116.405, 39.905, 84], label: { position: 'right' } },
+            { name: '上海', value: [121.473, 31.230, 90], label: { position: 'right' } },
+            { name: '广州', value: [113.264, 23.129, 96], label: { position: 'left' } },
+            { name: '深圳', value: [114.057, 22.543, 88], label: { position: 'bottom' } },
+            { name: '成都', value: [104.066, 30.572, 78], label: { position: 'right' } },
+            { name: '武汉', value: [114.305, 30.593, 72], label: { position: 'right' } },
+            { name: '杭州', value: [120.155, 30.274, 76], label: { position: 'top' } },
+            { name: '西安', value: [108.948, 34.263, 64], label: { position: 'left' } }
+        ];
+
+        var HUB = [116.405, 39.905];
+        var LINE_DATA = CITY_DATA.slice(1).map(function (city) {
+            return { coords: [HUB, [city.value[0], city.value[1]]] };
+        });
+
+        var HOURS = [];
+        var VISITS = [220, 180, 150, 130, 120, 180, 480, 760, 980, 1120, 1180, 1240, 1080, 1020, 1100, 1160, 1240, 1320, 1380, 1260, 1040, 880, 700, 560];
+        var SIGNS = [80, 55, 40, 30, 25, 50, 150, 240, 330, 420, 490, 560, 480, 460, 500, 540, 600, 650, 690, 630, 520, 430, 350, 322];
+
+        for (var h = 0; h < 24; h += 1) {
+            HOURS.push((h < 10 ? '0' + h : h) + ':00');
+        }
+
+        function pad2(value) {
+            return value < 10 ? '0' + value : String(value);
+        }
+
+        function formatTime(date) {
+            return pad2(date.getHours()) + ':' + pad2(date.getMinutes()) + ':' + pad2(date.getSeconds());
+        }
+
+        function updateClock() {
+            var now = new Date();
+            var week = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][now.getDay()];
+            var dateText = now.getFullYear() + '-' + pad2(now.getMonth() + 1) + '-' + pad2(now.getDate()) + ' ' + week;
+            var timeText = formatTime(now);
+            var dateEl = document.getElementById('dvDate');
+            var clockEl = document.getElementById('dvClock');
+            var footEl = document.getElementById('dvFootTime');
+            if (dateEl) dateEl.textContent = dateText;
+            if (clockEl) clockEl.textContent = timeText;
+            if (footEl) footEl.textContent = timeText;
+        }
+
+        function updateSyncTime() {
+            var el = document.getElementById('dvSync');
+            if (el) el.textContent = formatTime(new Date());
+        }
+
+        function initTicker() {
+            var group = document.querySelector('.dv-foot-group');
+            var run = document.querySelector('.dv-foot-run');
+            if (!group || !run) return;
+            var clone = group.cloneNode(true);
+            clone.setAttribute('aria-hidden', 'true');
+            run.appendChild(clone);
+        }
+
+        function resizeAll() {
+            charts.forEach(function (chart) {
+                if (chart && !chart.isDisposed()) chart.resize();
+            });
+        }
+
+        function debounce(fn, wait) {
+            var timer = 0;
+            return function () {
+                window.clearTimeout(timer);
+                timer = window.setTimeout(fn, wait);
+            };
+        }
+
+        function initFullscreen() {
+            var btn = document.getElementById('dvFull');
+            var root = document.documentElement;
+            if (!btn) return;
+            var request = root.requestFullscreen || root.webkitRequestFullscreen;
+            var exit = document.exitFullscreen || document.webkitExitFullscreen;
+            if (!request) {
+                btn.hidden = true;
+                return;
+            }
+            btn.addEventListener('click', function () {
+                var active = document.fullscreenElement || document.webkitFullscreenElement;
+                if (active) {
+                    if (exit) {
+                        var p = exit.call(document);
+                        if (p && p.catch) p.catch(function () {});
+                    }
+                } else {
+                    var q = request.call(root);
+                    if (q && q.catch) q.catch(function () {});
+                }
+            });
+            function onChange() {
+                var active = !!(document.fullscreenElement || document.webkitFullscreenElement);
+                btn.textContent = active ? '退出全屏' : '全屏';
+                btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+                window.setTimeout(resizeAll, 260);
+            }
+            document.addEventListener('fullscreenchange', onChange);
+            document.addEventListener('webkitfullscreenchange', onChange);
+        }
+
+        function initChart(id, option) {
+            var el = document.getElementById(id);
+            if (!el || !window.echarts) return null;
+            var chart = window.echarts.init(el, null, {
+                renderer: 'canvas',
+                devicePixelRatio: Math.min(window.devicePixelRatio || 1, 2)
+            });
+            chart.setOption(option);
+            charts.push(chart);
+
+            if (typeof ResizeObserver !== 'undefined') {
+                var frame = 0;
+                var observer = new ResizeObserver(function () {
+                    if (frame) window.cancelAnimationFrame(frame);
+                    frame = window.requestAnimationFrame(function () {
+                        if (chart && !chart.isDisposed()) chart.resize();
+                    });
+                });
+                observer.observe(el);
+            }
+            return chart;
+        }
+
+        function showChartError(message) {
+            var nodes = document.querySelectorAll('.dv-chart');
+            Array.prototype.forEach.call(nodes, function (node) {
+                node.innerHTML = '<div class="dv-chart-error">' + message + '</div>';
+            });
+        }
+
+        function showMapError(message) {
+            var el = document.getElementById('mapChart');
+            if (el) el.innerHTML = '<div class="dv-chart-error">' + message + '</div>';
+        }
+
+        function barOption() {
+            var rows = [
+                { name: '四川', value: 510 },
+                { name: '河南', value: 570 },
+                { name: '山东', value: 630 },
+                { name: '浙江', value: 720 },
+                { name: '江苏', value: 800 },
+                { name: '广东', value: 930 }
+            ];
+            return {
+                animationDuration: reduceMotion ? 0 : 900,
+                grid: { left: 44, right: 46, top: 9, bottom: 7 },
+                tooltip: Object.assign({}, TOOLTIP, {
+                    trigger: 'axis',
+                    axisPointer: { type: 'shadow', shadowStyle: { color: 'rgba(56, 189, 248, 0.06)' } },
+                    formatter: function (params) {
+                        var item = params[0];
+                        return item.name + '<br/>今日报名 <b style="color:#5eead4">' + item.value + '</b> 人';
+                    }
+                }),
+                xAxis: { type: 'value', show: false, max: 1120 },
+                yAxis: {
+                    type: 'category',
+                    data: rows.map(function (row) { return row.name; }),
+                    axisLine: { show: false },
+                    axisTick: { show: false },
+                    axisLabel: { color: '#8fb0c6', fontSize: 9.5, fontFamily: FONT }
+                },
+                series: [{
+                    type: 'bar',
+                    data: rows.map(function (row) { return row.value; }),
+                    barWidth: 8,
+                    showBackground: true,
+                    backgroundStyle: { color: 'rgba(56, 189, 248, 0.055)' },
+                    itemStyle: {
+                        borderRadius: [0, 4, 4, 0],
+                        color: new window.echarts.graphic.LinearGradient(0, 0, 1, 0, [
+                            { offset: 0, color: 'rgba(29, 111, 165, 0.32)' },
+                            { offset: 1, color: '#5eead4' }
+                        ])
+                    },
+                    label: {
+                        show: true,
+                        position: 'right',
+                        distance: 6,
+                        color: '#b9e7f7',
+                        fontSize: 9,
+                        fontFamily: FONT,
+                        formatter: '{c}'
+                    }
+                }]
+            };
+        }
+
+        function lineOption() {
+            return {
+                animationDuration: reduceMotion ? 0 : 900,
+                grid: { left: 32, right: 34, top: 29, bottom: 21 },
+                legend: {
+                    top: 2,
+                    right: 0,
+                    itemWidth: 8,
+                    itemHeight: 3,
+                    itemGap: 9,
+                    data: ['访问量', '报名量'],
+                    textStyle: { color: '#7f9db5', fontSize: 8.5, fontFamily: FONT }
+                },
+                tooltip: Object.assign({}, TOOLTIP, {
+                    trigger: 'axis',
+                    axisPointer: { type: 'line', lineStyle: { color: 'rgba(94, 234, 212, 0.35)' } },
+                    formatter: function (params) {
+                        var out = params[0].axisValue;
+                        params.forEach(function (item) {
+                            var color = item.seriesName === '访问量' ? '#38bdf8' : '#a78bfa';
+                            out += '<br/>' + item.marker + item.seriesName + ' <b style="color:' + color + '">' + item.value + '</b>';
+                        });
+                        return out;
+                    }
+                }),
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: HOURS,
+                    axisLine: { lineStyle: { color: 'rgba(74, 152, 196, 0.18)' } },
+                    axisTick: { show: false },
+                    axisLabel: { color: '#5f7f98', fontSize: 8, fontFamily: FONT, interval: 3 }
+                },
+                yAxis: [
+                    {
+                        type: 'value',
+                        splitLine: { lineStyle: { color: 'rgba(74, 152, 196, 0.1)', type: 'dashed' } },
+                        axisLine: { show: false },
+                        axisTick: { show: false },
+                        axisLabel: AXIS_LABEL
+                    },
+                    {
+                        type: 'value',
+                        splitLine: { show: false },
+                        axisLine: { show: false },
+                        axisTick: { show: false },
+                        axisLabel: AXIS_LABEL
+                    }
+                ],
+                series: [
+                    {
+                        name: '访问量',
+                        type: 'line',
+                        smooth: 0.42,
+                        symbol: 'none',
+                        data: VISITS,
+                        lineStyle: { width: 1.8, color: '#38bdf8', shadowBlur: 8, shadowColor: 'rgba(56, 189, 248, 0.35)' },
+                        areaStyle: {
+                            color: new window.echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                { offset: 0, color: 'rgba(56, 189, 248, 0.28)' },
+                                { offset: 1, color: 'rgba(56, 189, 248, 0)' }
+                            ])
+                        },
+                        emphasis: { focus: 'series' }
+                    },
+                    {
+                        name: '报名量',
+                        type: 'line',
+                        yAxisIndex: 1,
+                        smooth: 0.42,
+                        symbol: 'none',
+                        data: SIGNS,
+                        lineStyle: { width: 1.5, color: '#a78bfa' },
+                        areaStyle: {
+                            color: new window.echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                { offset: 0, color: 'rgba(167, 139, 250, 0.2)' },
+                                { offset: 1, color: 'rgba(167, 139, 250, 0)' }
+                            ])
+                        },
+                        emphasis: { focus: 'series' }
+                    }
+                ]
+            };
+        }
+
+        function funnelOption() {
+            return {
+                animationDuration: reduceMotion ? 0 : 900,
+                tooltip: Object.assign({}, TOOLTIP, {
+                    trigger: 'item',
+                    formatter: function (item) {
+                        return item.name + '<br/><b style="color:#5eead4">' + item.value.toLocaleString() + '</b> 人';
+                    }
+                }),
+                series: [{
+                    name: '报名转化',
+                    type: 'funnel',
+                    left: 15,
+                    right: 15,
+                    top: 8,
+                    bottom: 8,
+                    minSize: '28%',
+                    maxSize: '100%',
+                    sort: 'descending',
+                    gap: 2,
+                    label: {
+                        show: true,
+                        position: 'inside',
+                        color: '#eaf8ff',
+                        fontSize: 9,
+                        fontFamily: FONT,
+                        formatter: function (item) {
+                            return item.name + '  ' + item.value.toLocaleString();
+                        }
+                    },
+                    labelLine: { show: false },
+                    itemStyle: { borderWidth: 0, opacity: 0.92 },
+                    emphasis: { label: { fontSize: 10, fontWeight: 600 } },
+                    data: [
+                        { value: 32000, name: '曝光', itemStyle: { color: '#155b82' } },
+                        { value: 21800, name: '点击', itemStyle: { color: '#1a86a4' } },
+                        { value: 14600, name: '注册', itemStyle: { color: '#2bb7b6' } },
+                        { value: 8642, name: '报名', itemStyle: { color: '#5eead4' } },
+                        { value: 6120, name: '完赛', itemStyle: { color: '#fbbf24' } }
+                    ]
+                }]
+            };
+        }
+
+        function pieOption() {
+            return {
+                animationDuration: reduceMotion ? 0 : 900,
+                tooltip: Object.assign({}, TOOLTIP, {
+                    trigger: 'item',
+                    formatter: function (item) {
+                        return item.marker + item.name + '<br/><b style="color:#5eead4">' + item.value.toLocaleString() + '</b> 人 · ' + item.percent + '%';
+                    }
+                }),
+                title: {
+                    text: '8,642',
+                    subtext: '总报名',
+                    left: 'center',
+                    top: '29%',
+                    textAlign: 'center',
+                    textStyle: { color: '#eaf8ff', fontSize: 19, fontFamily: FONT, fontWeight: 600 },
+                    subtextStyle: { color: '#5f7f98', fontSize: 8, fontFamily: FONT }
+                },
+                legend: {
+                    bottom: 1,
+                    left: 'center',
+                    icon: 'circle',
+                    itemWidth: 7,
+                    itemHeight: 7,
+                    itemGap: 7,
+                    textStyle: { color: '#7f9db5', fontSize: 8, fontFamily: FONT }
+                },
+                series: [{
+                    name: '渠道构成',
+                    type: 'pie',
+                    radius: ['46%', '68%'],
+                    center: ['50%', '42%'],
+                    avoidLabelOverlap: true,
+                    itemStyle: { borderColor: '#061320', borderWidth: 2 },
+                    label: { show: false },
+                    labelLine: { show: false },
+                    emphasis: {
+                        scale: true,
+                        scaleSize: 4,
+                        itemStyle: { shadowBlur: 16, shadowColor: 'rgba(94, 234, 212, 0.38)' }
+                    },
+                    data: [
+                        { value: 3284, name: '官网', itemStyle: { color: '#38bdf8' } },
+                        { value: 2333, name: '社群', itemStyle: { color: '#a78bfa' } },
+                        { value: 1815, name: '校园大使', itemStyle: { color: '#fbbf24' } },
+                        { value: 1210, name: '合作媒体', itemStyle: { color: '#5eead4' } }
+                    ]
+                }]
+            };
+        }
+
+        function radarOption() {
+            var indicatorNames = ['响应速度', '解决率', '满意度', '覆盖率', '稳定性', '知识命中'];
+            var indicatorValues = [92, 88, 94, 86, 96, 90];
+            return {
+                animationDuration: reduceMotion ? 0 : 900,
+                tooltip: Object.assign({}, TOOLTIP, {
+                    trigger: 'item',
+                    formatter: function () {
+                        var out = '<b style="color:#5eead4">服务能力 · 本周</b>';
+                        indicatorNames.forEach(function (name, index) {
+                            out += '<br/>' + name + ' <b>' + indicatorValues[index] + '</b>';
+                        });
+                        return out;
+                    }
+                }),
+                radar: {
+                    center: ['50%', '55%'],
+                    radius: '64%',
+                    splitNumber: 4,
+                    shape: 'polygon',
+                    axisName: { color: '#7f9db5', fontSize: 8.5, fontFamily: FONT },
+                    axisLine: { lineStyle: { color: 'rgba(74, 152, 196, 0.16)' } },
+                    splitLine: { lineStyle: { color: 'rgba(74, 152, 196, 0.16)' } },
+                    splitArea: { areaStyle: { color: ['rgba(7, 25, 42, 0.1)', 'rgba(10, 34, 55, 0.24)'] } },
+                    indicator: indicatorNames.map(function (name) {
+                        return { name: name, max: 100 };
+                    })
+                },
+                series: [{
+                    type: 'radar',
+                    symbol: 'circle',
+                    symbolSize: 2.5,
+                    lineStyle: { color: '#5eead4', width: 1.5, shadowBlur: 8, shadowColor: 'rgba(94, 234, 212, 0.35)' },
+                    itemStyle: { color: '#5eead4' },
+                    areaStyle: { color: 'rgba(94, 234, 212, 0.18)' },
+                    data: [{ value: indicatorValues, name: '本周' }]
+                }]
+            };
+        }
+
+        function gaugeOption() {
+            return {
+                animationDuration: reduceMotion ? 0 : 1000,
+                tooltip: { show: false },
+                series: [{
+                    type: 'gauge',
+                    startAngle: 210,
+                    endAngle: -30,
+                    center: ['50%', '62%'],
+                    radius: '86%',
+                    min: 0,
+                    max: 100,
+                    progress: {
+                        show: true,
+                        width: 7,
+                        roundCap: true,
+                        itemStyle: {
+                            color: new window.echarts.graphic.LinearGradient(0, 0, 1, 1, [
+                                { offset: 0, color: '#38bdf8' },
+                                { offset: 1, color: '#5eead4' }
+                            ])
+                        }
+                    },
+                    axisLine: { lineStyle: { width: 7, color: [[1, 'rgba(56, 189, 248, 0.12)']] } },
+                    axisTick: { show: false },
+                    splitLine: { show: false },
+                    axisLabel: { show: false },
+                    pointer: { show: false },
+                    title: { show: false },
+                    detail: {
+                        valueAnimation: !reduceMotion,
+                        offsetCenter: [0, '4%'],
+                        color: '#eaf8ff',
+                        fontSize: 20,
+                        fontWeight: 600,
+                        fontFamily: FONT,
+                        formatter: '{value}%'
+                    },
+                    data: [{ value: 98.6, name: '系统健康度' }]
+                }]
+            };
+        }
+
+        function buildMapOption() {
+            var roam = window.innerWidth > 760;
+            return {
+                animationDuration: reduceMotion ? 0 : 900,
+                tooltip: Object.assign({}, TOOLTIP, {
+                    trigger: 'item',
+                    confine: true,
+                    formatter: function (item) {
+                        if (item.seriesType === 'effectScatter') {
+                            return '<b style="color:#5eead4">' + item.name + '</b><br/>城市热度 <b>' + item.value[2] + '</b> / 100';
+                        }
+                        if (item.seriesType === 'map') {
+                            var value = item.value;
+                            if (Array.isArray(value)) value = value[value.length - 1];
+                            return '<b>' + item.name + '</b><br/>今日报名 <b style="color:#fbbf24">' + (value == null ? 0 : value) + '</b> 人';
+                        }
+                        return '';
+                    }
+                }),
+                visualMap: {
+                    show: false,
+                    min: 0,
+                    max: 950,
+                    seriesIndex: 0,
+                    inRange: { color: ['#0a2236', '#0e4466', '#1c7fa2', '#41c7c0', '#fbbf24'] }
+                },
+                geo: {
+                    map: 'china',
+                    roam: roam,
+                    zoom: 1.05,
+                    center: [104.5, 36.2],
+                    layoutCenter: ['50%', '51%'],
+                    layoutSize: '104%',
+                    scaleLimit: { min: 1, max: 5 },
+                    itemStyle: {
+                        areaColor: '#081a2b',
+                        borderColor: '#1b4e6d',
+                        borderWidth: 0.9
+                    },
+                    emphasis: {
+                        itemStyle: { areaColor: '#123c58' },
+                        label: { show: false }
+                    }
+                },
+                series: [
+                    {
+                        name: '今日报名',
+                        type: 'map',
+                        map: 'china',
+                        geoIndex: 0,
+                        data: PROVINCE_DATA,
+                        selectedMode: false,
+                        label: { show: false },
+                        itemStyle: { borderColor: '#1e5b7c', borderWidth: 0.7 },
+                        emphasis: {
+                            label: {
+                                show: true,
+                                color: '#f2fbff',
+                                fontSize: 10,
+                                fontFamily: FONT,
+                                formatter: '{b}'
+                            },
+                            itemStyle: { areaColor: '#1a6388' }
+                        }
+                    },
+                    {
+                        name: '城市热度',
+                        type: 'effectScatter',
+                        coordinateSystem: 'geo',
+                        geoIndex: 0,
+                        zlevel: 2,
+                        data: CITY_DATA,
+                        symbolSize: function (value) {
+                            return 5 + value[2] / 12;
+                        },
+                        itemStyle: {
+                            color: '#5eead4',
+                            shadowBlur: 12,
+                            shadowColor: 'rgba(94, 234, 212, 0.8)'
+                        },
+                        rippleEffect: { scale: 3.4, brushType: 'stroke' },
+                        label: {
+                            show: true,
+                            color: '#c6ecff',
+                            fontSize: 9.5,
+                            fontFamily: FONT,
+                            textShadowColor: 'rgba(0, 0, 0, 0.9)',
+                            textShadowBlur: 4,
+                            textShadowOffsetY: 1
+                        },
+                        emphasis: { scale: 1.4 }
+                    },
+                    {
+                        name: '实时流动',
+                        type: 'lines',
+                        coordinateSystem: 'geo',
+                        geoIndex: 0,
+                        zlevel: 3,
+                        silent: true,
+                        effect: {
+                            show: !reduceMotion,
+                            period: 4.2,
+                            trailLength: 0.3,
+                            symbol: 'circle',
+                            symbolSize: 3,
+                            color: '#5eead4'
+                        },
+                        lineStyle: { color: '#5eead4', opacity: 0.28, width: 1, curveness: 0.2 },
+                        data: LINE_DATA
+                    }
+                ]
+            };
+        }
+
+        function updateMapHint() {
+            var hint = document.getElementById('mapHint');
+            if (!hint) return;
+            hint.textContent = window.innerWidth > 760 ? '滚轮缩放 · 拖拽平移' : '点击城市查看热度';
+        }
+
+        function resetMap() {
+            if (!mapChart || mapChart.isDisposed()) return;
+            mapChart.setOption(buildMapOption(), true);
+            mapChart.resize();
+            updateMapHint();
+        }
+
+        function initCharts() {
+            if (!window.echarts) {
+                showChartError('ECharts 本地资源未加载，请检查 cdn/echarts/echarts.min.js');
+                return;
+            }
+
+            initChart('barChart', barOption());
+            initChart('lineChart', lineOption());
+            initChart('funnelChart', funnelOption());
+            initChart('pieChart', pieOption());
+            initChart('radarChart', radarOption());
+            initChart('gaugeChart', gaugeOption());
+
+            if (window.CHINA_GEOJSON && window.CHINA_GEOJSON.features) {
+                try {
+                    window.echarts.registerMap('china', window.CHINA_GEOJSON);
+                    mapChart = initChart('mapChart', buildMapOption());
+                    if (mapChart) {
+                        mapChart.on('dblclick', resetMap);
+                    }
+                } catch (error) {
+                    showMapError('中国地图注册失败，请检查 cdn/geo/china.js');
+                }
+            } else {
+                showMapError('中国地图数据未加载，请检查 cdn/geo/china.js');
+            }
+
+            var reset = document.getElementById('mapReset');
+            if (reset) reset.addEventListener('click', resetMap);
+            updateMapHint();
+        }
+
+        updateClock();
+        updateSyncTime();
+        initTicker();
+        initFullscreen();
+        initCharts();
+
+        window.setInterval(updateClock, 1000);
+        window.setInterval(updateSyncTime, 5000);
+
+        window.addEventListener('resize', debounce(function () {
+            resizeAll();
+            updateMapHint();
+            if (mapChart && !mapChart.isDisposed()) {
+                mapChart.setOption({ geo: { roam: window.innerWidth > 760 } });
+            }
+        }, 140));
+
+        window.addEventListener('load', function () {
+            window.setTimeout(resizeAll, 180);
+        });
+    })();
+    </script>
+</body>
+</html>
