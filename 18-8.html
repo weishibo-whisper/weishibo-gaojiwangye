@@ -285,12 +285,23 @@
             min-height: 0;
         }
 
+        .dv-center {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            grid-template-rows: minmax(0, 1.66fr) minmax(0, 1fr);
+        }
+
         .dv-center-bottom {
             display: grid;
-            flex: 1 1 auto;
+            flex: none;
             grid-template-columns: 1.12fr 0.88fr;
             gap: 12px;
             min-height: 0;
+        }
+
+        .dv-center-bottom > .dv-panel {
+            min-height: 0;
+            overflow: hidden;
         }
 
         /* ---------- 面板 ---------- */
@@ -647,18 +658,18 @@
         .dv-map-stats b.dv-ok { color: var(--dv-cyan); }
 
         /* ---------- 右列 ---------- */
-        .dv-panel-rank { flex: 1.18 1 0; }
-        .dv-panel-radar { flex: 0.96 1 0; }
-        .dv-panel-gauge { flex: 0.9 1 0; }
+        .dv-panel-rank { flex: 1.22 1 0; overflow: hidden; }
+        .dv-panel-radar { flex: 0.94 1 0; }
+        .dv-panel-gauge { flex: 0.88 1 0; }
 
         .dv-rank-list {
             display: flex;
             flex: 1 1 auto;
             flex-direction: column;
             justify-content: space-around;
-            gap: 3px;
+            gap: 1px;
             min-height: 0;
-            padding: 7px 12px 3px;
+            padding: 4px 12px 1px;
             list-style: none;
         }
 
@@ -667,7 +678,7 @@
             grid-template-columns: 22px minmax(0, 1fr);
             align-items: center;
             gap: 7px;
-            padding: 2px 0;
+            padding: 1px 0;
         }
 
         .dv-rank-no {
@@ -711,7 +722,7 @@
 
         .dv-rank-bar {
             height: 3px;
-            margin: 4px 0 3px;
+            margin: 3px 0 2px;
             overflow: hidden;
             background: rgba(56, 189, 248, 0.08);
         }
@@ -734,20 +745,21 @@
             justify-content: space-between;
             gap: 6px;
             color: #57758d;
-            font-size: 7.2px;
+            font-size: 6.8px;
             letter-spacing: 0.02em;
+            line-height: 1.1;
         }
 
         .dv-rank-meta .up { color: var(--dv-cyan); }
         .dv-rank-meta .down { color: var(--dv-rose); }
 
         .dv-rank-foot {
-            flex: 0 0 18px;
+            flex: 0 0 16px;
             padding: 0 12px;
             color: #4f6c83;
-            font-size: 7px;
+            font-size: 6.7px;
             letter-spacing: 0.03em;
-            line-height: 18px;
+            line-height: 16px;
         }
 
         .dv-gauge-meta {
@@ -883,6 +895,8 @@
                 min-height: 0;
             }
             .dv-center {
+                display: flex;
+                flex-direction: column;
                 grid-column: 1 / -1;
                 order: -1;
             }
@@ -1264,10 +1278,10 @@
             { name: '北京', value: [116.405, 39.905, 84], label: { position: 'right' } },
             { name: '上海', value: [121.473, 31.230, 90], label: { position: 'right' } },
             { name: '广州', value: [113.264, 23.129, 96], label: { position: 'left' } },
-            { name: '深圳', value: [114.057, 22.543, 88], label: { position: 'bottom' } },
-            { name: '成都', value: [104.066, 30.572, 78], label: { position: 'right' } },
-            { name: '武汉', value: [114.305, 30.593, 72], label: { position: 'right' } },
-            { name: '杭州', value: [120.155, 30.274, 76], label: { position: 'top' } },
+            { name: '深圳', value: [114.057, 22.543, 88], label: { position: 'right' } },
+            { name: '成都', value: [104.066, 30.572, 78], label: { position: 'left' } },
+            { name: '武汉', value: [114.305, 30.593, 72], label: { position: 'bottom' } },
+            { name: '杭州', value: [120.155, 30.274, 76], label: { position: 'bottom' } },
             { name: '西安', value: [108.948, 34.263, 64], label: { position: 'left' } }
         ];
 
@@ -1803,6 +1817,9 @@
                             color: '#c6ecff',
                             fontSize: 9.5,
                             fontFamily: FONT,
+                            formatter: function (item) {
+                                return item.name;
+                            },
                             textShadowColor: 'rgba(0, 0, 0, 0.9)',
                             textShadowBlur: 4,
                             textShadowOffsetY: 1
